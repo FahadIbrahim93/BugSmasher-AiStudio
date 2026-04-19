@@ -3,6 +3,8 @@ export class SoundManager {
   masterGain: GainNode | null = null;
   enabled: boolean = false;
   volume: number = 1.0;
+  sfxVolume: number = 1.0;
+  musicVolume: number = 1.0;
   isMuted: boolean = false;
 
   constructor() {
@@ -13,8 +15,12 @@ export class SoundManager {
     try {
       const savedVol = localStorage.getItem('bugsmasher_volume');
       const savedMute = localStorage.getItem('bugsmasher_muted');
+      const savedSfxVol = localStorage.getItem('bugsmasher_sfxvolume');
+      const savedMusicVol = localStorage.getItem('bugsmasher_musicvolume');
       if (savedVol !== null) this.volume = parseFloat(savedVol);
       if (savedMute !== null) this.isMuted = savedMute === 'true';
+      if (savedSfxVol !== null) this.sfxVolume = parseFloat(savedSfxVol);
+      if (savedMusicVol !== null) this.musicVolume = parseFloat(savedMusicVol);
     } catch (e) {
       console.warn("Could not load audio settings", e);
     }
@@ -24,9 +30,29 @@ export class SoundManager {
     try {
       localStorage.setItem('bugsmasher_volume', this.volume.toString());
       localStorage.setItem('bugsmasher_muted', this.isMuted.toString());
+      localStorage.setItem('bugsmasher_sfxvolume', this.sfxVolume.toString());
+      localStorage.setItem('bugsmasher_musicvolume', this.musicVolume.toString());
     } catch (e) {
       console.warn("Could not save audio settings", e);
     }
+  }
+
+  setMuted(muted: boolean) {
+    this.isMuted = muted;
+    if (this.masterGain && this.ctx) {
+      this.masterGain.gain.setValueAtTime(muted ? 0 : this.volume, this.ctx.currentTime);
+    }
+    this.saveSettings();
+  }
+
+  setSFXVolume(vol: number) {
+    this.sfxVolume = Math.max(0, Math.min(1, vol));
+    this.saveSettings();
+  }
+
+  setMusicVolume(vol: number) {
+    this.musicVolume = Math.max(0, Math.min(1, vol));
+    this.saveSettings();
   }
 
   setVolume(vol: number) {

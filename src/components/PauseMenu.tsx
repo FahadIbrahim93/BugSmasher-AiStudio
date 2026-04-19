@@ -1,21 +1,28 @@
 import { motion } from 'motion/react';
-import { Volume2, VolumeX, Home, Play, Settings2 } from 'lucide-react';
+import { Volume2, VolumeX, Home, Play, Settings2, Sparkles, Music } from 'lucide-react';
 import { soundManager } from '../game/SoundManager';
 import { useEffect, useState } from 'react';
 
+interface PauseMenuProps {
+  onResume: () => void;
+  onMainMenu: () => void;
+  onSettings?: () => void;
+}
+
 export function PauseMenu({ 
   onResume, 
-  onMainMenu 
-}: { 
-  onResume: () => void, 
-  onMainMenu: () => void 
-}) {
+  onMainMenu,
+  onSettings 
+}: PauseMenuProps) {
   const [volTracker, setVolTracker] = useState(soundManager.volume);
+  const [sfxVolTracker, setSfxVolTracker] = useState(soundManager.sfxVolume);
+  const [musicVolTracker, setMusicVolTracker] = useState(soundManager.musicVolume);
   const [muteTracker, setMuteTracker] = useState(soundManager.isMuted);
 
-  // Sync state if it was changed externally
   useEffect(() => {
     setVolTracker(soundManager.volume);
+    setSfxVolTracker(soundManager.sfxVolume);
+    setMusicVolTracker(soundManager.musicVolume);
     setMuteTracker(soundManager.isMuted);
   }, []);
 
@@ -23,6 +30,18 @@ export function PauseMenu({
     const newVol = parseFloat(e.target.value);
     soundManager.setVolume(newVol);
     setVolTracker(newVol);
+  };
+
+  const handleSfxVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVol = parseFloat(e.target.value);
+    soundManager.setSFXVolume(newVol);
+    setSfxVolTracker(newVol);
+  };
+
+  const handleMusicVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVol = parseFloat(e.target.value);
+    soundManager.setMusicVolume(newVol);
+    setMusicVolTracker(newVol);
   };
 
   const handleToggleMute = () => {
@@ -68,6 +87,38 @@ export function PauseMenu({
               className="w-full accent-white h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer disabled:opacity-50"
             />
           </div>
+
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center space-x-2 text-zinc-500 font-mono text-xs uppercase tracking-widest">
+              <Sparkles className="w-3 h-3" />
+              <span>Sound Effects</span>
+            </div>
+            <input 
+              type="range" 
+              min="0" 
+              max="1" 
+              step="0.05"
+              value={sfxVolTracker}
+              onChange={handleSfxVolumeChange}
+              className="w-full accent-zinc-400 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+            />
+          </div>
+
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center space-x-2 text-zinc-500 font-mono text-xs uppercase tracking-widest">
+              <Music className="w-3 h-3" />
+              <span>Music</span>
+            </div>
+            <input 
+              type="range" 
+              min="0" 
+              max="1" 
+              step="0.05"
+              value={musicVolTracker}
+              onChange={handleMusicVolumeChange}
+              className="w-full accent-zinc-400 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+            />
+          </div>
         </div>
 
         <div className="w-full flex flex-col space-y-4">
@@ -81,6 +132,17 @@ export function PauseMenu({
               Resume Operations
             </span>
           </button>
+          
+          {onSettings && (
+            <button 
+              onClick={() => { soundManager.uiClick(); onSettings(); }}
+              onMouseEnter={() => soundManager.uiHover()}
+              className="w-full py-4 bg-transparent border-[0.5px] border-white/20 hover:bg-white/5 text-zinc-300 rounded-full font-medium text-sm font-mono uppercase tracking-widest transition-colors flex items-center justify-center"
+            >
+              <Settings2 className="w-4 h-4 mr-3" />
+              System Config
+            </button>
+          )}
           
           <button 
             onClick={() => { soundManager.uiClick(); onMainMenu(); }}

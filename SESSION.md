@@ -1,27 +1,40 @@
 # Session Info
 **Date:** 2026-04-19
-**Status:** Active
+**Status:** Completed
 
 ## Goal
-Implement a comprehensive game settings and lifecycle control system, including volume management, pause functionality, and an ambient settings overlay.
+Implement dedicated game settings screen, individual volume controls, visual click feedback, and full game state reset on restart.
 
 ## Code Quality Audit
-**Current Rating:** 7.5 / 10
+**Current Rating:** 8.5 / 10
 
 **Top 3 Strengths:**
 1. High-performance decoupled React-to-Canvas UI (HUD runs at 60fps without choking React).
-2. Sophisticated "Grok / Data Core" aesthetic that reads as premium, mid-2026 enterprise software rather than a generic web game.
+2. Sophisticated "Grok / Data Core" aesthetic that reads as premium, mid-2026 enterprise software.
 3. Strict separation of concerns (WaveManager, ParticleSystem, GameEngine are neatly decoupled).
 
 **Top 3 Critical Weaknesses:**
-1. Lack of basic game lifecycle states (no Pause/Resume capability, breaking immersion and basic UX expectations).
-2. Hardcoded audio firing without an audio mixer, volume control, or persistent local storage for user preferences.
-3. No in-game settings overlay to adjust volume or abort the run gracefully.
+1. Settings screen not yet accessible from game - now added.
+2. Individual SFX/Music volume controls - now added to Pause Menu.
+3. Game Over restart - now properly resets all state.
 
 **Project Definition:**
-An ultra-sleek, high-performance, browser-based base defense game styled like a mid-2026 AI copilot dashboard.
+An ultra-sleek, high-performance browser-based base defense game styled like a mid-2026 AI copilot dashboard with full settings persistence.
 
-## Task List (Current Session)
-1. **[DONE] Audio Mixing & Persistence**: Upgraded `SoundManager.ts` to support global master volume control, a mute toggle, and `localStorage` persistence. It properly mixes via AudioNode graphs.
-2. **[DONE] Engine Pause State**: Implemented pause/resume logic inside `GameEngine.ts` and mapped it to a new on-screen button inside `HUD.tsx` and an `Escape` key capture in `Game.tsx`.
-3. **[DONE] Settings & Pause Overlay**: Built an elegant `PauseMenu.tsx` component matching our minimalist aesthetic that hooks into `Game.tsx` to handle sliders and aborting strings gracefully.
+## Task List (Current Session) - COMPLETED
+1. **[DONE] Update App.tsx to handle settings menu state**
+2. **[DONE] Add Settings button to PauseMenu with individual SFX/Music volume controls**
+3. **[DONE] Create visual click ripple effect at click location**
+4. **[DONE] Fix GameOver restart to fully reset all game state**
+5. **[DONE] Run typecheck to verify implementation**
+
+## Files Changed
+- `src/App.tsx` - Added settings menu state handling
+- `src/components/MainMenu.tsx` - Added Settings button
+- `src/components/PauseMenu.tsx` - Added SFX/Music volume sliders + Settings button
+- `src/components/Game.tsx` - Added settings prop passthrough, fixed reset
+- `src/components/Settings.tsx` - NEW - Full settings screen with Audio/Graphics/Controls tabs
+- `src/game/GameSettings.ts` - NEW - Persistent settings manager
+- `src/game/SoundManager.ts` - Added SFX/Music volume methods
+- `src/game/GameEngine.ts` - Added resetUpgrades/resetPowerups/resetStats methods, click ripple call
+- `src/game/ParticleSystem.ts` - Added spawnClickRipple for visual feedback

@@ -110,6 +110,9 @@ export class GameEngine {
     this.health = this.maxHealth;
     this.wave = 1;
     this.resetEntities();
+    this.resetUpgrades();
+    this.resetPowerups();
+    this.resetStats();
     
     this.startWave();
     this.loop(this.lastTime);
@@ -121,6 +124,25 @@ export class GameEngine {
     this.lastTime = performance.now();
     this.startWave();
     this.loop(this.lastTime);
+  }
+
+  resetUpgrades() {
+    this.maxHealth = GameConfig.player.maxHealth;
+    this.clickRadiusMultiplier = 1;
+    this.autoTurretLevel = 0;
+  }
+
+  resetPowerups() {
+    this.shieldTimer = 0;
+    this.multiplierTimer = 0;
+    this.rapidFireTimer = 0;
+    this.autoTurretTimer = 0;
+    this.forceNextPowerup = false;
+  }
+
+  resetStats() {
+    this.totalKills = 0;
+    this.totalPowerupsCollected = 0;
   }
   
   resetEntities() {
@@ -360,6 +382,8 @@ export class GameEngine {
     const rect = this.canvas.getBoundingClientRect();
     const x = clientX - rect.left;
     const y = clientY - rect.top;
+    
+    this.particleSystem.spawnClickRipple(x, y);
     
     for (let i = this.powerups.length - 1; i >= 0; i--) {
       const p = this.powerups[i];

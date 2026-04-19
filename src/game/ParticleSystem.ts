@@ -59,6 +59,19 @@ export class ParticleSystem {
       }
   }
 
+  spawnClickRipple(x: number, y: number) {
+    const sw = this.shockwaves[this.shockwaveIdx];
+    sw.active = true;
+    sw.x = x;
+    sw.y = y;
+    sw.radius = 5;
+    sw.speed = 300;
+    sw.color = '#ffffff';
+    sw.life = 0.2;
+    sw.maxLife = 0.2;
+    this.shockwaveIdx = (this.shockwaveIdx + 1) % MAX_SHOCKWAVES;
+  }
+
   spawnShockwave(x: number, y: number, color: string, maxRadius: number) {
     const sw = this.shockwaves[this.shockwaveIdx];
     sw.active = true;

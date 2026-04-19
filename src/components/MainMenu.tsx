@@ -1,7 +1,7 @@
-import { Bug } from 'lucide-react';
+import { Bug, Settings2 } from 'lucide-react';
 import { soundManager } from '../game/SoundManager';
 
-export function MainMenu({ onStart }: { onStart: () => void }) {
+export function MainMenu({ onStart, onSettings }: { onStart: () => void; onSettings: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center h-full bg-[#050505] relative p-4">
       {/* Remove previous gradient backgrounds as we want absolute minimalist black */}
@@ -19,7 +19,7 @@ export function MainMenu({ onStart }: { onStart: () => void }) {
           </p>
         </div>
         
-        <div className="w-full flex justify-center mt-12">
+        <div className="w-full flex flex-col space-y-4 justify-center mt-12">
           <button 
             onClick={() => { soundManager.init(); soundManager.uiClick(); onStart(); }}
             onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
@@ -28,6 +28,16 @@ export function MainMenu({ onStart }: { onStart: () => void }) {
           >
             <span className="relative z-10">Initialize Sequence</span>
             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
+          </button>
+          
+          <button 
+            onClick={() => { soundManager.init(); soundManager.uiClick(); onSettings(); }}
+            onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
+            aria-label="Settings"
+            className="px-12 py-4 bg-transparent border border-white/20 hover:bg-white/5 text-zinc-300 rounded-full font-medium text-sm sm:text-base font-mono uppercase tracking-widest transition-colors flex items-center justify-center space-x-3"
+          >
+            <Settings2 className="w-4 h-4" />
+            <span>System Config</span>
           </button>
         </div>
       </div>
