@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Shield, Zap, Crosshair, Heart } from 'lucide-react';
 import { motion, Variants } from 'motion/react';
 import { soundManager } from '../game/SoundManager';
@@ -9,12 +8,12 @@ interface UpgradeMenuProps {
   onUpgrade: (type: 'health' | 'radius' | 'turret', cost: number) => void;
   onNextWave: () => void;
   wave: number;
+  healthLevel: number;
+  radiusLevel: number;
+  turretLevel: number;
 }
 
-export function UpgradeMenu({ score, onUpgrade, onNextWave, wave }: UpgradeMenuProps) {
-  const [healthLevel, setHealthLevel] = useState(0);
-  const [radiusLevel, setRadiusLevel] = useState(0);
-  const [turretLevel, setTurretLevel] = useState(0);
+export function UpgradeMenu({ score, onUpgrade, onNextWave, wave, healthLevel, radiusLevel, turretLevel }: UpgradeMenuProps) {
 
   const healthCost = GameConfig.upgrades.health.baseCost + healthLevel * GameConfig.upgrades.health.costMultiplier;
   const radiusCost = GameConfig.upgrades.radius.baseCost + radiusLevel * GameConfig.upgrades.radius.costMultiplier;
@@ -25,9 +24,6 @@ export function UpgradeMenu({ score, onUpgrade, onNextWave, wave }: UpgradeMenuP
     if (score >= cost) {
       soundManager.upgrade();
       onUpgrade(type, cost);
-      if (type === 'health') setHealthLevel(l => l + 1);
-      if (type === 'radius') setRadiusLevel(l => l + 1);
-      if (type === 'turret') setTurretLevel(l => l + 1);
     } else {
       soundManager.uiError();
     }

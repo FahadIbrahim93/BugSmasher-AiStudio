@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { GameEngine } from './GameEngine';
 import { GameConfig } from './GameConfig';
 
@@ -10,7 +10,12 @@ vi.mock('./SoundManager', () => ({
     splat: vi.fn(),
     hitBase: vi.fn(),
     powerup: vi.fn(),
+    nuke: vi.fn(),
     upgrade: vi.fn(),
+    uiClick: vi.fn(),
+    uiHover: vi.fn(),
+    uiError: vi.fn(),
+    scoreTick: vi.fn(),
   }
 }));
 
@@ -19,10 +24,46 @@ describe('GameEngine', () => {
   let engine: GameEngine;
 
   beforeEach(() => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => ({
+      scale: vi.fn(),
+      setTransform: vi.fn(),
+      save: vi.fn(),
+      restore: vi.fn(),
+      translate: vi.fn(),
+      rotate: vi.fn(),
+      fillRect: vi.fn(),
+      beginPath: vi.fn(),
+      arc: vi.fn(),
+      fill: vi.fn(),
+      stroke: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      closePath: vi.fn(),
+      ellipse: vi.fn(),
+      fillText: vi.fn(),
+      createRadialGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
+      setLineDash: vi.fn(),
+      quadraticCurveTo: vi.fn(),
+      globalCompositeOperation: 'source-over',
+      fillStyle: '',
+      strokeStyle: '',
+      lineWidth: 1,
+      font: '',
+      textAlign: 'left',
+      textBaseline: 'alphabetic',
+      globalAlpha: 1,
+      shadowColor: '',
+      shadowBlur: 0,
+    }) as unknown as CanvasRenderingContext2D);
+
     canvas = document.createElement('canvas');
     canvas.width = 800;
     canvas.height = 600;
     engine = new GameEngine(canvas);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('should initialize with correct default values', () => {

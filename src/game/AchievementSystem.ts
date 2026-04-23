@@ -40,7 +40,7 @@ export interface AchievementProgress {
   lastPlayedDate: string;
 }
 
-const ACHIEVEMENT_DATA: Record<AchievementId, Omit<Achievement, 'unlocked' | 'unlockedAt'>> = {
+const ACHIEVEMENT_DATA: Record<AchievementId, Omit<Achievement, 'id' | 'unlocked' | 'unlockedAt'>> = {
   first_blood:        { title: 'First Blood',        description: 'Smash your first bug', icon: '🪲' },
   combo_5:           { title: 'Combo Hunter',      description: 'Reach 5x combo', icon: '🔥' },
   combo_10:          { title: 'Blazing Fast',      description: 'Reach 10x combo', icon: '⚡' },

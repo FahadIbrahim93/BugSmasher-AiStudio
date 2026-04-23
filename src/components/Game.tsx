@@ -21,6 +21,11 @@ export function Game({ onMainMenu }: { onMainMenu: () => void }) {
   // We strictly manage these here ONLY for the menus that need them when paused
   const [finalScore, setFinalScore] = useState(0);
   const [currentWave, setCurrentWave] = useState(1);
+  const [upgradeLevels, setUpgradeLevels] = useState({
+    health: 0,
+    radius: 0,
+    turret: 0,
+  });
   
   const engineRef = useRef<GameEngine | null>(null);
 
@@ -46,6 +51,9 @@ export function Game({ onMainMenu }: { onMainMenu: () => void }) {
     const engine = engineRef.current;
     if (!engine) return;
 
+    // Defensive guard
+    if (engine.score < cost) return;
+
     // Deduct score
     engine.score -= cost;
     setFinalScore(engine.score);
@@ -59,6 +67,11 @@ export function Game({ onMainMenu }: { onMainMenu: () => void }) {
     } else if (type === 'turret') {
       engine.autoTurretLevel += 1;
     }
+
+    setUpgradeLevels((prev) => ({
+      ...prev,
+      [type]: prev[type] + 1,
+    }));
   };
 
   const handleNextWave = () => {
@@ -111,7 +124,10 @@ export function Game({ onMainMenu }: { onMainMenu: () => void }) {
           score={finalScore} 
           onUpgrade={handleUpgrade} 
           onNextWave={handleNextWave} 
-          wave={currentWave} 
+          wave={currentWave}
+          healthLevel={upgradeLevels.health}
+          radiusLevel={upgradeLevels.radius}
+          turretLevel={upgradeLevels.turret}
         />
       )}
 
@@ -129,6 +145,7 @@ export function Game({ onMainMenu }: { onMainMenu: () => void }) {
             setIsUpgrading(false);
             setFinalScore(0);
             setCurrentWave(1);
+            setUpgradeLevels({ health: 0, radius: 0, turret: 0 });
             setGameId(id => id + 1);
           }} 
           onMainMenu={onMainMenu} 
