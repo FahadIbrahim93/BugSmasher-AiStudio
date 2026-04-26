@@ -6,6 +6,10 @@ import { WaveManager } from './WaveManager';
 import { SaveManager } from './SaveManager';
 import { achievementSystem } from './AchievementSystem';
 import { hapticsManager } from './HapticsManager';
+import { statsManager } from './database/StatsManager';
+import { authManager } from './database/AuthManager';
+import { cloudSaveManager } from './database/CloudSaveManager';
+import { leaderboardManager } from './database/LeaderboardManager';
 
 export interface Bug { active: boolean; x: number; y: number; type: string; speed: number; color: string; size: number; scoreValue: number; hp: number; maxHp: number; walkCycle: number; rotation: number; offsetTime: number; }
 export interface Powerup { active: boolean; x: number; y: number; type: string; color: string; icon: string; life: number; maxLife: number; size: number; collection: string; }
@@ -51,6 +55,7 @@ export class GameEngine {
   multiplierTimer: number = 0;
   rapidFireTimer: number = 0;
   freezeTimer: number = 0;
+  slowMoTimer: number = 0;
   autoTurretTimer: number = 0;
 
   // Session tracking
@@ -84,6 +89,7 @@ export class GameEngine {
     this.waveManager = new WaveManager(this);
     this.saveManager = new SaveManager();
     this.highScore = this.saveManager.getHighScore();
+    this.applyPrestigeBonus();
     
     this.handlePointerDown = this.handlePointerDown.bind(this);
     this.handlePointerMove = this.handlePointerMove.bind(this);
@@ -91,6 +97,14 @@ export class GameEngine {
     this.canvas.addEventListener('pointermove', this.handlePointerMove);
     
     this.renderer = new Renderer(this);
+  }
+  
+  applyPrestigeBonus(): void {
+    const prestigeLevel = this.saveManager.getPrestigeLevel();
+    const multiplier = 1 + (prestigeLevel * 0.1);
+    this.maxHealth = Math.floor(GameConfig.player.maxHealth * multiplier);
+    this.health = this.maxHealth;
+    this.clickRadiusMultiplier = multiplier;
   }
   
   handleResize() {
@@ -224,12 +238,28 @@ export class GameEngine {
   update(dt: number) {
     if (this.health <= 0) {
       this.isRunning = false;
-      // Save session stats
+      const prestigePointsEarned = Math.floor(this.score / 100);
+      this.saveManager.addPrestigePoints(prestigePointsEarned);
       this.saveManager.addBugsSmashed(this.totalKills);
       this.saveManager.addPlayTime(this.globalTime);
       
-      // Track achievements
       achievementSystem.onGameEnd(this.score, this.missCount);
+      
+      // New database system integration
+      const playTimeSeconds = Math.floor(this.globalTime);
+      statsManager.recordGameEnd(this.score, this.wave, this.totalKills, playTimeSeconds);
+      
+      // Award XP and crystals based on performance
+      const xpEarned = Math.floor(this.score / 50) + (this.wave * 5);
+      const crystalsEarned = Math.floor(this.score / 500) + (this.wave > 5 ? 5 : 0);
+      authManager.addXP(xpEarned);
+      authManager.addCrystals(crystalsEarned);
+      
+      // Submit to leaderboard
+      leaderboardManager.submitScore(this.score, this.wave);
+      
+      // Auto-save cloud state
+      this.saveCloudState();
       
       this.onGameOver?.(this.score, this.wave, this.totalKills);
       return;
@@ -244,6 +274,7 @@ export class GameEngine {
     if (this.multiplierTimer > 0) this.multiplierTimer -= dt;
     if (this.rapidFireTimer > 0) this.rapidFireTimer -= dt;
     if (this.freezeTimer > 0) this.freezeTimer -= dt;
+    if (this.slowMoTimer > 0) this.slowMoTimer -= dt;
     
     this.waveManager.update(dt);
     
@@ -291,6 +322,9 @@ export class GameEngine {
       if (this.freezeTimer > 0) {
         vx *= 0.35;
         vy *= 0.35;
+      } else if (this.slowMoTimer > 0) {
+        vx *= GameConfig.powerups.slowMoFactor;
+        vy *= GameConfig.powerups.slowMoFactor;
       }
       
       if (bug.type === 'scout') {
@@ -348,6 +382,7 @@ export class GameEngine {
       const idx = this.bugs.indexOf(bug);
       if (idx > -1) {
         this.totalKills++;
+        statsManager.recordKill();
         achievementSystem.onKill();
         this.chainCombo++;
         
@@ -485,6 +520,7 @@ export class GameEngine {
   
   activatePowerup(type: string) {
     this.totalPowerupsCollected++;
+    statsManager.recordPowerupCollected();
     if (type === 'nuke') {
       soundManager.nuke();
       this.shake(1.5, 40); // Massive screen shake
@@ -516,7 +552,39 @@ export class GameEngine {
       } else if (type === 'freeze') {
         this.freezeTimer = GameConfig.powerups.freezeDuration;
         this.particleSystem.spawnShockwave(this.width / 2, this.height / 2, '#66ccff', 500);
+      } else if (type === 'slow_mo') {
+        this.slowMoTimer = GameConfig.powerups.slowMoDuration;
+        this.particleSystem.spawnShockwave(this.width / 2, this.height / 2, '#9966ff', 500);
       }
     }
+  }
+  
+  private saveCloudState(): void {
+    const profile = authManager.getProfile();
+    if (!profile) return;
+    
+    const gameState = {
+      score: this.score,
+      wave: this.wave,
+      health: this.health,
+      upgrades: {
+        health: Math.floor(this.maxHealth / 50 - 1),
+        radius: Math.floor(this.clickRadiusMultiplier * 10),
+        turret: this.autoTurretLevel,
+      },
+      unlocked_biomes: this.saveManager.getUnlockedBiomes(),
+      equipped_cosmetics: {
+        core: 'core_default',
+        bug: 'default',
+        trail: 'trail_default',
+        ui: 'ui_default',
+      },
+      prestige_level: this.saveManager.getPrestigeLevel(),
+      achievement_unlocks: [],
+      daily_challenge_date: new Date().toISOString().split('T')[0],
+      daily_challenge_completed: this.saveManager.getDailyChallengeCompleted() === new Date().toISOString().split('T')[0],
+    };
+    
+    cloudSaveManager.saveGame(gameState);
   }
 }

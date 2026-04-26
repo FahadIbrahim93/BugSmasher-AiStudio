@@ -135,6 +135,23 @@ export class SoundManager {
   scoreTick() {
     this.playTone(1200, 'sine', 0.03, 0.01);
   }
+
+  comboMilestone(combo: number) {
+    if (combo >= 10) {
+      this.playTone(600, 'sine', 0.15, 0.15, 1200);
+      setTimeout(() => this.playTone(800, 'sine', 0.15, 0.15, 1400), 100);
+      setTimeout(() => this.playTone(1000, 'sine', 0.3, 0.15, 1600), 200);
+    } else if (combo >= 5) {
+      this.playTone(500, 'sine', 0.1, 0.12, 900);
+      setTimeout(() => this.playTone(700, 'sine', 0.2, 0.12, 1100), 80);
+    }
+  }
+
+  waveComplete() {
+    this.playTone(300, 'sine', 0.2, 0.15, 600);
+    setTimeout(() => this.playTone(400, 'sine', 0.2, 0.15, 800), 150);
+    setTimeout(() => this.playTone(600, 'sine', 0.4, 0.15, 1000), 300);
+  }
 }
 
 export const soundManager = new SoundManager();

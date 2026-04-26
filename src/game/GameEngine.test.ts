@@ -1,6 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { GameEngine } from './GameEngine';
 import { GameConfig } from './GameConfig';
+import { statsManager } from './database/StatsManager';
+import { authManager } from './database/AuthManager';
+
+// Initialize database for tests
+authManager.signInAsGuest();
+statsManager.initialize();
 
 // Mock the sound manager to prevent AudioContext errors in jsdom
 vi.mock('./SoundManager', () => ({

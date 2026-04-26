@@ -1,21 +1,40 @@
-import { Bug } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { soundManager } from '../game/SoundManager';
 import { SettingsMenu } from './SettingsMenu';
 import { MatrixRain } from './MatrixRain';
+import { CustomBugLogo } from './CustomBugLogo';
+import { authManager } from '../game/database/AuthManager';
+import { AccountScreen } from './AccountScreen';
+import type { Profile } from '../game/database/types';
 
 export function MainMenu({ onStart }: { onStart: () => void }) {
   const [showSettings, setShowSettings] = useState(false);
+  const [showAccount, setShowAccount] = useState(false);
+  const [profile, setProfile] = useState<Profile | null>(null);
+
+  useEffect(() => {
+    const updateProfile = () => setProfile(authManager.getProfile());
+    updateProfile();
+    const unsub = authManager.subscribe(updateProfile);
+    return unsub;
+  }, []);
+
+  const handleStart = () => {
+    soundManager.init();
+    soundManager.uiClick();
+    onStart();
+  };
 
   return (
     <div className="flex flex-col items-center justify-center h-full bg-[#050505] relative p-4">
       <MatrixRain />
       {showSettings && <SettingsMenu onClose={() => setShowSettings(false)} />}
+      {showAccount && <AccountScreen onClose={() => setShowAccount(false)} />}
       <div className="z-10 flex flex-col items-center space-y-12 sm:space-y-16 w-full max-w-lg">
         <div className="text-center space-y-6">
-          <div className="flex items-center justify-center mb-6">
-            <Bug className="w-12 h-12 sm:w-16 sm:h-16 text-white opacity-80" />
-          </div>
+          <div className="flex items-center justify-center mb-6 mt-8 sm:mt-12">
+             <CustomBugLogo className="w-16 h-16 sm:w-24 sm:h-24" />
+           </div>
           <h1 className="text-4xl sm:text-6xl md:text-8xl font-black tracking-tighter text-white font-display">
             BUGSMASHER
           </h1>
@@ -27,7 +46,7 @@ export function MainMenu({ onStart }: { onStart: () => void }) {
         
         <div className="w-full flex justify-center mt-12">
           <button 
-            onClick={() => { soundManager.init(); soundManager.uiClick(); onStart(); }}
+            onClick={handleStart}
             onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
             aria-label="Start Game"
             className="group relative px-12 py-4 bg-white text-black hover:bg-zinc-200 rounded-full font-bold text-sm sm:text-base uppercase tracking-widest transition-all hover:scale-105 active:scale-95 flex items-center space-x-3 overflow-hidden"
@@ -43,6 +62,23 @@ export function MainMenu({ onStart }: { onStart: () => void }) {
           className="text-zinc-500 hover:text-white text-sm transition-colors"
         >
           Settings
+        </button>
+        
+        {/* Account Button */}
+        <button
+          onClick={() => { soundManager.uiClick(); setShowAccount(true); }}
+          className="absolute top-4 right-4 flex items-center gap-2 text-zinc-500 hover:text-white text-sm transition-colors"
+        >
+          {profile ? (
+            <>
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center text-xs font-bold">
+                {profile.username.charAt(0).toUpperCase()}
+              </div>
+              <span>{profile.username}</span>
+            </>
+          ) : (
+            <span>Account</span>
+          )}
         </button>
       </div>
     </div>

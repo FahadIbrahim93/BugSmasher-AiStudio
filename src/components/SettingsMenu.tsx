@@ -1,8 +1,15 @@
 import { useState, useEffect } from 'react';
-import { X, Volume2, VolumeX, Music, Music2, Trophy, Bug, Clock, Gamepad2, Award, Flame } from 'lucide-react';
+import { X, Volume2, VolumeX, Music, Music2, Trophy, Bug, Clock, Gamepad2, Award, Flame, ShoppingBag, Crown, Globe, Star, Users, Sparkles } from 'lucide-react';
 import { soundManager } from '../game/SoundManager';
 import { saveManager } from '../game/SaveManager';
 import { achievementSystem } from '../game/AchievementSystem';
+import { Store } from './Store';
+import { PremiumStore } from './PremiumStore';
+import { BiomeSelector } from './BiomeSelector';
+import { biomeManager } from '../game/BiomeManager';
+import { premiumManager } from '../game/PremiumManager';
+import { referralManager } from '../game/ReferralManager';
+import { ViralShareButton, CopyReferralLink, ReferralProgress } from './ViralShare';
 
 interface SettingsMenuProps {
   onClose: () => void;
@@ -12,6 +19,10 @@ export function SettingsMenu({ onClose }: SettingsMenuProps) {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [musicEnabled, setMusicEnabled] = useState(true);
   const [showAchievements, setShowAchievements] = useState(false);
+  const [showStore, setShowStore] = useState(false);
+  const [showPremium, setShowPremium] = useState(false);
+  const [showBiomes, setShowBiomes] = useState(false);
+  const [showReferral, setShowReferral] = useState(false);
 
   useEffect(() => {
     setSoundEnabled(saveManager.isSoundEnabled());
@@ -49,10 +60,17 @@ export function SettingsMenu({ onClose }: SettingsMenuProps) {
         {/* Header */}
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-black text-white tracking-tight">
-            {showAchievements ? 'ACHIEVEMENTS' : 'SETTINGS'}
+            {showAchievements ? 'ACHIEVEMENTS' : showReferral ? 'INVITE FRIENDS' : 'SETTINGS'}
           </h2>
           <button
-            onClick={() => showAchievements ? setShowAchievements(false) : onClose()}
+            onClick={() => {
+              if (showAchievements) setShowAchievements(false);
+              else if (showStore) setShowStore(false);
+              else if (showPremium) setShowPremium(false);
+              else if (showBiomes) setShowBiomes(false);
+              else if (showReferral) setShowReferral(false);
+              else onClose();
+            }}
             className="p-2 hover:bg-zinc-800 rounded-full transition-colors"
           >
             <X className="w-6 h-6 text-zinc-400" />
@@ -62,7 +80,6 @@ export function SettingsMenu({ onClose }: SettingsMenuProps) {
         {showAchievements ? (
           // Achievements Panel
           <div className="space-y-4">
-            {/* Progress Summary */}
             <div className="flex items-center justify-between bg-zinc-800/50 rounded-xl p-4">
               <div className="flex items-center space-x-3">
                 <Award className="w-6 h-6 text-yellow-500" />
@@ -191,12 +208,83 @@ export function SettingsMenu({ onClose }: SettingsMenuProps) {
                 {unlockedCount} / {totalCount} Achievements
               </span>
             </button>
+
+            {/* Shop Buttons */}
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => setShowBiomes(true)}
+                className="flex flex-col items-center justify-center p-3 bg-zinc-800/50 hover:bg-zinc-800 rounded-xl border border-white/10 transition-colors"
+              >
+                <Globe className="w-5 h-5 text-cyan-400" />
+                <span className="text-xs text-zinc-400 mt-1">Biomes</span>
+              </button>
+
+              <button
+                onClick={() => setShowStore(true)}
+                className="flex flex-col items-center justify-center p-3 bg-zinc-800/50 hover:bg-zinc-800 rounded-xl border border-white/10 transition-colors"
+              >
+                <ShoppingBag className="w-5 h-5 text-purple-400" />
+                <span className="text-xs text-zinc-400 mt-1">Store</span>
+              </button>
+
+              <button
+                onClick={() => setShowPremium(true)}
+                className="flex flex-col items-center justify-center p-3 bg-amber-500/10 hover:bg-amber-500/20 rounded-xl border border-amber-500/30 transition-colors"
+              >
+                <Crown className="w-5 h-5 text-amber-400" />
+                <span className="text-xs text-amber-400 mt-1">Premium</span>
+              </button>
+            </div>
+
+            {/* Referral Button */}
+            <button
+              onClick={() => setShowReferral(true)}
+              className="w-full flex items-center justify-center space-x-2 p-4 bg-blue-500/10 hover:bg-blue-500/20 rounded-xl border border-blue-500/30 transition-colors"
+            >
+              <Users className="w-5 h-5 text-blue-400" />
+              <span className="text-blue-400 font-medium">Invite Friends</span>
+            </button>
           </>
         )}
 
+        {showReferral && (
+          <div className="space-y-4">
+            <div className="text-center space-y-2">
+              <Users className="w-12 h-12 text-blue-400 mx-auto" />
+              <p className="text-sm text-zinc-400">Invite friends and earn rewards!</p>
+            </div>
+            
+            <CopyReferralLink />
+            
+<ViralShareButton score={saveManager.getHighScore()} wave={1} kills={saveManager.getTotalBugsSmashed()} />
+            
+            <ReferralProgress />
+          </div>
+        )}
+
         {/* Version */}
-        <p className="text-center text-xs text-zinc-600">Version 1.0.0 • BugSmasher by Fahad</p>
+        <p className="text-center text-xs text-zinc-600">Version 1.4.0 • BugSmasher by HopeTheory</p>
       </div>
+
+      {/* Overlays */}
+      {showStore && <Store onClose={() => setShowStore(false)} />}
+      {showPremium && <PremiumStore onClose={() => setShowPremium(false)} onPurchase={() => premiumManager.purchase()} />}
+      {showBiomes && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-zinc-900 rounded-2xl p-6 border border-zinc-800">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-black text-white">BIOMES</h2>
+              <button onClick={() => setShowBiomes(false)}>
+                <X className="w-6 h-6 text-zinc-400" />
+              </button>
+            </div>
+            <BiomeSelector 
+              currentBiomeId={biomeManager.getCurrentBiome().id} 
+              onSelectBiome={(id) => { biomeManager.setCurrentBiome(id); setShowBiomes(false); }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

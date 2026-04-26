@@ -36,15 +36,18 @@ export const GameConfig = {
     dropChance: 0.15,
     duration: 10, // shield/multiplier/rapid_fire
     freezeDuration: 8,
+    slowMoDuration: 12,
+    slowMoFactor: 0.4,
     life: 8, // time on ground
     spikeBurstTargets: 8,
     types: [
       { type: 'shield', color: '#00ccff', icon: 'S', collection: 'click', weight: 24 },
       { type: 'multiplier', color: '#ffffff', icon: '2X', collection: 'hover', weight: 20 },
       { type: 'rapid_fire', color: '#ffcc00', icon: 'RF', collection: 'hover', weight: 20 },
-      { type: 'freeze', color: '#66ccff', icon: 'FR', collection: 'hover', weight: 16 },
-      { type: 'spike_burst', color: '#ff00ff', icon: 'SB', collection: 'click', weight: 12 },
-      { type: 'nuke', color: '#ff3333', icon: 'X', collection: 'click', weight: 8 }
+      { type: 'slow_mo', color: '#9966ff', icon: 'SM', collection: 'hover', weight: 16 },
+      { type: 'freeze', color: '#66ccff', icon: 'FR', collection: 'hover', weight: 12 },
+      { type: 'spike_burst', color: '#ff00ff', icon: 'SB', collection: 'click', weight: 10 },
+      { type: 'nuke', color: '#ff3333', icon: 'X', collection: 'click', weight: 6 }
     ]
   },
   waves: {

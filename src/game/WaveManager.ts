@@ -1,5 +1,6 @@
 import { GameConfig } from './GameConfig';
 import { GameEngine, Bug } from './GameEngine';
+import { biomeManager } from './BiomeManager';
 
 export class WaveManager {
   engine: GameEngine;
@@ -34,6 +35,18 @@ export class WaveManager {
     } else if (this.engine.bugs.length === 0) {
       this.waveActive = false;
       const completedWave = this.engine.wave;
+      this.engine.saveManager.setHighestWave(completedWave);
+      
+      const newlyUnlocked = biomeManager.checkUnlocks(
+        completedWave,
+        this.engine.saveManager.getHighScore(),
+        this.engine.saveManager.getPrestigeLevel()
+      );
+      
+      for (const biomeId of newlyUnlocked) {
+        this.engine.saveManager.unlockBiome(biomeId);
+      }
+      
       this.engine.wave++;
       this.engine.stop();
       this.engine.onWaveComplete?.(completedWave);

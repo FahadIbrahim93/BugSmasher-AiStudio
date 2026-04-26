@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Skull, RotateCcw, Home, Trophy, Target, Layers, Share2 } from 'lucide-react';
+import { Skull, RotateCcw, Home, Trophy, Target, Layers, Share2, Star, Globe, Medal } from 'lucide-react';
 import { soundManager } from '../game/SoundManager';
 import { leaderboard } from '../game/Leaderboard';
+import { saveManager } from '../game/SaveManager';
+import { dailyChallengeManager } from '../game/DailyChallenge';
+import { cloudLeaderboard } from '../game/CloudLeaderboard';
 
 interface GameOverProps {
   score: number;
@@ -13,22 +16,35 @@ interface GameOverProps {
 
 export function GameOver({ score, waves, kills, onRetry, onMainMenu }: GameOverProps) {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [leaderboardTab, setLeaderboardTab] = useState<'local' | 'global'>('local');
   const [isNewHighScore, setIsNewHighScore] = useState(false);
+  const [globalRank, setGlobalRank] = useState(0);
   const [rank, setRank] = useState(0);
+  const [dailyChallengeComplete, setDailyChallengeComplete] = useState(false);
+  const [challengeBonus, setChallengeBonus] = useState(0);
 
   useEffect(() => {
     const isHigh = leaderboard.isHighScore(score);
     setIsNewHighScore(isHigh);
     setRank(leaderboard.getRank(score));
+    setGlobalRank(cloudLeaderboard.submitScore(score, waves, 'Player', 'neon_core'));
     
-    // Auto-add to leaderboard
     if (score > 0) {
       leaderboard.addEntry(score, waves, kills, 'Player');
+    }
+
+    const challenge = dailyChallengeManager.getTodayChallenge();
+    const completed = dailyChallengeManager.checkCompletion(challenge, score, kills, waves, 0, 0);
+    setDailyChallengeComplete(completed);
+    
+    if (completed && !saveManager.hasCompletedDailyChallenge()) {
+      saveManager.completeDailyChallenge();
+      setChallengeBonus(saveManager.getDailyChallengeBonus());
     }
   }, [score, waves, kills]);
 
   const handleShare = useCallback(async () => {
-    const text = `🎮 I scored ${score.toLocaleString()} points and reached Wave ${waves} in BugSmasher by Fahad!\n🐛 ${kills} bugs smashed\n#BugSmasher #HighScore`;
+    const text = `🎮 I scored ${score.toLocaleString()} points and reached Wave ${waves} in BugSmasher by HopeTheory!\n🐛 ${kills} bugs smashed\n#BugSmasher #HighScore`;
 
     // Try native share first
     try {
@@ -146,26 +162,89 @@ export function GameOver({ score, waves, kills, onRetry, onMainMenu }: GameOverP
         {/* Leaderboard Panel */}
         {showLeaderboard && (
           <div className="bg-zinc-900/80 backdrop-blur-sm rounded-xl p-4 border border-white/5">
-            <h3 className="text-xs text-zinc-500 uppercase tracking-widest font-mono mb-3">Top Scores</h3>
-            <div className="space-y-1">
-              {leaderboard.getEntries().map((entry, idx) => (
-                <div 
-                  key={idx} 
-                  className={`flex items-center justify-between p-2 rounded-lg ${entry.score === score ? 'bg-yellow-500/20 border border-yellow-500/30' : 'bg-black/20'}`}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setLeaderboardTab('local')}
+                  className={`px-3 py-1 rounded-full text-xs font-mono uppercase tracking-wider transition-colors ${
+                    leaderboardTab === 'local' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'
+                  }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className={`w-6 text-center font-mono text-sm ${idx === 0 ? 'text-yellow-400' : idx === 1 ? 'text-zinc-300' : idx === 2 ? 'text-amber-600' : 'text-zinc-600'}`}>
-                      #{idx + 1}
-                    </span>
-                    <span className="text-white text-sm font-mono">{entry.score.toLocaleString()}</span>
-                  </div>
-                  <div className="flex items-center gap-4 text-xs text-zinc-500">
-                    <span>W{entry.waves}</span>
-                    <span>{leaderboard.getFormattedDate(entry.date)}</span>
-                  </div>
+                  Local
+                </button>
+                <button
+                  onClick={() => setLeaderboardTab('global')}
+                  className={`px-3 py-1 rounded-full text-xs font-mono uppercase tracking-wider transition-colors flex items-center gap-1 ${
+                    leaderboardTab === 'global' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'
+                  }`}
+                >
+                  <Globe className="w-3 h-3" />
+                  Global
+                </button>
+              </div>
+              {leaderboardTab === 'global' && globalRank > 0 && (
+                <div className="flex items-center gap-1 text-xs text-zinc-500">
+                  <Medal className="w-3 h-3 text-amber-400" />
+                  #{globalRank}
                 </div>
-              ))}
+              )}
             </div>
+            
+            {leaderboardTab === 'local' ? (
+              <div className="space-y-1">
+                {leaderboard.getEntries().map((entry, idx) => (
+                  <div 
+                    key={idx} 
+                    className={`flex items-center justify-between p-2 rounded-lg ${entry.score === score ? 'bg-yellow-500/20 border border-yellow-500/30' : 'bg-black/20'}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={`w-6 text-center font-mono text-sm ${idx === 0 ? 'text-yellow-400' : idx === 1 ? 'text-zinc-300' : idx === 2 ? 'text-amber-600' : 'text-zinc-600'}`}>
+                        #{idx + 1}
+                      </span>
+                      <span className="text-white text-sm font-mono">{entry.score.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-zinc-500">
+                      <span>W{entry.waves}</span>
+                      <span>{leaderboard.getFormattedDate(entry.date)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {cloudLeaderboard.getWithLocalPlayer(score).slice(0, 10).map((entry) => (
+                  <div 
+                    key={entry.rank} 
+                    className={`flex items-center justify-between p-2 rounded-lg ${
+                      entry.isLocal ? 'bg-cyan-500/20 border border-cyan-500/30' : 'bg-black/20'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className={`w-6 text-center font-mono text-sm ${
+                        entry.rank === 1 ? 'text-yellow-400' : entry.rank === 2 ? 'text-zinc-300' : entry.rank === 3 ? 'text-amber-600' : 'text-zinc-600'
+                      }`}>
+                        #{entry.rank}
+                      </span>
+                      <span className={`text-sm font-mono ${entry.isLocal ? 'text-cyan-300' : 'text-white'}`}>
+                        {entry.name}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-zinc-500">
+                      <span>{entry.score.toLocaleString()}</span>
+                      <span>W{entry.wave}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {leaderboardTab === 'global' && (
+              <div className="mt-3 pt-3 border-t border-white/5 text-center">
+                <p className="text-xs text-zinc-500">
+                  {cloudLeaderboard.getPercentile(globalRank)} of all players
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
