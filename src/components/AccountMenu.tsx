@@ -101,7 +101,7 @@ export function AccountMenu({ onClose }: { onClose: () => void }) {
                     </div>
                     <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
                       <History className="w-4 h-4 text-purple-400 mb-2" />
-                      <p className="text[10px] font-mono text-zinc-500 uppercase tracking-widest">Active Session</p>
+                      <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Active Session</p>
                       <p className="text-sm font-bold text-white">ONLINE</p>
                     </div>
                   </div>

@@ -1,0 +1,311 @@
+import { useState, useEffect } from 'react'
+import { Hammer, BrainCircuit, Box, X, Wrench, Binary } from 'lucide-react'
+import { motion, AnimatePresence } from 'motion/react'
+import { progressionManager } from '@/lib/ProgressionManager'
+import type { ProgressionData } from '@/lib/ProgressionManager'
+import { RESOURCES, RECIPES, SKILLS, ResourceType } from '@/lib/ResourceTypes'
+
+interface ProgressionCenterProps {
+  onClose: () => void
+  onUseConsumable: (type: string) => void
+}
+
+export function ProgressionCenter({ onClose, onUseConsumable }: ProgressionCenterProps) {
+  const [activeTab, setActiveTab] = useState<'crafting' | 'skills' | 'inventory'>('crafting')
+  const [data, setData] = useState<ProgressionData>(progressionManager.getData())
+
+  useEffect(() => {
+    progressionManager.initCloudSync()
+    return progressionManager.subscribe(() => {
+      setData(progressionManager.getData())
+    })
+  }, [])
+
+  const handleCraft = (recipeId: string, ingredients: Partial<Record<ResourceType, number>>) => {
+    if (progressionManager.craftItem(recipeId, ingredients)) {
+      setData(progressionManager.getData())
+    }
+  }
+
+  const handleUpgradeSkill = (skillId: string) => {
+    if (progressionManager.upgradeSkill(skillId)) {
+      setData(progressionManager.getData())
+    }
+  }
+
+  return (
+    <div className="absolute inset-0 bg-[#050505]/98 z-[60] flex flex-col p-6 sm:p-10 text-white overflow-hidden">
+      <div className="max-w-6xl w-full mx-auto flex flex-col h-full">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-3xl font-black tracking-tighter uppercase flex items-center space-x-3">
+              <Binary className="text-blue-500 w-8 h-8" />
+              <span>Progression Hub</span>
+            </h2>
+            <p className="text-zinc-600 font-mono text-xs uppercase tracking-widest mt-1">Authorized Access Only</p>
+          </div>
+          <button onClick={onClose} className="p-3 hover:bg-white/10 rounded-full transition-colors">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="flex flex-wrap gap-4 mb-8 p-4 bg-white/5 rounded-2xl border border-white/5">
+          {(Object.entries(RESOURCES) as [ResourceType, (typeof RESOURCES)[ResourceType]][]).map(([id, res]) => (
+            <div key={id} className="flex items-center space-x-2 px-3 py-1 bg-black/40 rounded-lg border border-white/5">
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: res.color }} />
+              <span className="text-[10px] font-mono text-zinc-500 uppercase">{res.name}</span>
+              <span className="text-sm font-black font-mono">{data.inventory[id] || 0}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex space-x-2 mb-8 border-b border-white/10 pb-4">
+          <TabButton
+            active={activeTab === 'crafting'}
+            onClick={() => setActiveTab('crafting')}
+            icon={<Hammer className="w-4 h-4" />}
+            label="Assembly"
+          />
+          <TabButton
+            active={activeTab === 'skills'}
+            onClick={() => setActiveTab('skills')}
+            icon={<BrainCircuit className="w-4 h-4" />}
+            label="Neural Upgrades"
+          />
+          <TabButton
+            active={activeTab === 'inventory'}
+            onClick={() => setActiveTab('inventory')}
+            icon={<Box className="w-4 h-4" />}
+            label="Storage"
+          />
+        </div>
+
+        <div className="flex-grow overflow-y-auto pr-4">
+          <AnimatePresence mode="wait">
+            {activeTab === 'crafting' && (
+              <motion.div
+                key="crafting"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              >
+                {RECIPES.map(recipe => (
+                  <CraftCard
+                    key={recipe.id}
+                    recipe={recipe}
+                    inventory={data.inventory}
+                    count={data.consumables[recipe.id] || 0}
+                    onCraft={() => handleCraft(recipe.id, recipe.ingredients)}
+                  />
+                ))}
+              </motion.div>
+            )}
+
+            {activeTab === 'skills' && (
+              <motion.div
+                key="skills"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="grid grid-cols-1 md:grid-cols-2 gap-6"
+              >
+                {SKILLS.map(skill => (
+                  <SkillCard
+                    key={skill.id}
+                    skill={skill}
+                    inventory={data.inventory}
+                    level={data.skills[skill.id] || 0}
+                    onUpgrade={() => handleUpgradeSkill(skill.id)}
+                  />
+                ))}
+              </motion.div>
+            )}
+
+            {activeTab === 'inventory' && (
+              <motion.div
+                key="inventory"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-6"
+              >
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                  {(Object.entries(RESOURCES) as [ResourceType, (typeof RESOURCES)[ResourceType]][]).map(([id, res]) => (
+                    <div key={id} className="p-6 bg-white/5 rounded-3xl border border-white/5 flex flex-col items-center text-center">
+                      <div className="w-12 h-12 rounded-2xl mb-4 flex items-center justify-center border border-white/10">
+                        <div className="w-4 h-4 rounded-sm rotate-45" style={{ backgroundColor: res.color }} />
+                      </div>
+                      <h4 className="font-bold text-xs uppercase tracking-tighter mb-1">{res.name}</h4>
+                      <p className="text-[10px] text-zinc-500 font-mono mb-3">{res.rarity.toUpperCase()}</p>
+                      <p className="text-2xl font-black font-mono">{data.inventory[id] || 0}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="p-8 bg-white/5 rounded-3xl border border-white/5">
+                  <h3 className="text-xs font-mono text-zinc-500 uppercase tracking-widest mb-6">Consumables</h3>
+                  <div className="flex flex-wrap gap-4">
+                    {Object.entries(data.consumables).map(([id, count]) => {
+                      const recipe = RECIPES.find(r => r.id === id)
+                      if (!recipe) return null
+                      return (
+                        <div key={id} className="flex items-center space-x-4 px-6 py-4 bg-black/40 rounded-2xl border border-white/5">
+                          <div className="text-blue-400">
+                            <Wrench className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold uppercase tracking-wide">{recipe.name}</p>
+                            <p className="text-xl font-black font-mono">{count}</p>
+                          </div>
+                          {count > 0 && (
+                            <button
+                              onClick={() => onUseConsumable(id)}
+                              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all active:scale-95"
+                            >
+                              USE
+                            </button>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TabButton({ active, icon, label, onClick }: { active: boolean; icon: React.ReactNode; label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center space-x-3 px-6 py-3 rounded-xl transition-all ${
+        active
+          ? 'bg-white/10 text-white border border-white/10'
+          : 'text-zinc-500 hover:text-white hover:bg-white/5 border border-transparent'
+      }`}
+    >
+      {icon}
+      <span className="font-mono text-xs uppercase tracking-widest font-bold">{label}</span>
+    </button>
+  )
+}
+
+function CraftCard({
+  recipe,
+  inventory,
+  count,
+  onCraft,
+}: {
+  recipe: (typeof RECIPES)[0]
+  inventory: Partial<Record<ResourceType, number>>
+  count: number
+  onCraft: () => void
+}) {
+  const entries = Object.entries(recipe.ingredients) as [ResourceType, number][]
+  const canCraft = entries.every(([res, amount]) => (inventory[res] || 0) >= amount)
+  return (
+    <div className="p-6 bg-white/5 rounded-3xl border border-white/5 flex flex-col hover:border-white/20 transition-all group">
+      <div className="flex justify-between items-start mb-6">
+        <div className="p-4 bg-white/5 rounded-2xl border border-white/10 text-blue-400 group-hover:scale-110 transition-transform">
+          <Wrench className="w-6 h-6" />
+        </div>
+        <div className="text-right">
+          <p className="text-[10px] font-mono text-zinc-500 uppercase mb-1">In Stock</p>
+          <p className="text-lg font-black font-mono">{count}</p>
+        </div>
+      </div>
+      <h3 className="text-lg font-black tracking-tight mb-2">{recipe.name}</h3>
+      <p className="text-xs text-zinc-500 font-medium leading-relaxed mb-6">{recipe.description}</p>
+      <div className="space-y-3 mb-8">
+        <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">Requirements</p>
+        {entries.map(([res, amount]) => {
+          const resDef = RESOURCES[res]
+          const has = inventory[res] || 0
+          return (
+            <div key={res} className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: resDef.color }} />
+                <span className="text-[10px] font-mono text-zinc-400 uppercase">{resDef.name}</span>
+              </div>
+              <span className={`text-[10px] font-mono font-bold ${has >= amount ? 'text-zinc-400' : 'text-red-500'}`}>
+                {has}/{amount}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+      <button
+        onClick={onCraft}
+        disabled={!canCraft}
+        className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
+          canCraft
+            ? 'bg-blue-600 text-white hover:bg-blue-500 active:scale-95'
+            : 'bg-white/5 text-zinc-600 cursor-not-allowed border border-white/5'
+        }`}
+      >
+        Initiate Assembly
+      </button>
+    </div>
+  )
+}
+
+function SkillCard({
+  skill,
+  inventory,
+  level,
+  onUpgrade,
+}: {
+  skill: (typeof SKILLS)[0]
+  inventory: Partial<Record<ResourceType, number>>
+  level: number
+  onUpgrade: () => void
+}) {
+  const cost = skill.costPerLevel(level)
+  const costEntries = Object.entries(cost) as [ResourceType, number][]
+  const canUpgrade = costEntries.every(([res, amount]) => (inventory[res] || 0) >= amount) && level < skill.maxLevel
+  return (
+    <div className="p-8 bg-white/5 rounded-3xl border border-white/5 flex flex-col hover:border-white/20 transition-all group">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-xl font-black tracking-tighter">{skill.name}</h3>
+        <div className="px-3 py-1 bg-white/5 rounded-lg border border-white/10 text-[10px] font-mono font-black text-blue-400 uppercase">
+          RANK {level} / {skill.maxLevel}
+        </div>
+      </div>
+      <p className="text-sm text-zinc-400 mb-8">{skill.description}</p>
+      <div className="bg-black/40 p-6 rounded-2xl border border-white/5 mb-8">
+        <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest mb-4">Upgrade Path Cost</p>
+        <div className="grid grid-cols-2 gap-4">
+          {costEntries.map(([res, amount]) => {
+            const resDef = RESOURCES[res]
+            const has = inventory[res] || 0
+            return (
+              <div key={res} className="flex flex-col space-y-1">
+                <span className="text-[9px] font-mono text-zinc-500 uppercase">{resDef.name}</span>
+                <span className={`text-xs font-mono font-black ${has >= amount ? 'text-white' : 'text-red-500'}`}>
+                  {has} / {amount}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+      <button
+        onClick={onUpgrade}
+        disabled={!canUpgrade}
+        className={`w-full py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
+          canUpgrade
+            ? 'bg-white text-black hover:bg-zinc-200 active:scale-95'
+            : 'bg-white/5 text-zinc-600 cursor-not-allowed border border-white/5'
+        }`}
+      >
+        {level >= skill.maxLevel ? 'MAX RANK' : 'Engage Neural Link'}
+      </button>
+    </div>
+  )
+}

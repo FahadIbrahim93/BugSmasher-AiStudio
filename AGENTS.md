@@ -1,6 +1,7 @@
 # BugSmasher Next-Gen — Agent Guide
 
 ## Stack
+
 - Vite + React 19 + TypeScript 5.8 (strict)
 - Tailwind CSS v4, Canvas-based game rendering (no React DOM for game objects)
 - Procedural Web Audio API (zero external audio assets)
@@ -9,6 +10,7 @@
 ## Architecture
 
 ### Source Layout
+
 ```
 src/
   core/GameEngine.ts       — 614-line 60fps game loop: dash, resources, boss variants, hazards
@@ -35,6 +37,7 @@ src/
 ```
 
 ## Key Features Ported from GitHub
+
 - **Dash mechanics**: coreX/coreY movement with cooldown/duration/distance, push/damage bugs, trail particles
 - **Resource system**: scrap/plasma/alloy/flux/neural_core drops from bugs, magnet pull, auto-collect
 - **Boss variants**: Arachne (web hazards), Mandible (armor cycle), Moth (control distortion)
@@ -44,11 +47,13 @@ src/
 - **Progression**: Consumable support (repair_kit, emp_generator, overdrive_chip)
 
 ### State Management
+
 - **No Zustand/Redux** — game state flows through `GameEngine.state` → `onStateChange` callback → React `useState`
 - Phase-based UI: `menu → playing → paused → upgrade → story → gameOver`
 - Persistent state: `localStorage` via `SaveManager`, `UpgradeSystem`, `AchievementSystem` singletons
 
 ### Key Conventions
+
 - **No comments** in production code
 - `no-unused-vars` as error (prefix with `_` to suppress)
 - No `any` casts in production code (tolerated in test files with eslint-disable)
@@ -57,6 +62,7 @@ src/
 - Barrel exports: `@/lib`, `@/components`, `@/managers`
 
 ### Testing
+
 - `vitest` with `jsdom` for Canvas tests
 - `npm test` — vitest run
 - `npm run typecheck` — tsc --noEmit
@@ -65,6 +71,7 @@ src/
 - Each module's edge cases in separate `.edge.test.ts` file
 
 ### Available Scripts
+
 - `npm run dev` — dev server on port 3001
 - `npm run build` — production build + PWA generation
 - `npm test` — run tests
@@ -73,6 +80,7 @@ src/
 - `npm run format` — Prettier
 
 ## Critical Rules
+
 1. Never import from a path that doesn't exist (use barrel exports)
 2. Never add external dependencies without checking package.json
 3. Never add code comments to production files

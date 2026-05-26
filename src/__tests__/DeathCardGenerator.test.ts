@@ -5,25 +5,44 @@ import { generateDeathCardBlob, generateDeathCardDataUrl } from '../lib/DeathCar
 beforeAll(() => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ctx: Record<string, any> = {
-    _fillStyle: '', _font: '', _textAlign: '', _globalAlpha: 1,
+    _fillStyle: '',
+    _font: '',
+    _textAlign: '',
+    _globalAlpha: 1,
     _operations: [] as string[],
-    get fillStyle() { return this._fillStyle },
-    set fillStyle(v: string) { this._fillStyle = v },
-    get font() { return this._font },
-    set font(v: string) { this._font = v },
-    get textAlign() { return this._textAlign },
-    set textAlign(v: string) { this._textAlign = v },
-    get globalAlpha() { return this._globalAlpha },
-    set globalAlpha(v: number) { this._globalAlpha = v },
+    get fillStyle() {
+      return this._fillStyle
+    },
+    set fillStyle(v: string) {
+      this._fillStyle = v
+    },
+    get font() {
+      return this._font
+    },
+    set font(v: string) {
+      this._font = v
+    },
+    get textAlign() {
+      return this._textAlign
+    },
+    set textAlign(v: string) {
+      this._textAlign = v
+    },
+    get globalAlpha() {
+      return this._globalAlpha
+    },
+    set globalAlpha(v: number) {
+      this._globalAlpha = v
+    },
     fillRect: () => {},
     fillText: () => {},
   }
 
-  HTMLCanvasElement.prototype.getContext = function() {
+  HTMLCanvasElement.prototype.getContext = function () {
     return ctx as unknown as CanvasRenderingContext2D
   } as unknown as typeof HTMLCanvasElement.prototype.getContext
 
-  HTMLCanvasElement.prototype.toBlob = function(cb: BlobCallback) {
+  HTMLCanvasElement.prototype.toBlob = function (cb: BlobCallback) {
     const blob = new Blob(['fake-png-data'], { type: 'image/png' })
     cb(blob)
   } as unknown as typeof HTMLCanvasElement.prototype.toBlob

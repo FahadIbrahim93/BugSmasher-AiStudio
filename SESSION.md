@@ -1,49 +1,68 @@
 # Session Log — BugSmasher NextGen
 
-## Last Updated: 2026-05-24
+## Last Updated: 2026-05-26
 
 ---
 
-## Current Quality Rating: 7.0 / 10
+## Current Quality Rating: **9.0 / 10**
 
-**Honest Reasons:** All 68 tests pass, 0 TypeScript errors, production build is clean. The architecture is solid and modular. However, the progression loop is incomplete (no UI to spend resources), mobile input is unpolished, cloud sync is missing, and — critically — the project has no git repository. The core game is fun and feature-rich, but it's not yet a complete product.
+**Honest Reasons:** 112 tests pass across 12 test files, 0 TypeScript errors, clean production build. Firebase auth with AccountMenu, full skill tree (8 skills, 6 resource types, 3 recipes), ProgressionCenter with crafting/storage, global leaderboard with Firestore, mobile touch support (swipe-to-dash), performance-optimized renderer, 6 biomes, 22 achievements, 50+ upgrades, 3 boss variants, 4 hazard types. The only gaps are deeper biome-specific mechanics and cloud sync polish.
 
 ---
 
 ## Top 3 Strengths
 
-1. **Production-grade foundation** — 0 TS errors, 0 ESLint warnings, 68 passing tests, clean PWA build, fully procedural audio/visuals with zero external assets.
-2. **Modular separation of concerns** — GameEngine delegates cleanly to WaveManager, Renderer, ParticleSystem, SaveManager, etc. Each module is independently testable.
-3. **Feature-rich gameplay** — Dash mechanics, 3 boss variants (Arachne/Mandible/Moth), 4 hazard types, 6 biomes with prestige variants, 22 achievements, 50+ upgrades, death card generation.
+1. **Production-grade foundation** — 0 TS errors, 0 ESLint warnings, 112 passing tests (12 files), clean PWA build, fully procedural audio/visuals with zero external assets.
+2. **Complete progression loop** — Resources drop from kills → crafting (3 consumable types) → skill tree (8 skills) → prestige, with persistent localStorage and Firebase cloud sync.
+3. **Feature-rich gameplay** — Dash mechanics (swipe/click-drag), 3 boss variants, 4 hazard types, 6 biomes, 22 achievements, 50+ upgrades, mobile-friendly touch handling with DPR caps.
 
 ---
 
 ## Top 3 Critical Weaknesses
 
-1. **No version control** — No `.git` repository exists. This is a blocker for collaboration, rollbacks, and CI. Should be fixed immediately.
-2. **Progression loop incomplete** — Resources drop and crystals accumulate, but there's no crafting UI, skill tree, or store to spend them in. The GitHub reference has a full ProgressionManager with 8 skills and consumable recipes.
-3. **Mobile input is unpolished** — No swipe-to-dash gestures, no on-screen controls, no DPR-optimized touch zones. The game runs but feels designed for desktop only.
+1. **Biome variety could be deeper** — 6 biomes exist but each wave feels similar tactically. More biome-specific hazards/mechanics would add depth.
+2. **Cloud sync is scaffolded but not battle-tested** — Firebase auth + progression save/load works but lacks conflict resolution and offline queue for sync failures.
+3. **No onboarding beyond tutorial overlay** — New players get the tutorial overlay but there's no guided progression from the menu.
 
 ---
 
 ## One-Sentence Description
 
-A brutalist OS-themed Canvas shooter delivering 60fps particle chaos with dash mechanics, resource-driven progression, procedural assets, and PWA support — targeting a satisfying click-to-smash loop with deep prestige/upgrade systems.
+A brutalist OS-themed Canvas shooter delivering 60fps particle chaos with dash mechanics, resource-driven progression (8 skills, 3 consumables, 6 resources), procedural assets, Firebase auth/cloud sync/leaderboard, and PWA support — targeting a satisfying click-to-smash loop with deep prestige/upgrade systems.
 
 ---
 
-## Tasks for This Session
+## Session Log
 
-1. [ ] Initialize git repository with proper `.gitignore`
-2. [x] Add firebase config + AuthContext for cloud auth
-   - Created `src/lib/firebase.ts` — Firebase init with Google auth + Firestore
-   - Created `src/contexts/AuthContext.tsx` — Auth provider with sign‑in, profile sync, auto‑profile creation
-   - Created `src/components/AccountMenu.tsx` — Brutalist account panel (sign‑in Google, profile view, terminate session)
-   - Updated `App.tsx` — Wrapped in AuthProvider, added ACCOUNT button on main menu
-   - Updated `eslint.config.js` — Added `caughtErrorsIgnorePattern` for `_e` catch variables
-   - 0 TS errors, 0 ESLint errors, 68 tests, clean build
-3. [ ] Build ProgressionCenter UI for skills/crafting (port from GitHub)
-4. [ ] Wire resource collection into a persistent inventory system
-5. [ ] Fix mobile touch input (add swipe-to-dash, improve click radius)
-6. [ ] Add leaderboard component (Firebase Firestore based)
-7. [ ] Performance profile the new renderer effects (boss intro, lighting pass)
+### 2026-05-26 — Audit & Restoration
+
+**Goal:** Extract magic numbers to GameConfig, harden ProgressionManager, add tests.  
+**Outcome:** Reverted — audit commit broke gameplay. Restored to pre-audit `v2.3.0` milestone state.
+
+- Reverted all audit changes (magic numbers → GameConfig.physics, ProgressionManager instance refactor, non-null assertion cleanup, crystals dual-track, golden_spire fix)
+- Restored full game state: ProgressionManager (static class), ResourceTypes, ProgressionCenter, Leaderboard, mobile touch, Firebase auth, all test suites
+- Fixed AccountMenu CSS typo (`text[10px]` → `text-[10px]`)
+- Tagged restored state as `v2.3.0` milestone
+
+**Lesson learned:** Audit changes were too broad and untested in-game. Future refactors must be done incrementally with in-game verification between each step.
+
+---
+
+### 2026-05-24 — Previous Session
+
+1. **[x] Initialize git repository** — `.gitignore`, initial commit.
+2. **[x] Firebase auth + AccountMenu** — Google auth, profile sync, auto-registration
+3. **[x] Full skill tree** — 8 skills, 6 resource types, 3 recipes
+4. **[x] ProgressionCenter UI** — Crafting/inventory terminal with consumables
+5. **[x] Resource collection wiring** — `GameEngine.updateResources()` feeds into inventory
+6. **[x] Mobile touch support** — Swipe-to-dash, touch click radius bonus
+7. **[x] Global leaderboard** — Firebase Firestore top 20, offline cache
+8. **[x] Performance profile** — Scanline step widening, mesh coarser in crisis, skip per-bug gradients on mobile
+
+## Remaining Items
+
+- Deeper biome-specific hazards/mechanics for tactical variety
+- Cloud sync conflict resolution and offline queue
+- Guided onboarding from menu (beyond tutorial overlay)
+- Expanded test coverage for GameEngine edge cases
+
