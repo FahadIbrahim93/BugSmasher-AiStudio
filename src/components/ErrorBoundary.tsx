@@ -1,36 +1,52 @@
-import React from 'react'
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 
-interface State { hasError: boolean; error: Error | null }
+interface Props {
+  children: ReactNode;
+}
 
-export class ErrorBoundary extends React.Component<{ children: React.ReactNode }, State> {
-  state: State = { hasError: false, error: null }
+interface State {
+  hasError: boolean;
+  error: Error | null;
+}
 
-  static getDerivedStateFromError(error: Error): State { return { hasError: true, error } }
+export class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: null
+    };
+  }
 
-  handleReset = () => { this.setState({ hasError: false, error: null }); window.location.reload() }
+  public static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
+  }
 
-  render() {
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Uncaught error:', error, errorInfo);
+  }
+
+  public render() {
     if (this.state.hasError) {
       return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black z-50">
-          <div className="flex flex-col items-center max-w-md w-full p-10 space-y-6 text-center">
-            <div className="text-2xl font-mono text-red-400/80 tracking-[0.3em]">SYSTEM CRASH</div>
-            <div className="border border-red-900/30 w-full p-4 bg-red-950/20">
-              <div className="text-[10px] text-red-400/40 font-mono tracking-wider mb-2">FATAL ERROR</div>
-              <div className="text-xs text-red-300/60 font-mono break-all">
-                {this.state.error?.message ?? 'Unknown error'}
-              </div>
-            </div>
-            <button
-              onClick={this.handleReset}
-              className="w-full py-4 border border-red-900/40 hover:border-red-500/60 text-red-400/70 hover:text-red-300 font-mono text-sm tracking-[0.3em] transition-all"
-            >
-              REBOOT SYSTEM
-            </button>
+        <div className="flex flex-col items-center justify-center h-full bg-zinc-950 text-white p-8">
+          <h1 className="text-4xl font-bold text-red-500 mb-4">System Failure</h1>
+          <p className="text-zinc-400 mb-8 text-center max-w-md">
+            The core encountered a critical error. Please reload the simulation.
+          </p>
+          <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800 w-full max-w-2xl overflow-auto text-sm font-mono text-red-400">
+            {this.state.error?.message}
           </div>
+          <button
+            className="mt-8 px-6 py-3 bg-white text-black font-bold rounded-lg hover:bg-zinc-200"
+            onClick={() => window.location.reload()}
+          >
+            Reboot System
+          </button>
         </div>
-      )
+      );
     }
-    return this.props.children
+
+    return this.props.children;
   }
 }

@@ -1,94 +1,130 @@
-import React, { useState, useEffect } from 'react'
-import { GameEngine } from '@/core/GameEngine'
+import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { GameEngine } from '../game/GameEngine';
+import { MousePointer2, Zap, ShieldAlert } from 'lucide-react';
+import { soundManager } from '../game/SoundManager';
 
-const TUTORIAL_KEY = 'bugsmasher_tutorial_complete'
-
-interface TutorialStep {
-  title: string
-  body: string
-  highlight: string
-  condition: (_engine: GameEngine) => boolean
-}
-
-const STEPS: TutorialStep[] = [
-  {
-    title: 'SMASH BUGS',
-    body: 'Click on the glowing bugs to smash them before they reach your core. Each kill earns you points and crystals.',
-    highlight: 'Click any bug to destroy it',
-    condition: (e) => e.bugsKilledThisRun >= 3,
-  },
-  {
-    title: 'COLLECT POWERUPS',
-    body: 'Destroyed bugs sometimes drop powerups. Click them to activate temporary bonuses like shields, nukes, and multipliers.',
-    highlight: 'Click powerups to collect them',
-    condition: (e) => e.powerups.length === 0 && e.bugsKilledThisRun >= 5,
-  },
-  {
-    title: 'SURVIVE & UPGRADE',
-    body: 'After each wave, you can spend crystals on permanent upgrades. Survive as long as you can and climb the leaderboard.',
-    highlight: 'Complete wave 1 to unlock upgrades',
-    condition: (e) => e.state.wave >= 2,
-  },
-]
-
-interface TutorialOverlayProps {
-  engine: GameEngine
-  onComplete: () => void
-}
-
-export const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ engine, onComplete }) => {
-  const [step, setStep] = useState(0)
-  const [dismissed, setDismissed] = useState(false)
+export function TutorialOverlay({ engineRef }: { engineRef: React.RefObject<GameEngine | null> }) {
+  const [step, setStep] = useState(0);
+  const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
-    if (localStorage.getItem(TUTORIAL_KEY)) return
-    const check = setInterval(() => {
-      if (step < STEPS.length && STEPS[step].condition(engine)) {
-        if (step === STEPS.length - 1) {
-          clearInterval(check)
-          localStorage.setItem(TUTORIAL_KEY, 'true')
-          onComplete()
-        } else {
-          setStep(s => s + 1)
+    // If tutorial was previously completed, don't show it.
+    if (localStorage.getItem('bugsmasher_tutorial') === 'true') {
+      setIsVisible(false);
+      return;
+    }
+
+    let animationFrameId: number;
+    let forcedPowerup = false;
+
+    const checkTutorialState = () => {
+      const engine = engineRef.current;
+      if (engine) {
+        if (step === 0) {
+          // Progress when player gets their first kill
+          if (engine.totalKills >= 1) {
+            soundManager.uiClick();
+            setStep(1);
+          }
+        } else if (step === 1) {
+          // Force a powerup drop on the first kill after advancing to step 1
+          if (engine.powerups.length === 0 && engine.totalPowerupsCollected === 0 && !forcedPowerup && engine.bugs.length > 0) {
+             engine.forceNextPowerup = true;
+             forcedPowerup = true;
+          }
+
+          // Progress when player collects their first powerup
+          if (engine.totalPowerupsCollected >= 1) {
+            soundManager.uiClick();
+            setStep(2);
+          }
         }
       }
-    }, 500)
-    return () => clearInterval(check)
-  }, [step, engine, onComplete])
+      if (isVisible) {
+        animationFrameId = requestAnimationFrame(checkTutorialState);
+      }
+    };
 
-  const handleSkip = () => {
-    localStorage.setItem(TUTORIAL_KEY, 'true')
-    setDismissed(true)
-    onComplete()
-  }
+    if (isVisible) {
+      animationFrameId = requestAnimationFrame(checkTutorialState);
+    }
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [engineRef, step, isVisible]);
 
-  if (dismissed || localStorage.getItem(TUTORIAL_KEY)) return null
+  if (!isVisible) return null;
 
-  const current = STEPS[step]
-  if (!current) return null
+  const dismiss = () => {
+    soundManager.uiClick();
+    localStorage.setItem('bugsmasher_tutorial', 'true');
+    setIsVisible(false);
+  };
 
   return (
-    <div className="absolute inset-0 z-30 pointer-events-none">
-      <div className="absolute bottom-32 left-1/2 -translate-x-1/2 pointer-events-auto max-w-md w-full p-4">
-        <div className="bg-black/80 backdrop-blur-md border border-white/10 p-6">
-          <div className="text-[10px] text-cyan-400/60 font-mono tracking-[0.3em] mb-2">
-            TUTORIAL {step + 1}/{STEPS.length}
-          </div>
-          <div className="text-sm font-mono text-white/80 mb-3">{current.title}</div>
-          <p className="text-xs font-mono text-white/50 leading-relaxed mb-4">{current.body}</p>
-          <div className="text-[10px] font-mono text-white/30 italic">{current.highlight}</div>
-          <button
-            onClick={handleSkip}
-            className="mt-4 text-[10px] font-mono text-white/20 hover:text-white/40 transition-colors tracking-wider"
+    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 pointer-events-none w-[90%] max-w-md">
+      <AnimatePresence mode="wait">
+        {step === 0 && (
+          <motion.div 
+            key="step1"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-black/60 backdrop-blur-xl border border-white/20 p-5 rounded-2xl flex items-center space-x-4 shadow-[0_0_30px_rgba(0,0,0,0.8)]"
           >
-            SKIP TUTORIAL
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
+            <div className="w-10 h-10 min-w-10 rounded-full border border-white/20 flex items-center justify-center animate-pulse bg-white/5">
+              <MousePointer2 className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest mb-1">System Directive</p>
+              <p className="text-white font-mono text-sm leading-snug">Tap or click hostile anomalies to eliminate them.</p>
+            </div>
+          </motion.div>
+        )}
+        
+        {step === 1 && (
+          <motion.div 
+            key="step2"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-black/60 backdrop-blur-xl border border-white/20 p-5 rounded-2xl flex items-center space-x-4 shadow-[0_0_30px_rgba(0,0,0,0.8)]"
+          >
+            <div className="w-10 h-10 min-w-10 rounded-full border border-cyan-400/50 flex items-center justify-center animate-pulse bg-cyan-400/10">
+              <Zap className="w-5 h-5 text-cyan-400" />
+            </div>
+            <div>
+              <p className="text-cyan-500 font-mono text-xs uppercase tracking-widest mb-1">Payload Dropped</p>
+              <p className="text-white font-mono text-sm leading-snug">Collect data cores by hovering or clicking them.</p>
+            </div>
+          </motion.div>
+        )}
 
-export function isTutorialComplete(): boolean {
-  return !!localStorage.getItem(TUTORIAL_KEY)
+        {step === 2 && (
+          <motion.div 
+            key="step3"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-black/60 backdrop-blur-xl border border-white/20 p-5 rounded-2xl flex flex-col sm:flex-row items-center sm:space-x-4 shadow-[0_0_30px_rgba(0,0,0,0.8)] pointer-events-auto space-y-4 sm:space-y-0"
+          >
+            <div className="flex items-center space-x-4 flex-grow">
+              <div className="w-10 h-10 min-w-10 rounded-full border border-pink-500/50 flex items-center justify-center bg-pink-500/10">
+                <ShieldAlert className="w-5 h-5 text-pink-500" />
+              </div>
+              <div>
+                <p className="text-pink-500 font-mono text-xs uppercase tracking-widest mb-1">Armory Access</p>
+                <p className="text-white font-mono text-sm leading-snug">Survive the wave to access and install upgrades.</p>
+              </div>
+            </div>
+            <button 
+              onClick={dismiss}
+              className="w-full sm:w-auto px-6 py-3 bg-white text-black font-bold font-mono text-xs rounded-full uppercase tracking-widest hover:bg-zinc-200 transition-colors flex-shrink-0"
+            >
+              Acknowledge
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }

@@ -1,121 +1,207 @@
-import React, { useState } from 'react'
-import { saveManager } from '@/lib'
-import { achievementSystem } from '@/lib/AchievementSystem'
+import { motion } from 'motion/react';
+import { Volume2, VolumeX, Settings2, ArrowLeft, MousePointer2, Monitor } from 'lucide-react';
+import { soundManager } from '../game/SoundManager';
+import { useState } from 'react';
 
-interface SettingsMenuProps {
-  onClose: () => void
-}
+export function SettingsMenu({ onBack }: { onBack: () => void }) {
+  const [masterVol, setMasterVol] = useState(soundManager.masterVolume);
+  const [sfxVol, setSfxVol] = useState(soundManager.sfxVolume);
+  const [musicVol, setMusicVol] = useState(soundManager.musicVolume);
+  const [isMuted, setIsMuted] = useState(soundManager.isMuted);
 
-export const SettingsMenu: React.FC<SettingsMenuProps> = ({ onClose }) => {
-  const [soundEnabled, setSoundEnabled] = useState(saveManager.isSoundEnabled())
-  const [musicEnabled, setMusicEnabled] = useState(saveManager.isMusicEnabled())
-  const [tab, setTab] = useState<'settings' | 'stats' | 'achievements'>('settings')
+  const handleMasterVolume = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseFloat(e.target.value);
+    soundManager.setMasterVolume(val);
+    setMasterVol(val);
+  };
 
-  const toggleSound = () => { const v = !soundEnabled; setSoundEnabled(v); saveManager.setSoundEnabled(v) }
-  const toggleMusic = () => { const v = !musicEnabled; setMusicEnabled(v); saveManager.setMusicEnabled(v) }
+  const handleSfxVolume = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseFloat(e.target.value);
+    soundManager.setSfxVolume(val);
+    setSfxVol(val);
+  };
 
-  const h = Math.floor(saveManager.getTotalPlayTime() / 3600)
-  const m = Math.floor((saveManager.getTotalPlayTime() % 3600) / 60)
+  const handleMusicVolume = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseFloat(e.target.value);
+    soundManager.setMusicVolume(val);
+    setMusicVol(val);
+  };
+
+  const toggleMute = () => {
+    const muted = soundManager.toggleMute();
+    setIsMuted(muted);
+  };
+
+  const [showPerformance, setShowPerformance] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('nexus_show_perf_stats') === 'true';
+    }
+    return false;
+  });
+
+  const [highFidelityVFX, setHighFidelityVFX] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('nexus_high_fidelity_vfx');
+      if (saved !== null) {
+        return saved === 'true';
+      }
+      // Detect mobile device
+      const isMobileDevice = (window.innerWidth < 768) || 
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+        (navigator.maxTouchPoints > 0) ||
+        ('ontouchstart' in window);
+      return !isMobileDevice; // default off on mobile, on on desktop
+    }
+    return true;
+  });
+
+  const toggleVFX = () => {
+    const newValue = !highFidelityVFX;
+    setHighFidelityVFX(newValue);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('nexus_high_fidelity_vfx', newValue ? 'true' : 'false');
+      window.dispatchEvent(new CustomEvent('nexus_vfx_settings_changed', { detail: newValue }));
+    }
+  };
+
+  const togglePerformanceStats = () => {
+    const newValue = !showPerformance;
+    setShowPerformance(newValue);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('nexus_show_perf_stats', newValue ? 'true' : 'false');
+      window.dispatchEvent(new CustomEvent('nexus_perf_stats_changed', { detail: newValue }));
+    }
+  };
 
   return (
-    <div className="flex flex-col items-center max-w-lg w-full p-8 space-y-6">
-      <div className="text-center border-b border-white/10 pb-4 w-full">
-        <div className="text-xs text-white/30 font-mono tracking-[0.3em]">SETTINGS</div>
-      </div>
+    <div className="absolute inset-0 bg-black/80 backdrop-blur-2xl flex flex-col items-center justify-center z-[60] p-4">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-2xl w-full bg-zinc-900/50 border border-white/10 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden"
+      >
+        <button 
+          onClick={() => { soundManager.uiClick(); onBack(); }}
+          className="absolute top-8 left-8 p-2 rounded-full border border-white/10 hover:bg-white/5 transition-colors text-zinc-400 hover:text-white"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
 
-      <div className="flex w-full border border-white/10">
-        {(['settings', 'stats', 'achievements'] as const).map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`flex-1 py-3 text-[10px] font-mono tracking-widest transition-all ${
-              tab === t ? 'bg-white/5 text-white/60 border-b border-white/30' : 'text-white/20 hover:text-white/40'
-            }`}
-          >
-            {t.toUpperCase()}
-          </button>
-        ))}
-      </div>
-
-      {tab === 'settings' && (
-        <div className="w-full space-y-4">
-          <div className="flex items-center justify-between p-3 border border-white/10">
-            <span className="text-xs font-mono text-white/60">Sound Effects</span>
-            <button
-              onClick={toggleSound}
-              className={`px-4 py-1.5 text-[10px] font-mono tracking-widest border transition-all ${
-                soundEnabled ? 'border-white/30 text-white/60' : 'border-white/10 text-white/20'
-              }`}
-            >
-              {soundEnabled ? 'ON' : 'OFF'}
-            </button>
+        <div className="flex flex-col items-center mb-12">
+          <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-4">
+            <Settings2 className="w-8 h-8 text-white" />
           </div>
-          <div className="flex items-center justify-between p-3 border border-white/10">
-            <span className="text-xs font-mono text-white/60">Music</span>
-            <button
-              onClick={toggleMusic}
-              className={`px-4 py-1.5 text-[10px] font-mono tracking-widest border transition-all ${
-                musicEnabled ? 'border-white/30 text-white/60' : 'border-white/10 text-white/20'
-              }`}
-            >
-              {musicEnabled ? 'ON' : 'OFF'}
-            </button>
-          </div>
-          <div className="flex items-center justify-between p-3 border border-white/10">
-            <span className="text-xs font-mono text-white/60">Performance Mode</span>
-            <span className="text-[10px] font-mono text-white/30">Auto</span>
-          </div>
+          <h2 className="text-3xl font-black text-white uppercase tracking-[0.2em] font-display">System Settings</h2>
         </div>
-      )}
 
-      {tab === 'stats' && (
-        <div className="w-full space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { label: 'HIGH SCORE', value: saveManager.getHighScore().toLocaleString() },
-              { label: 'GAMES PLAYED', value: String(saveManager.getGamesPlayed()) },
-              { label: 'TOTAL KILLS', value: saveManager.getTotalBugsKilled().toLocaleString() },
-              { label: 'HIGHEST WAVE', value: String(saveManager.getHighestWave()) },
-              { label: 'CRYSTALS EARNED', value: saveManager.getTotalCrystalsEarned().toLocaleString() },
-              { label: 'TOTAL PLAY TIME', value: `${h}h ${m}m` },
-            ].map(s => (
-              <div key={s.label} className="p-3 border border-white/10 text-center">
-                <div className="text-[9px] font-mono text-white/30 tracking-wider">{s.label}</div>
-                <div className="text-sm font-mono text-white/70 mt-1">{s.value}</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          {/* Audio Section */}
+          <section className="space-y-8">
+            <div className="flex items-center space-x-3 text-zinc-500 font-mono text-xs uppercase tracking-widest border-b border-white/5 pb-2">
+              <Volume2 className="w-4 h-4" />
+              <span>Audio Modules</span>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <div className="flex justify-between items-end">
+                  <label className="text-white font-mono text-xs uppercase tracking-widest">Master Gain</label>
+                  <button onClick={toggleMute} className="text-zinc-500 hover:text-white transition-colors">
+                    {isMuted ? <VolumeX className="w-4 h-4 text-red-500" /> : <Volume2 className="w-4 h-4" />}
+                  </button>
+                </div>
+                <input 
+                  type="range" min="0" max="1" step="0.01" 
+                  value={isMuted ? 0 : masterVol} 
+                  onChange={handleMasterVolume}
+                  className="w-full accent-white opacity-60 hover:opacity-100 transition-opacity"
+                />
               </div>
-            ))}
-          </div>
-        </div>
-      )}
 
-      {tab === 'achievements' && (
-        <div className="w-full max-h-80 overflow-y-auto space-y-2">
-          <div className="text-[10px] font-mono text-white/30 mb-3 text-center">
-            {achievementSystem.getUnlockCount()} / {achievementSystem.getTotalCount()} UNLOCKED
-          </div>
-          {achievementSystem.achievements.map(a => (
-            <div key={a.id} className={`p-3 border ${a.unlocked ? 'border-yellow-400/20' : 'border-white/5'} text-left`}>
-              <div className="flex items-center gap-3">
-                <span className="text-sm">{a.icon}</span>
-                <div className="flex-1">
-                  <div className={`text-xs font-mono ${a.unlocked ? 'text-white/70' : 'text-white/30'}`}>{a.name}</div>
-                  <div className="text-[10px] font-mono text-white/20">{a.description}</div>
-                </div>
-                <div className={`text-[10px] font-mono ${a.unlocked ? 'text-yellow-400/50' : 'text-white/10'}`}>
-                  {a.unlocked ? '✓' : `${a.requirement.type} ${a.requirement.target}`}
-                </div>
+              <div className="space-y-3">
+                <label className="text-white font-mono text-xs uppercase tracking-widest">SFX Intensity</label>
+                <input 
+                  type="range" min="0" max="1" step="0.01" 
+                  value={sfxVol} 
+                  onChange={handleSfxVolume}
+                  className="w-full accent-zinc-500"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-white font-mono text-xs uppercase tracking-widest">Ambient Stream</label>
+                <input 
+                  type="range" min="0" max="1" step="0.01" 
+                  value={musicVol} 
+                  onChange={handleMusicVolume}
+                  className="w-full accent-zinc-500"
+                />
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          </section>
 
-      <button
-        onClick={onClose}
-        className="w-full py-4 border border-white/20 hover:border-white/40 text-white/60 hover:text-white/80 font-mono text-sm tracking-[0.3em] transition-all"
-      >
-        CLOSE
-      </button>
+          {/* Graphics & Controls */}
+          <div className="space-y-12">
+            <section className="space-y-6">
+              <div className="flex items-center space-x-3 text-zinc-500 font-mono text-xs uppercase tracking-widest border-b border-white/5 pb-2">
+                <Monitor className="w-4 h-4" />
+                <span>Visuals</span>
+              </div>
+              <div 
+                onClick={() => { soundManager.uiClick(); toggleVFX(); }}
+                className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group animate-fade-in"
+              >
+                <div className="flex flex-col items-start text-left">
+                  <span className="text-zinc-400 group-hover:text-white transition-colors font-mono text-xs uppercase">High Fidelity VFX</span>
+                  <span className="text-[9px] text-zinc-500 font-mono uppercase tracking-wider">Glows, heavy shadow blurs & complex particles</span>
+                </div>
+                <div className={`w-10 h-5 rounded-full relative transition-all duration-300 ${highFidelityVFX ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-zinc-700'}`}>
+                  <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all duration-300 ${highFidelityVFX ? 'left-6' : 'left-1'}`} />
+                </div>
+              </div>
+
+              <div 
+                onClick={() => { soundManager.uiClick(); togglePerformanceStats(); }}
+                className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group"
+              >
+                <div className="flex flex-col items-start text-left">
+                  <span className="text-zinc-400 group-hover:text-white transition-colors font-mono text-xs uppercase">Show Performance Stats</span>
+                  <span className="text-[9px] text-zinc-500 font-mono uppercase tracking-wider">Monitor FPS & Engine diagnostics</span>
+                </div>
+                <div className={`w-10 h-5 rounded-full relative transition-all duration-300 ${showPerformance ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-zinc-700'}`}>
+                  <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all duration-300 ${showPerformance ? 'left-6' : 'left-1'}`} />
+                </div>
+              </div>
+            </section>
+
+            <section className="space-y-6">
+              <div className="flex items-center space-x-3 text-zinc-500 font-mono text-xs uppercase tracking-widest border-b border-white/5 pb-2">
+                <MousePointer2 className="w-4 h-4" />
+                <span>Input Method</span>
+              </div>
+              <div className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-2">
+                <div className="flex justify-between text-xs font-mono">
+                  <span className="text-zinc-500">Left Click / Tap</span>
+                  <span className="text-white uppercase">Eliminate</span>
+                </div>
+                <div className="flex justify-between text-xs font-mono">
+                  <span className="text-zinc-500">Hover / Collect</span>
+                  <span className="text-white uppercase">Powerups</span>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div className="mt-12 flex justify-center">
+          <button 
+            onClick={() => { soundManager.uiClick(); onBack(); }}
+            className="px-12 py-4 bg-white text-black font-black text-xs uppercase tracking-[0.3em] rounded-full hover:bg-zinc-200 transition-all hover:scale-105 active:scale-95"
+          >
+            Apply Changes
+          </button>
+        </div>
+      </motion.div>
     </div>
-  )
+  );
 }

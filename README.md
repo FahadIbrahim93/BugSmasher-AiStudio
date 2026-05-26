@@ -1,51 +1,53 @@
-# BugSmasher NextGen
+# BUGSMASHER // Tactical QA System 🛡️👾
 
-A brutalist OS-themed Canvas shooter with procedural assets and 60fps particle chaos.
+An ultra-minimalist, high-intensity AI-shaped base defense game showcasing the visual contrast between a pristine, deadpan modern "Brutalist OS" terminal and viscous, glowing neon bio-luminescent bugs. Built inside the browser with a high-performance **React 18+**, **Vite**, and high-tier **Canvas 2D** rendering engine.
 
-[![Test Coverage](https://img.shields.io/badge/tests-112%20passing-brightgreen)](https://github.com/FahadIbrahim93/BugSmasher-HopeTheory)
+---
 
-## Stack
+## 🚀 Key Achievements (This Session)
 
-- Vite + React 19 + TypeScript 5.8 (strict)
-- Canvas renderer with CRT/bioluminescent effects
-- Procedural audio via Web Audio API (zero external assets)
-- Firebase auth + Firestore (leaderboard, cloud progression)
-- PWA via vite-plugin-pwa
+### 1. ⚙️ Real-Time Performance Scaler Utility
+To ensure a buttery smooth, high-intensity 60 FPS experience on any system, we implemented a real-time framerate scaling utility in `Renderer.ts`:
+- **Smooth FPS Sampling**: Tracks delta render loops using high-accuracy timestamps (`performance.now()`), calculating a sliding window average (last 6 samples) to eliminate scale-jitter.
+- **Dynamic VFX Quality Downscaling**: If the framerate falls below **40 FPS**, the scaler dynamically reduces particle counts (`vfxScalar`) proportionally down to `0.15` and optimizes rendering calculations.
+- **Geometric Complexity Reduction**: Seamlessly increases the dynamic background mesh grid spacing step (from `10px` all the way up to `80px` during severe lag), cutting rendering vertices in real-time.
+- **Auto-Recovery**: Smoothly restores full visual fidelity once high-framerates stabilize above the critical 40 FPS benchmark.
 
-## Development
+### 2. 🎛️ High-Fidelity VFX Switcher & Mobile Protection
+Integrated adaptive configuration policies:
+- **Intelligent Defaults**: Automatically detects touch capabilities, inner screen widths, and user-agent details. High Fidelity settings are deactivated on mobile screens to safeguard battery life and eliminate overheating.
+- **Manual Toggle Controls**: Added a stylized toggler inside the settings menu with custom ambient green halo glows to toggle glows, heavy shadow blurs, vector cloud simulations, and complex particle lifespans.
+- **Device Pixel Ratio (DPR) Clamping**: When high-fidelity features are disabled, the engine clamps down retina and high-DPI scaling factors to a strict `1.0`, rescuing fill-rate bound systems instantly.
 
+### 3. 🫧 Particle Spawn Multiplexing
+Re-engineered particle generation in `ParticleSystem.ts` to follow the dynamic scaler's outputs:
+- All core effects (`spawnGibs`, `spawnSmoke`, `spawnSparkExplosion`, `spawnExplosion`, `spawnMissParticles`) multiply their spawn iteration indices with the scaler's current real-time performance factor (`vfxCountMultiplier`).
+
+### 4. 🪱 React Hook-Mismatch Architectural Fix
+Resolved a critical rendering crash within `<CustomCursor>`:
+- Refactored the conditional early-return checks for mobile/touch screens to sit strictly **at the bottom** of the component.
+- Guaranteed that all state hooks, reference hooks, tracking logic, and ambient particle animation callbacks execute in a perfect, deterministic order, complying with React's strict hook safety laws.
+
+---
+
+## 🛠️ Architecture Standards
+
+- **Systemic Orchestration**: Core engine mechanics are organized into modular single-purpose controllers (`InputSystem.ts`, `WaveManager.ts`, `ParticleSystem.ts`, `Renderer.ts`).
+- **Standard Delta Timing (`dt`)**: Game math and physics calculations are strictly tied to high-precision update delta ticks. No `setTimeout` or `setInterval` structures are used.
+- **Deterministic Type Safety**: Game-specific interface definitions and strict schemas reside in `src/game/GameTypes.ts`.
+
+---
+
+## 🏃 Getting Started
+
+### Development
 ```bash
 npm install
-npm run dev      # localhost:3001
-npm test         # 112 tests passing (12 files)
-npm run build    # production
+npm run dev
 ```
 
-## Architecture
-
-- `src/core/GameEngine.ts` — 60fps game loop (dash, resources, boss variants, hazards)
-- `src/lib/` — Pure logic modules (singletons)
-  - `GameConfig.ts` — All game constants
-  - `ProgressionManager.ts` — Resources, skills, crafting, cloud sync, prestige
-  - `Renderer.ts` — Canvas rendering with CRT, biomes, lighting, glitch
-  - `ParticleSystem.ts` — Object-pooled VFX
-  - `SoundManager.ts` — Procedural audio synthesis
-  - `AssetManager.ts` — Pre-renders sprites to offscreen canvases
-  - `UpgradeSystem.ts` — Crystal economy with 50+ upgrades
-  - `AchievementSystem.ts` — 22 achievements
-  - `DeathCardGenerator.ts` — Canvas 1200×630 death card PNG
-  - `LeaderboardService.ts` — Firebase Firestore top 20 with offline cache
-- `src/managers/` — WaveManager (6 biomes + surge + bosses), StoryManager (50 waves, 6 acts)
-- `src/components/` — MainMenu, HUD, UpgradeMenu, GameOver, ProgressionCenter, Leaderboard, AccountMenu, StorySceneRenderer, TutorialOverlay, SettingsMenu, ErrorBoundary
-- `src/contexts/AuthContext.tsx` — Firebase Google auth with auto-registration
-
-## Controls
-
-- Click bugs to smash, collect resources, survive waves
-- Swipe to dash (mobile), click-drag dash (desktop)
-- Boss waves every 10th wave
-- 6 biomes, 22 achievements, 50+ upgrades, 8 skills, 3 consumables
-
-## Milestone
-
-**v2.3.0** — Playable release with full progression loop, Firebase auth + leaderboard, mobile touch, and 112 passing tests.
+### Production Build
+```bash
+npm run build
+npm run preview
+```

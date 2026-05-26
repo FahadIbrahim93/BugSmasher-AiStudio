@@ -1,55 +1,201 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap');
-@import 'tailwindcss';
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700;800&family=Space+Grotesk:wght@500;700;900&family=Press+Start+2P&display=swap');
+@import "tailwindcss";
 
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-pixel: "Press Start 2P", cursive;
 }
 
 @layer base {
-  html,
-  body,
-  #root {
-    width: 100%;
-    height: 100dvh;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    touch-action: none;
-    background: #000;
-    cursor: none;
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
   }
 
   .glass-panel {
     @apply bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl;
   }
-
+  
   .cyber-button {
     @apply relative overflow-hidden transition-all duration-300 active:scale-95;
   }
-
+  
   .cyber-text-glow {
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
   }
 }
 
+.scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.05);
+  animation: scan 4s linear infinite;
+  pointer-events: none;
+  z-index: 100;
+}
+
 @keyframes scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  touch-action: none; /* Prevent pull-to-refresh and swipe navigation */
+  background: #000;
+  cursor: none;
+}
+
+.custom-cursor-container {
+  position: fixed;
+  pointer-events: none;
+  z-index: 1000;
+  transform: translate(-50%, -50%); /* Center the container around the cursor coordinate */
+  mix-blend-mode: normal; /* Use normal mix blend mode to render the beautiful colors cleanly */
+}
+
+/* Fallback for general menu / interface states */
+.custom-cursor-ring {
+  width: 32px;
+  height: 32px;
+  --cursor-color: #ffffff;
+  --cursor-shadow: rgba(255, 255, 255, 0.2);
+  border: 2px solid var(--cursor-color);
+  border-radius: 50%;
+  box-shadow: 
+    0 0 0 1px rgba(0, 0, 0, 0.95), 
+    inset 0 0 0 1px rgba(0, 0, 0, 0.95), 
+    0 0 calc(8px * var(--biome-intensity, 1)) var(--cursor-shadow),
+    0 0 calc(14px * var(--biome-intensity, 1)) rgba(0, 0, 0, 0.6);
+  transition: transform 0.15s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  opacity: 0.85;
+  position: relative;
+}
+
+.custom-cursor-ring::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  background: var(--cursor-color);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.95);
+  transition: background-color 0.15s ease;
+}
+
+/* Biome Theme Class Configurations */
+.custom-cursor-ring.biome-neon_core {
+  --cursor-color: #39ff14; /* neon green */
+  --cursor-shadow: rgba(57, 255, 20, 0.6);
+}
+
+.custom-cursor-ring.biome-quantum_void {
+  --cursor-color: #bb00ff; /* quantum purple */
+  --cursor-shadow: rgba(187, 0, 255, 0.6);
+}
+
+.custom-cursor-ring.biome-ember_depths {
+  --cursor-color: #ff4400; /* magma heat orange */
+  --cursor-shadow: rgba(255, 68, 0, 0.6);
+}
+
+.custom-cursor-ring.biome-frostbyte {
+  --cursor-color: #00ccff; /* frostbyte cyan */
+  --cursor-shadow: rgba(0, 204, 255, 0.6);
+}
+
+.custom-cursor-ring.biome-void_abyss {
+  --cursor-color: #ffffff; /* pure void white */
+  --cursor-shadow: rgba(255, 255, 255, 0.6);
+}
+
+.custom-cursor-ring.biome-golden_cache,
+.custom-cursor-ring.biome-golden_spire {
+  --cursor-color: #ffcc00; /* golden amber */
+  --cursor-shadow: rgba(255, 204, 0, 0.6);
+}
+
+/* Critical low health status: pulsing high alert override */
+.custom-cursor-ring.critical-health {
+  --cursor-color: #f43f5e !important; /* Rose Red */
+  --cursor-shadow: rgba(244, 63, 94, 0.7) !important;
+  animation: cursorHealthPulse 0.4s ease-in-out infinite alternate !important;
+}
+
+@keyframes cursorHealthPulse {
   0% {
-    transform: translateY(-100%);
+    transform: scale(0.9);
+    opacity: 0.75;
+    box-shadow: 
+      0 0 0 1px rgba(0, 0, 0, 1), 
+      inset 0 0 0 1px rgba(0, 0, 0, 1), 
+      0 0 6px var(--cursor-shadow);
   }
   100% {
-    transform: translateY(100vh);
+    transform: scale(1.22);
+    opacity: 1;
+    box-shadow: 
+      0 0 0 1px rgba(0, 0, 0, 1), 
+      inset 0 0 0 1px rgba(0, 0, 0, 1), 
+      0 0 20px var(--cursor-shadow);
   }
 }
 
-.custom-cursor {
-  position: absolute;
-  width: 32px;
-  height: 32px;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 1000;
-  transform: translate(-50%, -50%);
-  mix-blend-mode: difference;
+/* Clicking state scale down slightly for robust tactical feel */
+.custom-cursor-ring.clicking {
+  transform: scale(0.75);
+  opacity: 1;
+  --cursor-color: #22d3ee !important; /* Cyber action teal click override */
+  --cursor-shadow: rgba(34, 211, 238, 0.6) !important;
+}
+
+/* Expansion keyframes animation */
+@keyframes cursorHoverPulse {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.4);
+    box-shadow: 
+      0 0 0 1px rgba(0, 0, 0, 1), 
+      inset 0 0 0 1px rgba(0, 0, 0, 1), 
+      0 0 18px var(--cursor-shadow);
+  }
+  100% {
+    transform: scale(1.22);
+    box-shadow: 
+      0 0 0 1px rgba(0, 0, 0, 0.95), 
+      inset 0 0 0 1px rgba(0, 0, 0, 0.95), 
+      0 0 14px var(--cursor-shadow);
+  }
+}
+
+.custom-cursor-ring.hovering {
+  animation: cursorHoverPulse 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  opacity: 0.95;
+}
+
+/* Hides core design center dot when Weapon Mode glyph overlays are actively rendered */
+.custom-cursor-ring.has-weapon-mode::after {
+  display: none !important;
 }

@@ -1,10 +1,18 @@
-import ReactDOM from 'react-dom/client'
-import { App } from './App'
-import { ErrorBoundary } from './components'
-import './index.css'
+import {StrictMode} from 'react';
+import {createRoot} from 'react-dom/client';
+import App from './App.tsx';
+import { AuthProvider } from './contexts/AuthContext';
+import { ProgressionManager } from './game/ProgressionManager';
+import { StoryManager } from './game/StoryManager';
+import './index.css';
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <ErrorBoundary>
-    <App />
-  </ErrorBoundary>,
-)
+ProgressionManager.initCloudSync();
+StoryManager.init();
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  </StrictMode>,
+);

@@ -1,36 +1,8 @@
-# Dependencies
 node_modules/
-
-# Build output
-dist/
 build/
-
-# Environment files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-.DS_Store
-
-# Logs
-*.log
-npm-debug.log*
-
-# Coverage
+dist/
 coverage/
-
-# OS
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# TypeScript
-*.tsbuildinfo
+.DS_Store
+*.log
+.env*
+!.env.example
