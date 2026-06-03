@@ -16,7 +16,8 @@
     "lint": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "ci": "npm run lint && npm test && npm run build",
+    "ci": "npm run lint && npm run validate:functions && npm test && npm run build",
+    "validate:functions": "cd functions && npm ci && npm run build",
     "deploy:hosting": "npm run build && firebase deploy --only hosting",
     "deploy:rules": "firebase deploy --only firestore:rules"
   },
