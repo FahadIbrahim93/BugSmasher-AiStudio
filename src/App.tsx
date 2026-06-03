@@ -1,15 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { MainMenu } from './components/MainMenu';
-import { Game } from './components/Game';
-import { SettingsMenu } from './components/SettingsMenu';
-import { IntelHub } from './components/IntelHub';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Preloader } from './components/Preloader';
-
 import { AchievementToast } from './components/AchievementToast';
 import { CustomCursor } from './components/CustomCursor';
 import type { ChallengeModifierId } from './game/DailyChallengeManager';
 import type { GameModeId } from './game/GameMode';
+
+const Game = lazy(() => import('./components/Game').then(m => ({ default: m.Game })));
+const SettingsMenu = lazy(() => import('./components/SettingsMenu').then(m => ({ default: m.SettingsMenu })));
+const IntelHub = lazy(() => import('./components/IntelHub').then(m => ({ default: m.IntelHub })));
 
 export default function App() {
   const [gameState, setGameState] = useState<'preloading' | 'menu' | 'playing'>('preloading');
@@ -48,28 +48,32 @@ export default function App() {
               onSettings={() => setIsSettingsOpen(true)}
               onIntel={() => setIsIntelOpen(true)}
             />
-            {isSettingsOpen && (
-              <SettingsMenu 
-                onBack={() => setIsSettingsOpen(false)} 
-                onOpenArmory={() => {
-                  setIsSettingsOpen(false);
-                }}
-              />
-            )}
-            {isIntelOpen && (
-              <IntelHub onBack={() => setIsIntelOpen(false)} />
-            )}
+            <Suspense fallback={null}>
+              {isSettingsOpen && (
+                <SettingsMenu 
+                  onBack={() => setIsSettingsOpen(false)} 
+                  onOpenArmory={() => {
+                    setIsSettingsOpen(false);
+                  }}
+                />
+              )}
+              {isIntelOpen && (
+                <IntelHub onBack={() => setIsIntelOpen(false)} />
+              )}
+            </Suspense>
           </>
         )}
         {gameState === 'playing' && (
-          <Game 
-            onMainMenu={() => {
-              setChallengeModifiers(undefined);
-              setGameState('menu');
-            }} 
-            challengeModifiers={challengeModifiers}
-            gameMode={gameMode}
-          />
+          <Suspense fallback={null}>
+            <Game 
+              onMainMenu={() => {
+                setChallengeModifiers(undefined);
+                setGameState('menu');
+              }} 
+              challengeModifiers={challengeModifiers}
+              gameMode={gameMode}
+            />
+          </Suspense>
         )}
       </div>
     </ErrorBoundary>

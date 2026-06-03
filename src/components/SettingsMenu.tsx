@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
-import { Volume2, VolumeX, Settings2, ArrowLeft, MousePointer2, Monitor, Gem, Accessibility } from 'lucide-react';
+import { Volume2, VolumeX, Settings2, ArrowLeft, MousePointer2, Monitor, Gem, Accessibility, Keyboard } from 'lucide-react';
 import { soundManager } from '../game/SoundManager';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   loadAccessibilitySettings,
   saveAccessibilitySettings,
@@ -9,6 +9,11 @@ import {
   type ColorblindMode,
   type DifficultyId,
 } from '../game/AccessibilitySettings';
+import {
+  loadControlBindings,
+  saveControlBindings,
+  type ControlBindings,
+} from '../game/ControlBindings';
 
 export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onOpenArmory?: () => void }) {
   const [masterVol, setMasterVol] = useState(soundManager.masterVolume);
@@ -46,6 +51,27 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
     setIsMuted(muted);
   };
 
+  const [bindings, setBindings] = useState<ControlBindings>(loadControlBindings);
+  const [listeningFor, setListeningFor] = useState<string | null>(null);
+
+  const handleKeyCapture = useCallback((e: KeyboardEvent) => {
+    if (!listeningFor) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const newBindings = { ...bindings, [listeningFor]: e.code };
+    setBindings(newBindings);
+    saveControlBindings(newBindings);
+    setListeningFor(null);
+    soundManager.uiClick();
+  }, [listeningFor, bindings]);
+
+  useEffect(() => {
+    if (listeningFor) {
+      window.addEventListener('keydown', handleKeyCapture, true);
+      return () => window.removeEventListener('keydown', handleKeyCapture, true);
+    }
+  }, [listeningFor, handleKeyCapture]);
+
   const [showPerformance, setShowPerformance] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('nexus_show_perf_stats') === 'true';
@@ -64,7 +90,7 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
         /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
         (navigator.maxTouchPoints > 0) ||
         ('ontouchstart' in window);
-      return !isMobileDevice; // default off on mobile, on on desktop
+      return !isMobileDevice;
     }
     return true;
   });
@@ -203,6 +229,52 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
                   <span className="text-white uppercase">Powerups</span>
                 </div>
               </div>
+            </section>
+
+            {/* Control Remapping */}
+            <section className="space-y-4">
+              <div className="flex items-center space-x-3 text-zinc-500 font-mono text-xs uppercase tracking-widest border-b border-white/5 pb-2">
+                <Keyboard className="w-4 h-4" />
+                <span>Key Bindings</span>
+              </div>
+              {(['fire', 'dash', 'pause'] as const).map((action) => (
+                <div key={action} className="flex items-center justify-between">
+                  <span className="text-zinc-400 font-mono text-xs uppercase">{action}</span>
+                  <button
+                    onClick={() => {
+                      soundManager.uiClick();
+                      setListeningFor(listeningFor === action ? null : action);
+                    }}
+                    className={`relative px-4 py-2 rounded-xl font-mono text-xs uppercase tracking-wider border transition-all ${
+                      listeningFor === action
+                        ? 'border-cyan-400 bg-cyan-950/30 text-cyan-300 animate-pulse shadow-[0_0_12px_rgba(0,255,255,0.3)]'
+                        : 'border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-white/20'
+                    }`}
+                  >
+                    {listeningFor === action ? 'Press key...' : bindings[action]}
+                  </button>
+                </div>
+              ))}
+              <p className="text-[8px] text-zinc-600 font-mono uppercase tracking-wider">
+                Click a binding, then press the desired key
+              </p>
+              {/* Volume Preview Buttons */}
+              {Object.entries({ 'Master Gain': masterVol, 'SFX Intensity': sfxVol, 'Ambient Stream': musicVol })
+                .filter(([_, vol]) => vol > 0 && !isMuted)
+                .slice(0, 1)
+                .map(([name]) => (
+                  <button
+                    key={name}
+                    onClick={() => {
+                      soundManager.init();
+                      soundManager.powerup('multiplier');
+                    }}
+                    className="mt-2 w-full flex items-center justify-center space-x-2 p-3 bg-white/5 rounded-xl border border-white/5 hover:bg-white/10 transition-colors text-zinc-400 hover:text-white font-mono text-[10px] uppercase tracking-wider"
+                  >
+                    <Volume2 className="w-3 h-3" />
+                    <span>Preview Audio Levels</span>
+                  </button>
+                ))}
             </section>
           </div>
         </div>
