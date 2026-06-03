@@ -177,6 +177,20 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
                   className="w-full accent-zinc-500"
                 />
               </div>
+
+              {/* Volume Preview Button */}
+              {(masterVol > 0 || sfxVol > 0 || musicVol > 0) && !isMuted && (
+                <button
+                  onClick={() => {
+                    soundManager.init();
+                    soundManager.powerup('multiplier');
+                  }}
+                  className="w-full flex items-center justify-center space-x-2 p-3 bg-white/5 rounded-xl border border-white/5 hover:bg-white/10 hover:text-white transition-colors text-zinc-400 font-mono text-[10px] uppercase tracking-wider"
+                >
+                  <Volume2 className="w-3 h-3" />
+                  <span>Preview Audio</span>
+                </button>
+              )}
             </div>
           </section>
 
@@ -258,23 +272,6 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
               <p className="text-[8px] text-zinc-600 font-mono uppercase tracking-wider">
                 Click a binding, then press the desired key
               </p>
-              {/* Volume Preview Buttons */}
-              {Object.entries({ 'Master Gain': masterVol, 'SFX Intensity': sfxVol, 'Ambient Stream': musicVol })
-                .filter(([_, vol]) => vol > 0 && !isMuted)
-                .slice(0, 1)
-                .map(([name]) => (
-                  <button
-                    key={name}
-                    onClick={() => {
-                      soundManager.init();
-                      soundManager.powerup('multiplier');
-                    }}
-                    className="mt-2 w-full flex items-center justify-center space-x-2 p-3 bg-white/5 rounded-xl border border-white/5 hover:bg-white/10 transition-colors text-zinc-400 hover:text-white font-mono text-[10px] uppercase tracking-wider"
-                  >
-                    <Volume2 className="w-3 h-3" />
-                    <span>Preview Audio Levels</span>
-                  </button>
-                ))}
             </section>
           </div>
         </div>
