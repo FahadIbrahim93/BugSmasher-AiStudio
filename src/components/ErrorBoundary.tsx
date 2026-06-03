@@ -1,7 +1,10 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { monitor } from '../lib/monitoring';
 
 interface Props {
   children: ReactNode;
+  fallback?: ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
 
 interface State {
@@ -23,11 +26,24 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo);
+    // Report to monitoring
+    monitor.errors.track(error, errorInfo.componentStack);
+    monitor.error('React component error', {
+      error,
+      componentStack: errorInfo.componentStack,
+    });
+
+    // Call optional onError callback
+    this.props.onError?.(error, errorInfo);
   }
 
   public render() {
     if (this.state.hasError) {
+      // Use custom fallback if provided
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+
       return (
         <div className="flex flex-col items-center justify-center h-full bg-zinc-950 text-white p-8">
           <h1 className="text-4xl font-bold text-red-500 mb-4">System Failure</h1>
@@ -37,8 +53,11 @@ export class ErrorBoundary extends Component<Props, State> {
           <div className="bg-zinc-900 p-4 rounded-lg border border-zinc-800 w-full max-w-2xl overflow-auto text-sm font-mono text-red-400">
             {this.state.error?.message}
           </div>
+          <div className="mt-2 text-xs text-zinc-600 font-mono">
+            Error logged to monitoring system
+          </div>
           <button
-            className="mt-8 px-6 py-3 bg-white text-black font-bold rounded-lg hover:bg-zinc-200"
+            className="mt-8 px-6 py-3 bg-white text-black font-bold rounded-lg hover:bg-zinc-200 transition-colors"
             onClick={() => window.location.reload()}
           >
             Reboot System
