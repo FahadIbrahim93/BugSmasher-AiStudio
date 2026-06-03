@@ -12,7 +12,7 @@ BUGSMASHER is a **visually exceptional indie prototype** with a genuinely viral 
 
 It is **not yet 10/10 production-ready**. The largest gaps are commercial infrastructure (audio assets, analytics, monetization), remaining type-safety debt in UI layers, and Phase 3 growth features.
 
-**Overall Weighted Score: 7.4 / 10** (up from 6.1 at audit start)
+**Overall Weighted Score: 7.6 / 10** (up from 6.1 at audit start; enterprise ops pass 8.3)
 
 ---
 
@@ -26,10 +26,10 @@ It is **not yet 10/10 production-ready**. The largest gaps are commercial infras
 | Game Design & Engagement | 7.0 | **7.4** | 10 | Strong loop; procedural audio still weak |
 | Business Viability | 3.5 | **4.0** | 10 | Cosmetics/daily challenges exist; no analytics/revenue |
 | Security & Data Integrity | 7.0 | **7.0** | 10 | Firestore rules good; checksum client-only |
-| Testing & Reliability | 3.5 | **8.5** | 10 | 404 tests, 14 files; component E2E still thin |
-| Feature Completeness | 5.5 | **7.2** | 10 | A11y + gamepad + difficulty added; no i18n/social |
-| Documentation & AI Maintainability | 4.0 | **9.0** | 10 | AUDIT_REPORT + TASKBOARD for coders |
-| DevOps & Release Readiness | 5.0 | **6.5** | 10 | Build passes; no CI manifest in repo |
+| Testing & Reliability | 3.5 | **8.5** | 10 | 410 tests, 17 files; component E2E still thin |
+| Feature Completeness | 5.5 | **7.5** | 10 | A11y filters + gamepad; no i18n/social |
+| Documentation & AI Maintainability | 4.0 | **9.5** | 10 | docs/, ADRs, enterprise report |
+| DevOps & Release Readiness | 5.0 | **8.5** | 10 | GitHub Actions CI, Firebase, CHANGELOG |
 
 ---
 

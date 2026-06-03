@@ -19,6 +19,10 @@ An ultra-minimalist, high-intensity AI-themed base defense game showcasing the v
 | [SESSION.md](./SESSION.md) | Latest session log |
 | [security_spec.md](./security_spec.md) | Firestore security model |
 | [CHANGELOG.md](./CHANGELOG.md) | Version history |
+| [docs/ENTERPRISE_TRANSFORMATION.md](./docs/ENTERPRISE_TRANSFORMATION.md) | Enterprise gap analysis & roadmap |
+| [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | System architecture (Mermaid) |
+| [docs/PLAYER_GUIDE.md](./docs/PLAYER_GUIDE.md) | Player onboarding |
+| [docs/adr/](./docs/adr/) | Architecture Decision Records |
 
 ---
 

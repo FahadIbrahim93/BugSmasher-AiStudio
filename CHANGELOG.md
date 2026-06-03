@@ -2,6 +2,18 @@
 
 All notable changes to BUGSMASHER are documented here. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.4.1] - 2026-06-03
+
+### Added
+- Enterprise docs: `docs/ENTERPRISE_TRANSFORMATION.md`, `ARCHITECTURE.md`, `PLAYER_GUIDE.md`, ADRs
+- Analytics facade (`src/lib/analytics.ts`) with game event wiring
+- Colorblind CSS filters on game canvas wrapper
+- PWA `manifest.webmanifest` + meta tags
+- GitHub PR template, `src/vite-env.d.ts`
+
+### Changed
+- Composite readiness: 7.6/10 audit · 8.3/10 enterprise operations
+
 ## [2.4.0] - 2026-06-03
 
 ### Added

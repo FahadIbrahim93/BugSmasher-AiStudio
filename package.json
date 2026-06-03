@@ -1,7 +1,7 @@
 {
   "name": "bugsmasher",
   "private": true,
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "Tactical QA base defense — Brutalist OS vs bio-luminescent bugs",
   "type": "module",
   "repository": {

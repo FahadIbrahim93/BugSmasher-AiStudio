@@ -24,6 +24,13 @@ import {
   type ChallengeModifierId,
   type WinCondition,
 } from '../game/DailyChallengeManager';
+import {
+  loadAccessibilitySettings,
+  subscribeAccessibility,
+  getColorblindCanvasStyle,
+  type AccessibilitySettings,
+} from '../game/AccessibilitySettings';
+import { analytics } from '../lib/analytics';
 
 function checkWinCondition(engine: GameEngine, condition: WinCondition): boolean {
   switch (condition.type) {
@@ -51,10 +58,22 @@ export function Game({ onMainMenu, challengeModifiers }: { onMainMenu: () => voi
   const [currentWave, setCurrentWave] = useState(1);
   
   const engineRef = useRef<GameEngine | null>(null);
+  const [a11y, setA11y] = useState<AccessibilitySettings>(loadAccessibilitySettings);
+
+  useEffect(() => {
+    analytics.track('session_start', { mode: challengeModifiers ? 'daily' : 'standard' });
+    return () => analytics.track('session_end');
+  }, [gameId, challengeModifiers]);
+
+  useEffect(() => subscribeAccessibility(setA11y), []);
 
   const handleGameOver = useCallback((score: number) => {
     setFinalScore(score);
     setIsGameOver(true);
+    analytics.track('game_over', {
+      score,
+      wave: engineRef.current?.wave ?? 0,
+    });
 
     // Check challenge completion
     if (engineRef.current?.isChallengeMode) {
@@ -83,6 +102,10 @@ export function Game({ onMainMenu, challengeModifiers }: { onMainMenu: () => voi
     if (engineRef.current) {
       setFinalScore(engineRef.current.score);
       setCurrentWave(engineRef.current.wave);
+      analytics.track('wave_complete', {
+        wave: engineRef.current.wave,
+        score: engineRef.current.score,
+      });
       
       StatsManager.updateStats({
         totalWavesCompleted: 1
@@ -227,15 +250,23 @@ export function Game({ onMainMenu, challengeModifiers }: { onMainMenu: () => voi
     return () => window.removeEventListener('challenge_reward', handleReward);
   }, []);
 
+  const canvasA11yStyle = getColorblindCanvasStyle(a11y.colorblindMode);
+
   return (
     <div className="relative w-full h-full">
-      <GameCanvas 
-        ref={engineRef}
-        key={gameId}
-        onGameOver={handleGameOver}
-        onWaveComplete={handleWaveComplete}
-        onStoryTrigger={handleStoryTrigger}
-      />
+      <div
+        className="absolute inset-0 w-full h-full"
+        style={canvasA11yStyle}
+        aria-label="Game battlefield"
+      >
+        <GameCanvas
+          ref={engineRef}
+          key={gameId}
+          onGameOver={handleGameOver}
+          onWaveComplete={handleWaveComplete}
+          onStoryTrigger={handleStoryTrigger}
+        />
+      </div>
       
       {!isGameOver && <HUD engineRef={engineRef} onPauseToggle={togglePause} isPaused={isPaused} />}
       

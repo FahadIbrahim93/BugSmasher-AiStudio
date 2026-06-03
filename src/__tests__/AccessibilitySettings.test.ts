@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   DEFAULT_ACCESSIBILITY,
   DIFFICULTY_PRESETS,
+  getColorblindCanvasStyle,
   loadAccessibilitySettings,
   saveAccessibilitySettings,
 } from '../game/AccessibilitySettings';
@@ -18,6 +19,11 @@ describe('AccessibilitySettings', () => {
   it('persists settings', () => {
     saveAccessibilitySettings({ ...DEFAULT_ACCESSIBILITY, difficulty: 'hard' });
     expect(loadAccessibilitySettings().difficulty).toBe('hard');
+  });
+
+  it('returns CSS filter for colorblind modes', () => {
+    expect(getColorblindCanvasStyle('off')).toBeUndefined();
+    expect(getColorblindCanvasStyle('protanopia')?.filter).toContain('hue-rotate');
   });
 
   it('has sane difficulty presets', () => {

@@ -38,7 +38,7 @@
 |----|------|--------|-------|---------------------|
 | P2-01 | Professional SFX pack integration | [ ] | `SoundManager.ts`, `public/audio/*` | Replace procedural splat/shoot/UI |
 | P2-02 | Adaptive music layers (wave/health/boss) | [ ] | `SoundManager.ts` | Crossfade on state change |
-| P2-03 | Accessibility — colorblind canvas filter | [~] | `AccessibilitySettings.ts`, `Renderer.ts` | CSS filter per mode when not `off` |
+| P2-03 | Accessibility — colorblind canvas filter | [x] | `AccessibilitySettings.ts`, `Game.tsx` | CSS filter per mode when not `off` |
 | P2-04 | Accessibility — difficulty presets | [x] | `AccessibilitySettings.ts`, `WaveManager.ts` | Easy/Normal/Hard changes HP/speed/drops |
 | P2-05 | Accessibility — reduced motion | [x] | `Renderer.ts` | No shake when enabled |
 | P2-06 | Accessibility — gamepad support | [x] | `InputSystem.ts` | Stick moves aim, A fires |
@@ -55,7 +55,7 @@
 
 | ID | Task | Status | Files | Acceptance Criteria |
 |----|------|--------|-------|---------------------|
-| P3-01 | PostHog/Mixpanel analytics wrapper | [ ] | `src/lib/analytics.ts` | session_start, wave_complete, death events |
+| P3-01 | PostHog/Mixpanel analytics wrapper | [~] | `src/lib/analytics.ts` | Facade + events wired; provider SDK pending |
 | P3-02 | Share score image generator | [ ] | `src/lib/shareCard.ts` | Canvas → PNG download |
 | P3-03 | Friend challenge deep links | [ ] | Firebase + routing | URL opens challenge modal |
 | P3-04 | Cosmetics monetization (Stripe/revenuecat stub) | [ ] | `CosmeticsManager.ts` | Supporter pack flag + UI |
