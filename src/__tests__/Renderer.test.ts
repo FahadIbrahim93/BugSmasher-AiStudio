@@ -129,7 +129,8 @@ describe('Renderer', () => {
 
     it('should initialize performance scaler state', () => {
       expect(renderer.currentFps).toBe(60);
-      expect(renderer.vfxScalar).toBe(1.0);
+      // Default High preset (0.95 vfx keeps headroom; Ultra would be 1.0)
+      expect(renderer.vfxScalar).toBe(0.95);
       expect(renderer.meshComplexityStep).toBe(10);
     });
   });
@@ -160,9 +161,9 @@ describe('Renderer', () => {
 
   describe('updatePerformanceScaler', () => {
     it('should use default values on first call', () => {
-      // First call sets baseline
+      // First call sets baseline (High preset starts at 0.95)
       renderer.updatePerformanceScaler();
-      expect(renderer.vfxScalar).toBe(1.0);
+      expect(renderer.vfxScalar).toBe(0.95);
     });
 
     it('should calculate FPS after accumulating frames', () => {
