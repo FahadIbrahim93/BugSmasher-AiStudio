@@ -1,15 +1,24 @@
 {
-  "name": "react-example",
+  "name": "bugsmasher",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.4.0",
+  "description": "Tactical QA base defense — Brutalist OS vs bio-luminescent bugs",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HopeTheoory/BugSmasher-ApZz.git"
+  },
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "ci": "npm run lint && npm test && npm run build",
+    "deploy:hosting": "npm run build && firebase deploy --only hosting",
+    "deploy:rules": "firebase deploy --only firestore:rules"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.14",

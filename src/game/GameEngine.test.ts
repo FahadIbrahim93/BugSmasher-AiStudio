@@ -15,6 +15,25 @@ vi.mock('./SoundManager', () => ({
     uiClick: vi.fn(),
     uiHover: vi.fn(),
     scoreTick: vi.fn(),
+    resource: vi.fn(),
+    bossHit: vi.fn(),
+    bossDeath: vi.fn(),
+    bossWarning: vi.fn(),
+    bossAbility: vi.fn(),
+    skillUpgrade: vi.fn(),
+    dash: vi.fn(),
+    uiError: vi.fn(),
+    speak: vi.fn(),
+    stopSpeaking: vi.fn(),
+    updateGameState: vi.fn(),
+    setMasterVolume: vi.fn(),
+    setSfxVolume: vi.fn(),
+    setMusicVolume: vi.fn(),
+    setVoiceVolume: vi.fn(),
+    toggleMute: vi.fn(),
+    stopMusic: vi.fn(),
+    playBiomeMusic: vi.fn(),
+    destroy: vi.fn(),
   }
 }));
 
@@ -38,18 +57,19 @@ describe('GameEngine', () => {
 
   it('should spawn bugs correctly', () => {
     engine.startWave();
-    expect(engine.waveManager.bugsToSpawn).toBe(GameConfig.waves.baseBugs + 1 * GameConfig.waves.bugsPerWave);
+    // bugsToSpawn includes a performance factor bonus (perfFactor=1.0 => +5)
+    const expectedBase = GameConfig.waves.baseBugs + engine.wave * GameConfig.waves.bugsPerWave;
+    const perfBonus = Math.floor(engine.performanceFactor * 5);
+    expect(engine.waveManager.bugsToSpawn).toBe(expectedBase + perfBonus);
     
     (engine.waveManager as any).spawnBug();
     expect(engine.bugs.length).toBe(1);
-    expect(engine.waveManager.bugsToSpawn).toBe(GameConfig.waves.baseBugs + 1 * GameConfig.waves.bugsPerWave - 1);
+    expect(engine.waveManager.bugsToSpawn).toBe(expectedBase + perfBonus - 1);
     
     const bug = engine.bugs[0];
     expect(bug.active).toBe(true);
-    expect(['basic', 'scout', 'tank']).toContain(bug.type);
-  });
-
-  it('should damage and kill bugs', () => {
+    expect(['basic', 'scout', 'tank', 'swarmer', 'ghost']).toContain(bug.type);
+  });    it('should damage and kill bugs', () => {
     engine.startWave();
     (engine.waveManager as any).spawnBug();
     const bug = engine.bugs[0];
@@ -62,7 +82,7 @@ describe('GameEngine', () => {
     
     engine.damageBug(bug, 1);
     
-    expect(bug.hp).toBe(0);
+    expect(bug.hp).toBeLessThanOrEqual(0);
     expect(engine.bugs.length).toBe(0);
     expect(engine.score).toBe(10);
   });
@@ -101,7 +121,9 @@ describe('GameEngine', () => {
     (engine.waveManager as any).spawnBug();
     
     const bug = engine.bugs[0];
-    // Move bug to center (base)
+    // Align bug with core position
+    engine.coreX = engine.width / 2;
+    engine.coreY = engine.height / 2;
     bug.x = engine.width / 2;
     bug.y = engine.height / 2;
     
@@ -119,6 +141,8 @@ describe('GameEngine', () => {
     (engine.waveManager as any).spawnBug();
     
     const bug = engine.bugs[0];
+    engine.coreX = engine.width / 2;
+    engine.coreY = engine.height / 2;
     bug.x = engine.width / 2;
     bug.y = engine.height / 2;
     

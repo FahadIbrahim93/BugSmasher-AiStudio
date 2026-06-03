@@ -1,14 +1,17 @@
-import { Skull, RotateCcw, Home, Trophy, Zap } from 'lucide-react';
+import { Skull, RotateCcw, Home, Trophy, Zap, Gift } from 'lucide-react';
 import { soundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
 import { ProgressionManager } from '../game/ProgressionManager';
 import { useEffect, useState } from 'react';
+import { isTodaysChallengeCompleted, getStreakInfo } from '../game/DailyChallengeManager';
 
 export function GameOver({ score, wave, onRetry, onMainMenu }: { score: number, wave: number, onRetry: () => void, onMainMenu: () => void }) {
   const [isNewHigh, setIsNewHigh] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isPrestigeAnimation, setIsPrestigeAnimation] = useState(false);
   const canPrestige = wave >= 15;
+  const challengeCompleted = isTodaysChallengeCompleted();
+  const streak = getStreakInfo();
 
   const handlePrestige = () => {
     setIsPrestigeAnimation(true);
@@ -82,6 +85,19 @@ export function GameOver({ score, wave, onRetry, onMainMenu }: { score: number, 
                 <p className="text-4xl font-black text-white font-mono">{wave.toString().padStart(2, '0')}</p>
               </div>
             </div>
+
+            {/* Challenge Completion Badge */}
+            {challengeCompleted && (
+              <div className="mt-4 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-xl px-4 py-3 flex items-center space-x-3">
+                <Gift className="w-5 h-5 text-emerald-400 shrink-0" />
+                <div className="text-left">
+                  <p className="text-sm font-bold text-emerald-400">Daily Directive Complete</p>
+                  <p className="text-[10px] text-emerald-500/60 font-mono">
+                    Rewards granted. Streak: {streak.currentStreak}d
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         

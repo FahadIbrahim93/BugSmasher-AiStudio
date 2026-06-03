@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Terminal, Database, ShieldAlert, Cpu } from 'lucide-react';
+import { Terminal, Database, ShieldAlert, Cpu, Volume2, VolumeX } from 'lucide-react';
 import { DialogueLine } from '../data/lore';
 import { soundManager } from '../game/SoundManager';
 
@@ -13,13 +13,19 @@ export const StoryCutscene = ({ lines, onComplete }: StoryCutsceneProps) => {
   const [currentLineIndex, setCurrentLineIndex] = useState(0);
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(true);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const voicePlayedRef = useRef(false);
 
   const currentLine = lines[currentLineIndex];
 
+  // Typing animation effect (only depends on line changes, not voiceEnabled)
   useEffect(() => {
     let index = 0;
     setIsTyping(true);
     setDisplayedText('');
+    voicePlayedRef.current = false;
+    
+    soundManager.stopSpeaking();
     
     const typingSpeed = currentLine.speed || 30;
     
@@ -33,8 +39,23 @@ export const StoryCutscene = ({ lines, onComplete }: StoryCutsceneProps) => {
       }
     }, typingSpeed);
 
-    return () => clearInterval(interval);
-  }, [currentLineIndex, currentLine.text, currentLine.speed]);
+    return () => {
+      clearInterval(interval);
+      soundManager.stopSpeaking();
+    };
+  }, [currentLineIndex]);
+
+  // Separate voice playback effect (only triggers when text is fully revealed and voice is enabled)
+  useEffect(() => {
+    if (!isTyping && !voicePlayedRef.current && voiceEnabled) {
+      voicePlayedRef.current = true;
+      soundManager.speak({
+        text: currentLine.text,
+        speaker: currentLine.speaker,
+        mood: currentLine.mood,
+      });
+    }
+  }, [isTyping, voiceEnabled, currentLine.text, currentLine.speaker, currentLine.mood]);
 
   const handleNext = () => {
     if (isTyping) {
@@ -44,6 +65,8 @@ export const StoryCutscene = ({ lines, onComplete }: StoryCutsceneProps) => {
     }
 
     soundManager.uiClick();
+    soundManager.stopSpeaking();
+    
     if (currentLineIndex < lines.length - 1) {
       setCurrentLineIndex(prev => prev + 1);
     } else {
@@ -101,7 +124,27 @@ export const StoryCutscene = ({ lines, onComplete }: StoryCutsceneProps) => {
               {currentLine.mood === 'alert' ? 'SYSTEM_CRITICAL' : 'Aegis-7 Terminal'}
             </span>
           </div>
-          <span className="text-[10px] text-zinc-500">CH_0{currentLineIndex + 1}</span>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (voiceEnabled) {
+                  soundManager.stopSpeaking();
+                  setVoiceEnabled(false);
+                } else {
+                  setVoiceEnabled(true);
+                }
+              }}
+              className="p-1 hover:bg-white/10 rounded transition-colors"
+              title={voiceEnabled ? 'Voice enabled' : 'Voice muted'}
+            >
+              {voiceEnabled 
+                ? <Volume2 className="w-3 h-3 text-emerald-400" /> 
+                : <VolumeX className="w-3 h-3 text-zinc-600" />
+              }
+            </button>
+            <span className="text-[10px] text-zinc-500">CH_0{currentLineIndex + 1}</span>
+          </div>
         </div>
 
         {/* Visuals Area */}

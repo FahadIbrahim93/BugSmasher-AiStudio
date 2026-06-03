@@ -8,11 +8,13 @@ import { Preloader } from './components/Preloader';
 
 import { AchievementToast } from './components/AchievementToast';
 import { CustomCursor } from './components/CustomCursor';
+import type { ChallengeModifierId } from './game/DailyChallengeManager';
 
 export default function App() {
   const [gameState, setGameState] = useState<'preloading' | 'menu' | 'playing'>('preloading');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isIntelOpen, setIsIntelOpen] = useState(false);
+  const [challengeModifiers, setChallengeModifiers] = useState<ChallengeModifierId[] | undefined>(undefined);
 
   return (
     <ErrorBoundary>
@@ -25,12 +27,20 @@ export default function App() {
         {gameState === 'menu' && (
           <>
             <MainMenu 
-              onStart={() => setGameState('playing')} 
+              onStart={(challengeMods?: ChallengeModifierId[]) => {
+                setChallengeModifiers(challengeMods);
+                setGameState('playing');
+              }}
               onSettings={() => setIsSettingsOpen(true)}
               onIntel={() => setIsIntelOpen(true)}
             />
             {isSettingsOpen && (
-              <SettingsMenu onBack={() => setIsSettingsOpen(false)} />
+              <SettingsMenu 
+                onBack={() => setIsSettingsOpen(false)} 
+                onOpenArmory={() => {
+                  setIsSettingsOpen(false);
+                }}
+              />
             )}
             {isIntelOpen && (
               <IntelHub onBack={() => setIsIntelOpen(false)} />
@@ -39,7 +49,11 @@ export default function App() {
         )}
         {gameState === 'playing' && (
           <Game 
-            onMainMenu={() => setGameState('menu')} 
+            onMainMenu={() => {
+              setChallengeModifiers(undefined);
+              setGameState('menu');
+            }} 
+            challengeModifiers={challengeModifiers}
           />
         )}
       </div>

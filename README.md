@@ -1,6 +1,42 @@
 # BUGSMASHER // Tactical QA System 🛡️👾
 
-An ultra-minimalist, high-intensity AI-shaped base defense game showcasing the visual contrast between a pristine, deadpan modern "Brutalist OS" terminal and viscous, glowing neon bio-luminescent bugs. Built inside the browser with a high-performance **React 18+**, **Vite**, and high-tier **Canvas 2D** rendering engine.
+An ultra-minimalist, high-intensity AI-themed base defense game showcasing the visual contrast between a pristine, deadpan modern "Brutalist OS" terminal and viscous, glowing neon bio-luminescent bugs. Built inside the browser with a high-performance **React 19**, **Vite**, and high-tier **Canvas 2D** rendering engine.
+
+**Repository:** [github.com/HopeTheoory/BugSmasher-ApZz](https://github.com/HopeTheoory/BugSmasher-ApZz) · **Version:** 2.4.0
+
+---
+
+## 📚 Documentation Index
+
+| Document | Purpose |
+|----------|---------|
+| [AUDIT_REPORT.md](./AUDIT_REPORT.md) | Brutal honest quality audit (7.4/10) |
+| [TASKBOARD.md](./TASKBOARD.md) | Phased backlog for AI/human coders |
+| [DEPLOYMENT.md](./DEPLOYMENT.md) | CI/CD, Firebase Hosting, release checklist |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | PR workflow, commit standards |
+| [AGENTS.md](./AGENTS.md) | Architecture rules for AI agents |
+| [DESIGN_DOC.md](./DESIGN_DOC.md) | Creative vision & core loop |
+| [SESSION.md](./SESSION.md) | Latest session log |
+| [security_spec.md](./security_spec.md) | Firestore security model |
+
+---
+
+## 🏆 Project Status — June 2026
+
+**Overall Audit Rating: 7.4/10 (Pre-Production)**
+
+Full analysis: [`AUDIT_REPORT.md`](./AUDIT_REPORT.md) · AI task list: [`TASKBOARD.md`](./TASKBOARD.md)
+
+| Category | Rating | Status |
+|---|---|---|
+| Architecture & Code Quality | 8.0/10 | ✅ Engine + Renderer modularized |
+| Performance & Optimization | 7.8/10 | ✅ Real-time FPS scaler |
+| UI/UX & Visual Design | 8.7/10 | ✅ Brutalist OS aesthetic |
+| Game Design & Engagement | 7.4/10 | ⚠️ Procedural audio — top gap |
+| Business Viability | 4.0/10 | ⚠️ No analytics/revenue yet |
+| Security & Data Integrity | 7.0/10 | ⚠️ Client-side checksums |
+| Testing Coverage | 8.5/10 | ✅ 409 tests |
+| Feature Completeness | 7.2/10 | ✅ A11y + daily challenges |
 
 ---
 
@@ -32,9 +68,33 @@ Resolved a critical rendering crash within `<CustomCursor>`:
 
 ## 🛠️ Architecture Standards
 
-- **Systemic Orchestration**: Core engine mechanics are organized into modular single-purpose controllers (`InputSystem.ts`, `WaveManager.ts`, `ParticleSystem.ts`, `Renderer.ts`).
+- **Systemic Orchestration**: Core engine mechanics are organized into modular single-purpose controllers (`InputSystem`, `WaveManager`, `CollisionSystem`, `BossSystem`, `PowerupSystem`, `HazardSystem`).
+- **Renderer Split**: `Renderer.ts` orchestrates `src/game/rendering/{Environment,Bug,Particle,UIRenderer}.ts` + `PerformanceScaler.ts`.
 - **Standard Delta Timing (`dt`)**: Game math and physics calculations are strictly tied to high-precision update delta ticks. No `setTimeout` or `setInterval` structures are used.
 - **Deterministic Type Safety**: Game-specific interface definitions and strict schemas reside in `src/game/GameTypes.ts`.
+
+---
+
+## 🧭 Development Roadmap (Priority Order)
+
+### Phase 1 — Production Readiness ✅
+- [x] Extract monoliths: CollisionSystem, BossSystem, PowerupSystem, HazardSystem
+- [x] Split Renderer into sub-renderers under `src/game/rendering/`
+- [x] `GameEngineStatusBus` typed event bus
+- [x] `ParticleEngineHost` replaces `engine?: any`
+- [x] 409 tests across 16 files
+
+### Phase 2 — Commercial Polish
+- [ ] Replace procedural audio with professional SFX + adaptive soundtrack
+- [x] Accessibility suite (difficulty, reduced motion, gamepad, shape markers)
+- [x] Daily challenges with modifiers and cosmetics
+- [ ] Achievement gallery and lifetime stats dashboard
+
+### Phase 3 — Growth & Monetization
+- [ ] Cosmetics-only monetization (cursor skins, core themes, supporter pack)
+- [ ] Social features (auto-generated score images, friend challenges)
+- [ ] Analytics integration (PostHog/Mixpanel) for user behavior tracking
+- [ ] Re-engagement mechanics (push notifications, email campaigns)
 
 ---
 
@@ -42,12 +102,26 @@ Resolved a critical rendering crash within `<CustomCursor>`:
 
 ### Development
 ```bash
+git clone https://github.com/HopeTheoory/BugSmasher-ApZz.git
+cd BugSmasher-ApZz
 npm install
 npm run dev
+```
+
+### Quality & CI (required before push)
+```bash
+npm run ci          # lint + test + build
 ```
 
 ### Production Build
 ```bash
 npm run build
 npm run preview
+```
+
+### Deploy
+See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for Firebase Hosting, GitHub Actions, and release checklist.
+
+```bash
+npm run deploy:hosting   # build + firebase deploy
 ```

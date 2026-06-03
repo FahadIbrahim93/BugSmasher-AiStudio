@@ -22,7 +22,18 @@ describe('SaveManager', () => {
     expect(success).toBe(true);
 
     const loaded = await SaveManager.load();
-    expect(loaded).toEqual(data);
+    expect(loaded).not.toBeNull();
+    if (loaded) {
+      // Core game data fields should match
+      expect(loaded.score).toBe(data.score);
+      expect(loaded.wave).toBe(data.wave);
+      expect(loaded.health).toBe(data.health);
+      expect(loaded.maxHealth).toBe(data.maxHealth);
+      expect(loaded.clickRadiusMultiplier).toBe(data.clickRadiusMultiplier);
+      expect(loaded.autoTurretLevel).toBe(data.autoTurretLevel);
+      // Checksum will be present (added by save system)
+      expect(loaded).toHaveProperty('checksum');
+    }
   });
 
   it('should handle high scores correctly', async () => {

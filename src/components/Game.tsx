@@ -18,8 +18,25 @@ import { StoryCutscene } from './StoryCutscene';
 import { StoryManager } from '../game/StoryManager';
 import { StoryBeat } from '../data/lore';
 import { TerminalLog } from './TerminalLog';
+import {
+  completeChallenge,
+  getTodaysChallenge,
+  type ChallengeModifierId,
+  type WinCondition,
+} from '../game/DailyChallengeManager';
 
-export function Game({ onMainMenu }: { onMainMenu: () => void }) {
+function checkWinCondition(engine: GameEngine, condition: WinCondition): boolean {
+  switch (condition.type) {
+    case 'wave':
+      return engine.wave >= condition.value;
+    case 'score':
+      return engine.score >= condition.value;
+    case 'kills':
+      return engine.totalKills >= condition.value;
+  }
+}
+
+export function Game({ onMainMenu, challengeModifiers }: { onMainMenu: () => void; challengeModifiers?: ChallengeModifierId[] }) {
   const [isGameOver, setIsGameOver] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [isProgressionOpen, setIsProgressionOpen] = useState(false);
@@ -38,6 +55,20 @@ export function Game({ onMainMenu }: { onMainMenu: () => void }) {
   const handleGameOver = useCallback((score: number) => {
     setFinalScore(score);
     setIsGameOver(true);
+
+    // Check challenge completion
+    if (engineRef.current?.isChallengeMode) {
+      const challenge = getTodaysChallenge();
+      const met = checkWinCondition(engineRef.current, challenge.winCondition);
+      if (met) {
+        completeChallenge({
+          completed: true,
+          score: score,
+          wave: engineRef.current.wave,
+          modifierConditions: {},
+        });
+      }
+    }
     
     // Final stats push
     if (engineRef.current) {
@@ -172,6 +203,28 @@ export function Game({ onMainMenu }: { onMainMenu: () => void }) {
       if (engineRef.current) engineRef.current.pause();
       setActiveStoryBeat(beat);
     }
+  }, []);
+
+    // Apply challenge modifiers to engine when canvas ref is set
+  useEffect(() => {
+    if (engineRef.current && challengeModifiers && !engineRef.current.isChallengeMode) {
+      engineRef.current.setChallengeModifiers(challengeModifiers);
+    }
+  }, [engineRef.current, challengeModifiers]);
+
+  // Listen for challenge reward events to grant progression
+  useEffect(() => {
+    const handleReward = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail.type === 'resources') {
+        // Defer to ProgressionManager via dynamic import to avoid circular deps
+        import('../game/ProgressionManager').then(({ ProgressionManager }) => {
+          ProgressionManager.addResource(detail.id as any, detail.id === 'crystals' ? 25 : 500);
+        });
+      }
+    };
+    window.addEventListener('challenge_reward', handleReward);
+    return () => window.removeEventListener('challenge_reward', handleReward);
   }, []);
 
   return (

@@ -1,13 +1,27 @@
 import { motion } from 'motion/react';
-import { Volume2, VolumeX, Settings2, ArrowLeft, MousePointer2, Monitor } from 'lucide-react';
+import { Volume2, VolumeX, Settings2, ArrowLeft, MousePointer2, Monitor, Gem, Accessibility } from 'lucide-react';
 import { soundManager } from '../game/SoundManager';
 import { useState } from 'react';
+import {
+  loadAccessibilitySettings,
+  saveAccessibilitySettings,
+  type AccessibilitySettings,
+  type ColorblindMode,
+  type DifficultyId,
+} from '../game/AccessibilitySettings';
 
-export function SettingsMenu({ onBack }: { onBack: () => void }) {
+export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onOpenArmory?: () => void }) {
   const [masterVol, setMasterVol] = useState(soundManager.masterVolume);
   const [sfxVol, setSfxVol] = useState(soundManager.sfxVolume);
   const [musicVol, setMusicVol] = useState(soundManager.musicVolume);
   const [isMuted, setIsMuted] = useState(soundManager.isMuted);
+  const [a11y, setA11y] = useState<AccessibilitySettings>(loadAccessibilitySettings);
+
+  const updateA11y = (patch: Partial<AccessibilitySettings>) => {
+    const next = { ...a11y, ...patch };
+    setA11y(next);
+    saveAccessibilitySettings(next);
+  };
 
   const handleMasterVolume = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value);
@@ -191,6 +205,82 @@ export function SettingsMenu({ onBack }: { onBack: () => void }) {
               </div>
             </section>
           </div>
+        </div>
+
+        {/* Accessibility */}
+        <section className="mt-8 pt-8 border-t border-white/5 space-y-6">
+          <div className="flex items-center space-x-3 text-zinc-500 font-mono text-xs uppercase tracking-widest border-b border-white/5 pb-2">
+            <Accessibility className="w-4 h-4" />
+            <span>Accessibility</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label className="flex flex-col gap-2 font-mono text-xs text-zinc-400 uppercase">
+              Difficulty
+              <select
+                value={a11y.difficulty}
+                onChange={(e) => { soundManager.uiClick(); updateA11y({ difficulty: e.target.value as DifficultyId }); }}
+                className="bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-white text-sm normal-case"
+              >
+                <option value="easy">Easy</option>
+                <option value="normal">Normal</option>
+                <option value="hard">Hard</option>
+              </select>
+            </label>
+            <label className="flex flex-col gap-2 font-mono text-xs text-zinc-400 uppercase">
+              Colorblind Assist
+              <select
+                value={a11y.colorblindMode}
+                onChange={(e) => { soundManager.uiClick(); updateA11y({ colorblindMode: e.target.value as ColorblindMode, showEnemyShapes: e.target.value !== 'off' }); }}
+                className="bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-white text-sm normal-case"
+              >
+                <option value="off">Off</option>
+                <option value="protanopia">Protanopia</option>
+                <option value="deuteranopia">Deuteranopia</option>
+                <option value="tritanopia">Tritanopia</option>
+              </select>
+            </label>
+          </div>
+          {[
+            { key: 'reducedMotion' as const, label: 'Reduced Motion', hint: 'Disables screen shake' },
+            { key: 'showEnemyShapes' as const, label: 'Enemy Shape Icons', hint: 'Shape markers on bugs' },
+            { key: 'gamepadEnabled' as const, label: 'Gamepad Support', hint: 'Left stick aim, A / RT fire' },
+          ].map((item) => (
+            <div
+              key={item.key}
+              onClick={() => { soundManager.uiClick(); updateA11y({ [item.key]: !a11y[item.key] }); }}
+              className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+            >
+              <div>
+                <span className="text-zinc-400 font-mono text-xs uppercase">{item.label}</span>
+                <p className="text-[9px] text-zinc-500 font-mono">{item.hint}</p>
+              </div>
+              <div className={`w-10 h-5 rounded-full relative ${a11y[item.key] ? 'bg-emerald-500' : 'bg-zinc-700'}`}>
+                <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${a11y[item.key] ? 'left-6' : 'left-1'}`} />
+              </div>
+            </div>
+          ))}
+        </section>
+
+        {/* Cosmetics Shortcut */}
+        <div className="mt-8 pt-8 border-t border-white/5">
+          <button
+            onClick={() => {
+              soundManager.uiClick();
+              onOpenArmory?.();
+            }}
+            className="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all group"
+          >
+            <div className="flex items-center space-x-3">
+              <Gem className="w-5 h-5 text-purple-400" />
+              <div className="text-left">
+                <span className="text-sm font-bold text-zinc-300 group-hover:text-white transition-colors">Armory</span>
+                <p className="text-[10px] font-mono text-zinc-500">Cursor skins, core themes & cosmetics</p>
+              </div>
+            </div>
+            <svg className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
         </div>
 
         <div className="mt-12 flex justify-center">

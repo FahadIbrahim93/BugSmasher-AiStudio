@@ -19,6 +19,53 @@ export class InputSystem {
     this.engine.canvas.addEventListener('pointerdown', this.handlePointerDown);
     this.engine.canvas.addEventListener('pointermove', this.handlePointerMove);
     window.addEventListener('keydown', this.handleKeyDown);
+    this.handleGamepad = this.handleGamepad.bind(this);
+  }
+
+  private gamepadPollId: number | null = null;
+  private lastGamepadClick = false;
+
+  startGamepadPolling(): void {
+    if (!this.engine.accessibility.gamepadEnabled) return;
+    if (this.gamepadPollId !== null) return;
+    const poll = () => {
+      this.handleGamepad();
+      this.gamepadPollId = requestAnimationFrame(poll);
+    };
+    this.gamepadPollId = requestAnimationFrame(poll);
+  }
+
+  stopGamepadPolling(): void {
+    if (this.gamepadPollId !== null) {
+      cancelAnimationFrame(this.gamepadPollId);
+      this.gamepadPollId = null;
+    }
+  }
+
+  private handleGamepad(): void {
+    if (!this.engine.isRunning || this.engine.isPaused) return;
+    const pads = navigator.getGamepads?.();
+    if (!pads) return;
+    const pad = pads[0];
+    if (!pad) return;
+    const ax = pad.axes[0] ?? 0;
+    const ay = pad.axes[1] ?? 0;
+    const deadzone = 0.2;
+    if (Math.abs(ax) > deadzone || Math.abs(ay) > deadzone) {
+      this.lastMouseX = Math.max(
+        0,
+        Math.min(this.engine.width, this.lastMouseX + ax * 12)
+      );
+      this.lastMouseY = Math.max(
+        0,
+        Math.min(this.engine.height, this.lastMouseY + ay * 12)
+      );
+    }
+    const fire = pad.buttons[0]?.pressed || pad.buttons[7]?.pressed;
+    if (fire && !this.lastGamepadClick) {
+      this.processClick(this.lastMouseX + (this.engine.canvas.getBoundingClientRect?.()?.left ?? 0), this.lastMouseY + (this.engine.canvas.getBoundingClientRect?.()?.top ?? 0));
+    }
+    this.lastGamepadClick = !!fire;
   }
 
   private handleKeyDown(e: KeyboardEvent) {
@@ -201,6 +248,7 @@ export class InputSystem {
   }
 
   public destroy() {
+    this.stopGamepadPolling();
     this.engine.canvas.removeEventListener('pointerdown', this.handlePointerDown);
     this.engine.canvas.removeEventListener('pointermove', this.handlePointerMove);
     window.removeEventListener('keydown', this.handleKeyDown);

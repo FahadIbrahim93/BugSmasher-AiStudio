@@ -1,4 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
+import { getActiveSkin } from '../game/DailyChallengeManager';
+import { GameEngineStatusBus, type GameEngineStatus } from '../game/GameEngineStatusBus';
 
 interface VentParticle {
   x: number;
@@ -32,6 +34,14 @@ export function CustomCursor() {
   const [rapidFireActive, setRapidFireActive] = useState(false);
   const [spikeBurstActive, setSpikeBurstActive] = useState(false);
   const [lastCritTime, setLastCritTime] = useState(0);
+
+  // Active cursor skin from daily challenge rewards
+  const [activeSkin, setActiveSkin] = useState<string | null>(null);
+  useEffect(() => {
+    if (!isMobileDevice) {
+      setActiveSkin(getActiveSkin());
+    }
+  }, [isMobileDevice]);
   
   const currentPosRef = useRef({ x: -100, y: -100 });
   const trailPosRef = useRef({ x: -100, y: -100 });
@@ -54,6 +64,44 @@ export function CustomCursor() {
       ('ontouchstart' in window);
     setIsMobileDevice(isMobile);
   }, []);
+
+  const applyEngineStatus = (status: GameEngineStatus | null) => {
+    if (!status) {
+      if (lastStateRef.current.biome !== 'neon_core') {
+        lastStateRef.current = { biome: 'neon_core', healthPercent: 1, intensity: 1 };
+        setBiome('neon_core');
+        setHealthPercent(1);
+        setIntensity(1);
+        setWeaponHeat(0);
+        setIsOverheated(false);
+      }
+      return;
+    }
+    const pct = status.maxHealth > 0 ? status.health / status.maxHealth : 1;
+    const biomeVal = status.currentBiome || 'neon_core';
+    const intensityVal = Math.round((status.intensity || 1) * 100) / 100;
+    setWeaponHeat(status.weaponHeat || 0);
+    setIsOverheated(!!status.isOverheated);
+    setDashCooldownTimer(status.dashCooldownTimer || 0);
+    setDashCooldown(status.dashCooldown || 3.0);
+    setRapidFireActive(!!(status.rapidFireTimer && status.rapidFireTimer > 0));
+    setSpikeBurstActive(!!(status.spikeBurstTimer && status.spikeBurstTimer > 0));
+    if (
+      biomeVal !== lastStateRef.current.biome ||
+      Math.abs(pct - lastStateRef.current.healthPercent) > 0.01 ||
+      Math.abs(intensityVal - lastStateRef.current.intensity) > 0.05
+    ) {
+      lastStateRef.current = { biome: biomeVal, healthPercent: pct, intensity: intensityVal };
+      setBiome(biomeVal);
+      setHealthPercent(pct);
+      setIntensity(intensityVal);
+    }
+  };
+
+  useEffect(() => {
+    if (isMobileDevice) return;
+    return GameEngineStatusBus.subscribe(applyEngineStatus);
+  }, [isMobileDevice]);
 
   // Listen for critical hit notifications from the Engine
   useEffect(() => {
@@ -180,62 +228,6 @@ export function CustomCursor() {
         });
       }
 
-      // Read game engine status from the window global safely
-      const status = (window as any).__gameEngineStatus;
-      let checkOverheated = false;
-      let checkHeat = 0;
-
-      if (status) {
-        const pct = status.maxHealth > 0 ? status.health / status.maxHealth : 1;
-        const biomeVal = status.currentBiome || 'neon_core';
-        // Stabilize intensity value slightly to avoid performance jitter
-        const rawIntensity = status.intensity || 1;
-        const intensityVal = Math.round(rawIntensity * 100) / 100;
-
-        checkHeat = status.weaponHeat || 0;
-        checkOverheated = !!status.isOverheated;
-        setWeaponHeat(checkHeat);
-        setIsOverheated(checkOverheated);
-
-        // Sync Dash HUD parameters for the radial mobility indicators
-        setDashCooldownTimer(status.dashCooldownTimer || 0);
-        setDashCooldown(status.dashCooldown || 3.0);
-
-        // Sync weapon states for center mode icons
-        setRapidFireActive(!!(status.rapidFireTimer && status.rapidFireTimer > 0));
-        setSpikeBurstActive(!!(status.spikeBurstTimer && status.spikeBurstTimer > 0));
-
-        if (
-          biomeVal !== lastStateRef.current.biome ||
-          Math.abs(pct - lastStateRef.current.healthPercent) > 0.01 ||
-          Math.abs(intensityVal - lastStateRef.current.intensity) > 0.05
-        ) {
-          lastStateRef.current = { biome: biomeVal, healthPercent: pct, intensity: intensityVal };
-          setBiome(biomeVal);
-          setHealthPercent(pct);
-          setIntensity(intensityVal);
-        }
-      } else {
-        // Reset to default on unmount or menu transition
-        if (
-          lastStateRef.current.biome !== 'neon_core' || 
-          lastStateRef.current.healthPercent !== 1 ||
-          weaponHeat !== 0 ||
-          isOverheated
-        ) {
-          lastStateRef.current = { biome: 'neon_core', healthPercent: 1, intensity: 1 };
-          setBiome('neon_core');
-          setHealthPercent(1);
-          setIntensity(1);
-          setWeaponHeat(0);
-          setIsOverheated(false);
-          setDashCooldownTimer(0);
-          setDashCooldown(3.0);
-          setRapidFireActive(false);
-          setSpikeBurstActive(false);
-        }
-      }
-      
       // Update steam venting particle canvas overlay
       const canvas = ventCanvasRef.current;
       if (canvas) {
@@ -252,7 +244,7 @@ export function CustomCursor() {
 
           // Emit steam particles
           // If overheated, emit very dense active venting steam. If high heat, emit minor venting steam.
-          const emitChance = checkOverheated ? 0.8 : (checkHeat > 60 ? 0.25 : 0.0);
+          const emitChance = isOverheated ? 0.8 : (weaponHeat > 60 ? 0.25 : 0.0);
           if (emitChance > 0 && Math.random() < emitChance) {
             const angle = Math.random() * Math.PI * 2;
             const dist = 12 + Math.random() * 8;
@@ -263,7 +255,7 @@ export function CustomCursor() {
             const speedX = Math.cos(angle) * 0.4 + (Math.random() - 0.5) * 0.3;
             const speedY = -0.5 - Math.random() * 1.5; // Rise up
             
-            const heatColor = checkOverheated 
+            const heatColor = isOverheated 
               ? (Math.random() < 0.3 ? 'rgba(239, 68, 68, 0.5)' : Math.random() < 0.6 ? 'rgba(249, 115, 22, 0.4)' : 'rgba(220, 220, 220, 0.45)') 
               : 'rgba(200, 200, 200, 0.3)';
 
@@ -322,7 +314,8 @@ export function CustomCursor() {
     isHoveringInteractive ? 'hovering' : '',
     isClicking ? 'clicking' : '',
     isCritical ? 'critical-health' : '',
-    hasWeaponMode ? 'has-weapon-mode' : ''
+    hasWeaponMode ? 'has-weapon-mode' : '',
+    activeSkin ? `cursor-skin-${activeSkin}` : ''
   ].filter(Boolean).join(' ');
 
   // Direct element custom property injection for elite visual flair

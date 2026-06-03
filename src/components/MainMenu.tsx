@@ -1,4 +1,4 @@
-import { Bug, Settings2, Trophy, User, BookOpen, ListOrdered, Zap } from 'lucide-react';
+import { Bug, Settings2, Trophy, User, BookOpen, ListOrdered, Zap, Calendar, Gem } from 'lucide-react';
 import { soundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
 import { ProgressionManager } from '../game/ProgressionManager';
@@ -6,18 +6,45 @@ import { useState } from 'react';
 import { AccountMenu } from './AccountMenu';
 import { IntelHub } from './IntelHub';
 import { Leaderboard } from './Leaderboard';
+import { Armory } from './Armory';
+import { DailyChallengeModal } from './DailyChallengeModal';
+import { isTodaysChallengeCompleted, getStreakInfo } from '../game/DailyChallengeManager';
+import { isSupporter } from '../game/CosmeticsManager';
+import { type ChallengeModifierId } from '../game/DailyChallengeManager';
 
-export function MainMenu({ onStart, onSettings, onIntel }: { onStart: () => void, onSettings: () => void, onIntel?: () => void }) {
+export function MainMenu({ onStart, onSettings, onIntel }: { 
+  onStart: (challengeMods?: ChallengeModifierId[]) => void, 
+  onSettings: () => void, 
+  onIntel?: () => void 
+}) {
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+  const [isDailyChallengeOpen, setIsDailyChallengeOpen] = useState(false);
+  const [isArmoryOpen, setIsArmoryOpen] = useState(false);
+  const supporter = isSupporter();
   const highScore = SaveManager.getHighScore();
+  const challengeCompleted = isTodaysChallengeCompleted();
+  const streak = getStreakInfo();
 
   return (
     <div className="flex flex-col items-center justify-center h-full bg-[#050505] relative p-4">
+      {isArmoryOpen && <Armory onClose={() => setIsArmoryOpen(false)} />}
       {isAccountOpen && <AccountMenu onClose={() => setIsAccountOpen(false)} />}
       {isLeaderboardOpen && <Leaderboard onClose={() => setIsLeaderboardOpen(false)} />}
-      
-      {/* Remove previous gradient backgrounds as we want absolute minimalist black */}
+      {isDailyChallengeOpen && (
+        <DailyChallengeModal 
+          onStart={() => {
+            setIsDailyChallengeOpen(false);
+            // Import daily challenge manager to get modifiers and pass them to game start
+            import('../game/DailyChallengeManager').then(({ generateDailyChallenge }) => {
+              const challenge = generateDailyChallenge();
+              onStart(challenge.modifiers);
+            });
+          }}
+          onClose={() => setIsDailyChallengeOpen(false)}
+        />
+      )}
+
       <div className="z-10 flex flex-col items-center space-y-12 sm:space-y-16 w-full max-w-lg">
         <div className="text-center space-y-6">
           <div className="flex items-center justify-center mb-6">
@@ -64,6 +91,42 @@ export function MainMenu({ onStart, onSettings, onIntel }: { onStart: () => void
           >
             <span className="relative z-10 font-bold">Initialize Sequence</span>
             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
+          </button>
+
+          {/* Armory Button */}
+          <button 
+            onClick={() => { soundManager.init(); soundManager.uiClick(); setIsArmoryOpen(true); }}
+            onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
+            className={`group relative w-full sm:w-auto px-6 py-3 rounded-full font-bold text-xs uppercase tracking-widest transition-all overflow-hidden flex items-center justify-center space-x-2.5 ${
+              supporter 
+                ? 'bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500/20' 
+                : 'bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            <Gem className="w-4 h-4" />
+            <span>Armory</span>
+            {supporter && (
+              <span className="text-[8px] bg-purple-500/20 px-1.5 py-0.5 rounded uppercase font-black tracking-wider">Unlocked</span>
+            )}
+          </button>
+
+          {/* Daily Challenge Button */}
+          <button 
+            onClick={() => { soundManager.init(); soundManager.uiClick(); setIsDailyChallengeOpen(true); }}
+            onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
+            className={`group relative w-full sm:w-auto px-6 py-3 rounded-full font-bold text-xs uppercase tracking-widest transition-all overflow-hidden flex items-center justify-center space-x-2.5 ${
+              challengeCompleted 
+                ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' 
+                : 'bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20'
+            }`}
+          >
+            <Calendar className="w-4 h-4" />
+            <span>Daily Directive</span>
+            {challengeCompleted ? (
+              <span className="text-[8px] bg-emerald-500/20 px-1.5 py-0.5 rounded uppercase font-black tracking-wider">Done</span>
+            ) : streak.currentStreak >= 3 ? (
+              <span className="text-[8px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded uppercase font-black tracking-wider">{streak.currentStreak}d</span>
+            ) : null}
           </button>
 
           <button 

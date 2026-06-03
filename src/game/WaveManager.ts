@@ -16,6 +16,8 @@ export class WaveManager {
   bossWarningSounded: boolean = false;
   bossIntroActive: boolean = false;
   bossIntroTimer: number = 0;
+  difficultySpeedMultiplier: number = 1;
+  difficultyHpMultiplier: number = 1;
 
   constructor(engine: GameEngine) {
     this.engine = engine;
@@ -23,7 +25,8 @@ export class WaveManager {
 
   startWave() {
     this.waveActive = true;
-    this.isBossWave = (this.engine.wave % 10 === 0);
+    const bossInterval = this.engine.challengeModifiers?.bossWaveInterval || 10;
+    this.isBossWave = (this.engine.wave % bossInterval === 0);
     this.bossSpawned = false;
     this.bossWarningSounded = false;
     this.bossIntroActive = this.isBossWave;
@@ -188,15 +191,19 @@ export class WaveManager {
     if (biome === 'void_abyss' && r < 0.2) return 'phase';
     
     // Special units chance
-    if (wave > 8 && r < 0.05) return 'healer';
+    const healerWeight = this.engine.challengeModifiers?.healerSpawnMultiplier || 1;
+    if (wave > 8 && r < 0.05 * healerWeight) return 'healer';
 
     const types = ['basic', 'scout', 'tank', 'swarmer', 'ghost', 'phase', 'ember', 'frost'];
     if (wave < 6) return r < 0.6 ? 'basic' : (r < 0.8 ? 'scout' : 'swarmer');
+    // Challenge modifier: tank_wave increases tank spawn rate
+    const tankWeight = this.engine.challengeModifiers?.tankSpawnMultiplier || 1;
+
     if (wave < 12) {
         if (r < 0.3) return 'basic';
         if (r < 0.5) return 'scout';
         if (r < 0.7) return 'swarmer';
-        if (r < 0.9) return 'tank';
+        if (r < 0.7 + 0.2 * tankWeight) return 'tank';
         return 'ghost';
     }
     
@@ -218,8 +225,15 @@ export class WaveManager {
     
     // Scale stats by both Wave and Performance
     const scaling = 1 + (wave * 0.05) + (this.engine.performanceFactor - 1.0);
-    const hp = Math.floor((conf.baseHp + Math.floor(wave * conf.hpPerWave)) * (1 + (this.engine.performanceFactor - 1) * 0.5));
-    const speed = (conf.baseSpeed + wave * conf.speedPerWave) * (1 + (this.engine.performanceFactor - 1) * 0.2);
+    const hp = Math.floor(
+      (conf.baseHp + Math.floor(wave * conf.hpPerWave)) *
+        (1 + (this.engine.performanceFactor - 1) * 0.5) *
+        this.difficultyHpMultiplier
+    );
+    const speed =
+      (conf.baseSpeed + wave * conf.speedPerWave) *
+      (1 + (this.engine.performanceFactor - 1) * 0.2) *
+      this.difficultySpeedMultiplier;
 
     return {
       active: true,

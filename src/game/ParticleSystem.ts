@@ -24,8 +24,10 @@ const MAX_LASERS = 50;
 const MAX_MUZZLE_FLASHES = 20;
 const MAX_DROPS_PER_SPLATTER = 16;
 
+import type { ParticleEngineHost } from './ParticleEngineHost';
+
 export class ParticleSystem {
-  engine?: any;
+  engine?: ParticleEngineHost;
   
   get vfxCountMultiplier(): number {
     if (!this.engine) return 1.0;
