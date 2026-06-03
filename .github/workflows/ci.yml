@@ -52,13 +52,14 @@ jobs:
           retention-days: 7
 
   deploy-preview:
-    name: Deploy Preview (main only)
+    name: Deploy Preview (PRs) + Live (main)
     needs: quality
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: (github.event_name == 'pull_request') || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout
@@ -75,11 +76,11 @@ jobs:
           npm ci
           npm run build
 
-      - name: Deploy to Firebase Hosting
+      - name: Deploy to Firebase Hosting (preview channel for PRs, live for main)
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          channelId: live
+          channelId: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || 'live' }}
           projectId: studio-1155838266-56095
         continue-on-error: true
