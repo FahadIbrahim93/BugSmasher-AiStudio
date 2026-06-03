@@ -19,6 +19,7 @@ import { StoryCutscene } from './StoryCutscene';
 import { StoryManager } from '../game/StoryManager';
 import { StoryBeat } from '../data/lore';
 import { TerminalLog } from './TerminalLog';
+import type { ResourceType } from '../game/ResourceTypes';
 import {
   completeChallenge,
   getTodaysChallenge,
@@ -250,7 +251,7 @@ export function Game({
       if (detail.type === 'resources') {
         // Defer to ProgressionManager via dynamic import to avoid circular deps
         import('../game/ProgressionManager').then(({ ProgressionManager }) => {
-          ProgressionManager.addResource(detail.id as any, detail.id === 'crystals' ? 25 : 500);
+          ProgressionManager.addResource(detail.id as ResourceType, detail.id === 'crystals' ? 25 : 500);
         });
       }
     };

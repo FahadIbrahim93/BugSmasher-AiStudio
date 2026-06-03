@@ -1,13 +1,9 @@
 node_modules/
-build/
 dist/
+build/
 coverage/
 .DS_Store
 *.log
 .env*
 !.env.example
-
-# Functions (Cloud Functions for Firebase)
-functions/node_modules/
-functions/lib/
-functions/.env*
+nul

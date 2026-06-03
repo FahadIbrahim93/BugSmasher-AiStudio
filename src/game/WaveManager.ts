@@ -228,7 +228,8 @@ export class WaveManager {
     else if (edge === 2) { x = Math.random() * this.engine.width; y = this.engine.height + margin; }
     else { x = -margin; y = Math.random() * this.engine.height; }
 
-    const conf = (GameConfig.bugs as any)[typeName];
+    const bugsConfig = GameConfig.bugs as unknown as Record<string, { color: string; size: number; baseHp: number; hpPerWave: number; baseSpeed: number; speedPerWave: number; score: number }>;
+    const conf = bugsConfig[typeName];
     
     // Scale stats by both Wave and Performance
     const scaling = 1 + (wave * 0.05) + (this.engine.performanceFactor - 1.0);

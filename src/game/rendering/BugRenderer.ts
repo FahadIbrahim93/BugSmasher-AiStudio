@@ -212,7 +212,7 @@ export class BugRenderer {
       const themeShadow = coreTheme ? coreTheme.colors.glow : coreColor;
       ctx.shadowColor = coreTheme && this.parent.powerupAlpha <= 0.01 ? themeShadow : coreColor;
       // emissiveScale from preset (1.6 ultra ... 0.9 mobile) boosts core "glow" feel
-      const em = (this.scaler as any).emissiveScale ?? 1.0;
+      const em = this.scaler.emissiveScale;
       ctx.shadowBlur = (coreTheme ? 22 : 14) * em;
       ctx.shadowBlur = (20 + this.parent.fireAlpha * 40 + this.parent.impactFlash * 60 + this.parent.powerupAlpha * 40) * pulseFactor;
     }

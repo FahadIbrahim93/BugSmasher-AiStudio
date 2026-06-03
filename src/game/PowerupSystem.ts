@@ -118,7 +118,7 @@ export class PowerupSystem {
     this.engine.renderer.powerupAlpha = 1.0;
     this.engine.totalPowerupsCollected++;
     StatsManager.updateStats({ totalPowerupsCollected: 1 });
-    import('./SoundManager').then(({ soundManager }) => soundManager.powerup(type as any));
+    import('./SoundManager').then(({ soundManager }) => soundManager.powerup(type));
     this.engine.particleSystem.spawnShockwave(
       this.engine.coreX,
       this.engine.coreY,

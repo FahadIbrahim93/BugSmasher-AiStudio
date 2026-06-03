@@ -288,7 +288,7 @@ export class EnvironmentRenderer {
     // Intensity factor combining wave progression, boss flag, and performance surge
     const performanceFactor = Math.max(1, this.engine.performanceFactor);
     // crtIntensity from scaler provides preset-driven base (0.04 mobile ... 0.22 ultra) + auto damp
-    const crtBase = (this.scaler as any).crtIntensity ?? 0.12;
+    const crtBase = this.scaler.crtIntensity;
     const intensity = (isBoss ? 0.6 : Math.min(0.3, (this.engine.wave - 15) * 0.01)) * (performanceFactor * 0.5 + 0.5) * (crtBase / 0.16);
     
     // Random scanline flicker - reduced frequency on low FPS

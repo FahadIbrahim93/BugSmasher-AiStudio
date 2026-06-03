@@ -424,7 +424,7 @@ export class SoundManager {
 
   init() {
     if (!this.ctx) {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!AudioContextClass) return;
 
       this.ctx = new AudioContextClass();

@@ -19,9 +19,9 @@ export const GameCanvas = forwardRef<GameEngine | null, GameCanvasProps>(({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<GameEngine | null>(null);
 
-  useImperativeHandle(ref, () => {
-    return new Proxy({}, {
-      get: (target, prop) => {
+  useImperativeHandle(ref, (): GameEngine => {
+    return new Proxy({} as GameEngine, {
+      get: (_, prop) => {
         if (!engineRef.current) return undefined;
         const value = (engineRef.current as any)[prop];
         if (typeof value === 'function') {
@@ -29,14 +29,14 @@ export const GameCanvas = forwardRef<GameEngine | null, GameCanvasProps>(({
         }
         return value;
       },
-      set: (target, prop, value) => {
+      set: (_, prop, value) => {
         if (engineRef.current) {
           (engineRef.current as any)[prop] = value;
           return true;
         }
         return false;
       }
-    }) as any;
+    });
   });
 
   useEffect(() => {
