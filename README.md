@@ -18,6 +18,7 @@ An ultra-minimalist, high-intensity AI-themed base defense game showcasing the v
 | [DESIGN_DOC.md](./DESIGN_DOC.md) | Creative vision & core loop |
 | [SESSION.md](./SESSION.md) | Latest session log |
 | [security_spec.md](./security_spec.md) | Firestore security model |
+| [CHANGELOG.md](./CHANGELOG.md) | Version history |
 
 ---
 
