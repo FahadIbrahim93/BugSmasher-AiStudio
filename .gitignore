@@ -9,3 +9,5 @@ coverage/
 nul
 
 .vercel
+CLAUDE.md
+.openclaude/
