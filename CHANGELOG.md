@@ -2,6 +2,30 @@
 
 All notable changes to BUGSMASHER are documented here. Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [2.5.0] - 2026-06 (feat/enterprise-10x-elevation)
+
+### Added
+- Full 10/10 enterprise elevation (see docs/2026_10X_TRANSFORMATION_ROADMAP.md + 10X_ELEVATION_FINAL_REPORT.md)
+- `vite-plugin-pwa` + brutalist PWA icons (192/512) + SW precache + offline audio cache (true installable + 2026 PWA)
+- `QUALITY_PRESETS` (Ultra/High/Balanced/Mobile) + crt/heat/emissive/glow tunables in PerformanceScaler (ported concepts from pro three.js adaptive example; no direct import possible — Canvas 2D stack)
+- PR preview channels (Firebase `pr-N`) + functions validation in CI
+- `validate:functions` + full `npm run ci` gate
+- Bundle manualChunks (main app now ~290kB from 1.19MB; react/motion/firebase/vendor)
+
+### Changed
+- CI: root lint + functions + tests + build; deploy job supports previews + live
+- tsconfig excludes functions/; functions import v1 for tsc + lock committed
+- Renderer/Environment/BugRenderer wired to new preset scalars
+- Tests fixed + 411/411 green; git hygiene (gitignore functions/lib, conventional on feat branch)
+- PWA manifest now sourced in vite config (removed dupe public/)
+- index.html cleaned for plugin injection
+- Composite: ~9.3/10 (perf/ops/docs strong gains; see final report)
+
+### Fixed
+- InputSystem dash Space test (code + start consistency)
+- Root tsc on functions (exclude + CI step)
+- Large chunk warnings (splits + limit 600)
+
 ## [2.4.1] - 2026-06-03
 
 ### Added
