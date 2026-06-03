@@ -81,9 +81,11 @@ describe('InputSystem', () => {
 
     it('should trigger dash on Space key', () => {
       engine.isRunning = true;
+      engine.start();
       engine.triggerDash = vi.fn();
 
-      const event = new KeyboardEvent('keydown', { key: ' ' });
+      // Provide code to match DEFAULT_BINDINGS.dash = 'Space' (jsdom synthetic KeyboardEvent requires explicit .code)
+      const event = new KeyboardEvent('keydown', { key: ' ', code: 'Space' });
       window.dispatchEvent(event);
 
       expect(engine.triggerDash).toHaveBeenCalled();

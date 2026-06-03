@@ -32,6 +32,12 @@ jobs:
       - name: Typecheck
         run: npm run lint
 
+      - name: Typecheck Functions (Cloud Functions for server validation)
+        run: |
+          cd functions
+          npm ci
+          npm run build
+
       - name: Unit tests
         run: npm test
 
