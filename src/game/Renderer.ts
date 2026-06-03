@@ -59,6 +59,17 @@ export class Renderer {
     this.scaler.currentFps = value;
   }
 
+  // New quality/post tunables (from extended presets)
+  get crtIntensity(): number { return this.scaler.crtIntensity; }
+  get heatDistort(): number { return this.scaler.heatDistort; }
+  get emissiveScale(): number { return this.scaler.emissiveScale; }
+  get glowScalar(): number { return this.scaler.glowScalar; }
+  get currentQualityPreset(): string { return this.scaler.currentPreset; }
+
+  applyQualityPreset(name: import('./rendering/PerformanceScaler').QualityPresetName): void {
+    this.scaler.applyPreset(name);
+  }
+
   /** @deprecated Prefer draw() which calls scaler.tick() — kept for unit tests */
   updatePerformanceScaler(): void {
     this.scaler.tick();
