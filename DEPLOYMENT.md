@@ -122,7 +122,7 @@ Rules file: [`firestore.rules`](./firestore.rules)
 - [ ] `TASKBOARD.md` P0 items for this release marked `[x]`  
 - [ ] `SESSION.md` date and rating updated  
 - [ ] Version bumped in `package.json`  
-- [ ] Tag: `git tag -a v2.4.0 -m "Pre-production audit milestone"`  
+- [ ] Tag: `git tag -a v2.5.0 -m "10/10 enterprise elevation milestone"` (done via feat merge to main)  
 - [ ] Push branch + open PR to `main`  
 - [ ] After merge: verify Firebase Hosting + smoke test auth/saves  
 
