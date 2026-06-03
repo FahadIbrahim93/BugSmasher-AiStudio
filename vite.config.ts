@@ -66,5 +66,23 @@ export default defineConfig(({mode}) => {
       // Do not modify—file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
     },
+    build: {
+      // 600kB to accommodate firebase chunk (common for backend-integrated games); main app chunk now ~290kB thanks to splits
+      chunkSizeWarningLimit: 600,
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom')) return 'react';
+              if (id.includes('lucide-react')) return 'icons';
+              if (id.includes('motion')) return 'motion';
+              if (id.includes('firebase')) return 'firebase';
+              return 'vendor';
+            }
+            // Future: split heavy game/ UI if desired (e.g. if (id.includes('game/rendering')) return 'rendering';)
+          },
+        },
+      },
+    },
   };
 });
