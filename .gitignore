@@ -6,3 +6,8 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Functions (Cloud Functions for Firebase)
+functions/node_modules/
+functions/lib/
+functions/.env*
