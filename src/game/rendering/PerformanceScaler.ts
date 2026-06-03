@@ -11,6 +11,8 @@ export const QUALITY_PRESETS = {
   High:     { label: 'High — rich VFX, balanced post',       vfx: 0.95, mesh: 10, crt: 0.16, heat: 0.006, emissive: 1.35, glow: 0.9, dprCap: 1.75 },
   Balanced: { label: 'Balanced — 60fps target, lighter FX',  vfx: 0.8,  mesh: 16, crt: 0.10, heat: 0.003, emissive: 1.1,  glow: 0.7, dprCap: 1.25 },
   Mobile:   { label: 'Mobile — 30-60fps, minimal post',      vfx: 0.55, mesh: 32, crt: 0.04, heat: 0.0,   emissive: 0.9,  glow: 0.4, dprCap: 1.0 },
+  /** Emergency bare-minimum mode — skips all post-FX, minimal particles */
+  Headless: { label: 'Headless — bare minimum, 30fps target', vfx: 0.2,  mesh: 80, crt: 0.0,  heat: 0.0,   emissive: 0.4,  glow: 0.0, dprCap: 0.75 },
 } as const;
 
 export type QualityPresetName = keyof typeof QUALITY_PRESETS;
@@ -32,9 +34,22 @@ export class PerformanceScaler {
 
   currentPreset: QualityPresetName = 'High';
 
+  private lastFpsAlert: number = 0;
+
+  /** Force a full quality downgrade when FPS has been critically low for too long */
+  private emergencyDowngradeFps: number = 0;
+
   constructor(engine: GameEngine) {
     this.engine = engine;
-    this.applyPreset('High');
+    // Detect Vercel / cloud-hosted environments (no GPU acceleration)
+    const isCloudHosted = typeof navigator !== 'undefined' && (
+      navigator.hardwareConcurrency !== undefined && navigator.hardwareConcurrency <= 4
+    );
+    this.applyPreset('Balanced');
+    // Start more conservative in cloud environments
+    if (isCloudHosted) {
+      this.vfxScalar = Math.min(this.vfxScalar, 0.65);
+    }
   }
 
   /**
@@ -82,35 +97,56 @@ export class PerformanceScaler {
       const sum = this.fpsBuffer.reduce((a, b) => a + b, 0);
       this.currentFps = Math.round(sum / this.fpsBuffer.length);
 
-      // Auto-scale on top of current preset baseline (protects manual choice while still graceful)
+      // Track consecutive low-FPS readings for emergency downgrade
+      if (this.currentFps < 25) {
+        this.emergencyDowngradeFps++;
+      } else {
+        this.emergencyDowngradeFps = Math.max(0, this.emergencyDowngradeFps - 1);
+      }
+
       const base = QUALITY_PRESETS[this.currentPreset];
+
+      // Emergency downgrade: if FPS stays below 25 for 3+ consecutive readings, drop to Headless
+      if (this.emergencyDowngradeFps >= 3) {
+        this.applyPreset('Headless');
+        this.lastFpsAlert = now;
+        return;
+      }
+
       if (this.currentFps < 40) {
         const rangePercent = Math.max(0, (this.currentFps - 15) / (40 - 15));
-        this.vfxScalar = Math.min(base.vfx, 0.15 + rangePercent * 0.85);
+        this.vfxScalar = Math.min(base.vfx, 0.12 + rangePercent * 0.88);
 
         if (this.currentFps < 20) {
-          this.meshComplexityStep = Math.max(base.mesh, 80);
+          this.meshComplexityStep = Math.max(base.mesh, 100);
         } else if (this.currentFps < 30) {
-          this.meshComplexityStep = Math.max(base.mesh, 40);
+          this.meshComplexityStep = Math.max(base.mesh, 60);
         } else {
-          this.meshComplexityStep = Math.max(base.mesh, 20);
+          this.meshComplexityStep = Math.max(base.mesh, 30);
         }
-        // Dampen post FX on low FPS
-        this.crtIntensity = base.crt * 0.6;
-        this.heatDistort = base.heat * 0.5;
-        this.glowScalar = base.glow * 0.6;
+        // Aggressively dampen post FX when struggling
+        const dampFactor = this.currentFps < 30 ? 0.3 : 0.6;
+        this.crtIntensity = base.crt * dampFactor;
+        this.heatDistort = base.heat * dampFactor;
+        this.glowScalar = base.glow * dampFactor;
       } else {
-        this.vfxScalar = Math.min(base.vfx, this.vfxScalar + 0.08);
-        if (this.vfxScalar >= base.vfx * 0.98) {
+        // Only recover to base preset level, never above
+        this.vfxScalar = Math.min(base.vfx, this.vfxScalar + 0.05);
+        if (this.vfxScalar >= base.vfx * 0.95) {
           this.vfxScalar = base.vfx;
           this.meshComplexityStep = base.mesh;
           this.crtIntensity = base.crt;
           this.heatDistort = base.heat;
           this.glowScalar = base.glow;
-        } else if (this.vfxScalar > base.vfx * 0.65) {
-          this.meshComplexityStep = Math.min(base.mesh, 20);
         }
       }
+    }
+
+    // Every 5 seconds, check if we recovered enough to restore original preset
+    if (this.currentPreset === 'Headless' && this.currentFps > 45) {
+      const original = this.engine.isMobile ? 'Mobile' : 'Balanced';
+      this.applyPreset(original as QualityPresetName);
+      this.emergencyDowngradeFps = 0;
     }
   }
 }

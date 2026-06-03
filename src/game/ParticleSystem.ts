@@ -63,9 +63,13 @@ export class ParticleSystem {
   }
 
   update(dt: number) {
+    // Track active count — skip full iteration bursts when nothing is active
+    let anyActive = false;
+    
     for (let i = 0; i < MAX_PARTICLES; i++) {
       const p = this.particles[i];
       if (!p.active) continue;
+      anyActive = true;
       p.x += p.vx * dt;
       p.y += p.vy * dt;
       p.life -= dt;
@@ -75,6 +79,7 @@ export class ParticleSystem {
     for (let i = 0; i < MAX_SPLATTERS; i++) {
       const s = this.splatters[i];
       if (!s.active) continue;
+      anyActive = true;
       s.life -= dt;
       if (s.life <= 0) s.active = false;
     }
@@ -82,6 +87,7 @@ export class ParticleSystem {
     for (let i = 0; i < MAX_SHOCKWAVES; i++) {
       const sw = this.shockwaves[i];
       if (!sw.active) continue;
+      anyActive = true;
       sw.life -= dt;
       sw.radius += sw.speed * dt;
       if (sw.life <= 0) sw.active = false;
@@ -90,6 +96,7 @@ export class ParticleSystem {
     for (let i = 0; i < MAX_LASERS; i++) {
       const l = this.lasers[i];
       if (!l.active) continue;
+      anyActive = true;
       l.life -= dt;
       if (l.life <= 0) l.active = false;
     }
@@ -97,10 +104,17 @@ export class ParticleSystem {
     for (let i = 0; i < MAX_MUZZLE_FLASHES; i++) {
       const f = this.muzzleFlashes[i];
       if (!f.active) continue;
+      anyActive = true;
       f.life -= dt;
       if (f.life <= 0) f.active = false;
     }
+    
+    // Early-out hint: if nothing is active, skip rendering pass overhead
+    this.hasActiveEffects = anyActive;
   }
+
+  // Public flag so renderer can skip passes when nothing to draw
+  hasActiveEffects: boolean = false;
 
   spawnMuzzleFlash(x: number, y: number, size: number = 40) {
     const f = this.muzzleFlashes[this.muzzleFlashIdx];
@@ -265,18 +279,17 @@ export class ParticleSystem {
   }
 
   spawnInputFeedback(x: number, y: number) {
-    for (let i = 0; i < 3; i++) {
-      const sw = this.shockwaves[this.shockwaveIdx];
-      sw.active = true;
-      sw.x = x;
-      sw.y = y;
-      sw.radius = 5 + i * 5;
-      sw.speed = 200 + i * 100;
-      sw.color = i === 0 ? '#ffffff' : (i === 1 ? '#00ffff' : 'rgba(0, 255, 255, 0.5)');
-      sw.life = 0.2;
-      sw.maxLife = 0.2;
-      this.shockwaveIdx = (this.shockwaveIdx + 1) % MAX_SHOCKWAVES;
-    }
+    // Single shockwave instead of 3 — still gives visual feedback without triple overhead
+    const sw = this.shockwaves[this.shockwaveIdx];
+    sw.active = true;
+    sw.x = x;
+    sw.y = y;
+    sw.radius = 5;
+    sw.speed = 300;
+    sw.color = '#ffffff';
+    sw.life = 0.2;
+    sw.maxLife = 0.2;
+    this.shockwaveIdx = (this.shockwaveIdx + 1) % MAX_SHOCKWAVES;
   }
 
   spawnLaser(x1: number, y1: number, x2: number, y2: number, color: string, width: number = 2) {
@@ -286,21 +299,22 @@ export class ParticleSystem {
     l.y1 = y1;
     l.x2 = x2;
     l.y2 = y2;
-    l.life = 0.15;
-    l.maxLife = 0.15;
+    l.life = 0.12;
+    l.maxLife = 0.12;
     l.color = color;
     l.width = width;
     this.laserIdx = (this.laserIdx + 1) % MAX_LASERS;
     
-    const count = Math.max(1, Math.round(10 * this.vfxCountMultiplier));
+    // Reduced trail particles — was 10, now scales with width + multiplier
+    const count = Math.max(1, Math.round(4 * width * this.vfxCountMultiplier));
     for (let i = 0; i < count; i++) {
-      this.spawnParticle(x2, y2, color, Math.random() * 3 + 1, 0.2 + Math.random() * 0.1);
+      this.spawnParticle(x2, y2, color, Math.random() * 2 + 1, 0.12 + Math.random() * 0.08);
     }
   }
 
   spawnSparkExplosion(x: number, y: number, color: string) {
     const isLowQuality = this.engine && (this.engine.isMobile || !this.engine.highFidelityVFX);
-    let count = isLowQuality ? 6 : 20;
+    let count = isLowQuality ? 4 : 12;
     count = Math.max(1, Math.round(count * this.vfxCountMultiplier));
     for (let i = 0; i < count; i++) {
         const p = this.particles[this.particleIdx];
@@ -313,10 +327,10 @@ export class ParticleSystem {
         p.y = y;
         p.vx = Math.cos(angle) * speed;
         p.vy = Math.sin(angle) * speed;
-        p.size = Math.random() * 15 + 10;
+        p.size = Math.random() * 12 + 4;
         p.color = color;
         p.rotation = angle;
-        p.life = 0.3 + Math.random() * 0.2;
+        p.life = 0.25 + Math.random() * 0.15;
         p.maxLife = p.life;
         
         this.particleIdx = (this.particleIdx + 1) % MAX_PARTICLES;

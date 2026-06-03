@@ -8,6 +8,11 @@ import type { Renderer } from '../Renderer';
 import type { PerformanceScaler } from './PerformanceScaler';
 
 export class ParticleRenderer {
+  // Cached cloud gradients — avoid createRadialGradient 3× per frame
+  private cachedCloudGradients: Map<string, { gradient: CanvasGradient; cx: number; cy: number; r: number }> = new Map();
+  private lastCloudWidth: number = 0;
+  private lastCloudHeight: number = 0;
+
   constructor(
     protected engine: GameEngine,
     protected parent: Renderer,
@@ -262,7 +267,7 @@ export class ParticleRenderer {
   }
 
   drawClouds() {
-    if (this.isLowEnd) return;
+    if (this.isLowEnd || this.currentFps < 25) return;
     const ctx = this.engine.ctx;
     const w = this.engine.width;
     const h = this.engine.height;
@@ -276,19 +281,37 @@ export class ParticleRenderer {
     const surge = Math.min(1, this.engine.performanceFactor * 0.2 + this.parent.fireAlpha * 0.5);
     const bossFactor = isBoss ? 1.5 : 1.0;
     
-    // Create 3 large moving atmospheric clouds that react to combat
+    // Cache cloud gradients — recreate only on dimension or boss-state change
+    // (cloud gradient is always centered on the canvas, not on moving cloud center)
+    // Use a simple key for cache hit: dimension hash + boss flag
+    const cacheKey = `${w}x${h}_b${isBoss}`;
+    if (this.lastCloudWidth !== w || this.lastCloudHeight !== h) {
+      this.cachedCloudGradients.clear();
+      this.lastCloudWidth = w;
+      this.lastCloudHeight = h;
+    }
+    
+    // Cloud data (position animates but gradient is canvas-wide)
     const clouds = [
         { x: Math.sin(t * 0.1) * 200 + w * 0.5, y: Math.cos(t * 0.15) * 150 + h * 0.5, r: 400 * bossFactor, color: isBoss ? 'rgba(255, 50, 50, 0.03)' : 'rgba(50, 100, 255, 0.02)' },
         { x: Math.cos(t * 0.08) * 300 + w * 0.5, y: Math.sin(t * 0.12) * 200 + h * 0.5, r: 500 * bossFactor, color: isBoss ? 'rgba(255, 50, 150, 0.02)' : 'rgba(255, 50, 150, 0.015)' },
         { x: Math.sin(t * 0.05 + 2) * 250 + w * 0.5, y: Math.cos(t * 0.07 + 1) * 180 + h * 0.5, r: 600 * bossFactor, color: isBoss ? 'rgba(200, 0, 255, 0.015)' : 'rgba(50, 255, 200, 0.01)' }
     ];
 
-    clouds.forEach(c => {
-        const grad = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r * (1 + surge * 0.3));
+    clouds.forEach((c, idx) => {
+      const key = `${cacheKey}_${idx}`;
+      let cached = this.cachedCloudGradients.get(key);
+      if (!cached) {
+        const grad = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r);
         grad.addColorStop(0, c.color);
         grad.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, w, h);
+        this.cachedCloudGradients.set(key, { gradient: grad, cx: c.x, cy: c.y, r: c.r });
+        cached = { gradient: grad, cx: c.x, cy: c.y, r: c.r };
+      }
+      
+      // Apply surge scale dynamically (no need to recreate gradient)
+      ctx.fillStyle = cached.gradient;
+      ctx.fillRect(0, 0, w, h);
     });
 
     ctx.restore();

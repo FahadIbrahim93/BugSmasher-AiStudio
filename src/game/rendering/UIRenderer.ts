@@ -19,6 +19,10 @@ export class UIRenderer {
   protected get vfxScalar() { return this.scaler.vfxScalar; }
   protected get meshComplexityStep() { return this.scaler.meshComplexityStep; }
 
+  private cachedCoreLightGrad: CanvasGradient | null = null;
+  private lastLightW: number = 0;
+  private lastLightH: number = 0;
+
   drawLightingPass(width: number, height: number) {
     const ctx = this.engine.ctx;
     const bugs = this.engine.bugs;
@@ -45,23 +49,31 @@ export class UIRenderer {
     
     ctx.globalCompositeOperation = 'screen';
     
-    // Core light
-    const coreGrad = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, 200);
-    coreGrad.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
-    coreGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = coreGrad;
+    // Cache core light gradient — recreate only on dimension change
+    if (this.cachedCoreLightGrad === null || this.lastLightW !== width || this.lastLightH !== height) {
+      this.cachedCoreLightGrad = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, 200);
+      this.cachedCoreLightGrad.addColorStop(0, 'rgba(255, 255, 255, 0.4)');
+      this.cachedCoreLightGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      this.lastLightW = width;
+      this.lastLightH = height;
+    }
+    ctx.fillStyle = this.cachedCoreLightGrad;
     ctx.fillRect(0, 0, width, height);
 
-    // Light for each bug - only render lights for bugs closer than 300px to reduce draw calls
-    const maxLights = this.currentFps < 50 ? Math.min(5, bugs.length) : bugs.length;
+    // Skip per-bug lights entirely on low FPS — they add many gradient creations per frame
+    if (this.currentFps < 45 || bugs.length > 15) {
+      ctx.restore();
+      return;
+    }
+
+    // Light for each bug — limited to nearest 5
     let lightCount = 0;
-    for (let i = 0; i < bugs.length && lightCount < maxLights; i++) {
+    for (let i = 0; i < bugs.length && lightCount < 5; i++) {
       const bug = bugs[i];
       if (!bug.active) continue;
       const dx = bug.x - width/2;
       const dy = bug.y - height/2;
       const distSq = dx * dx + dy * dy;
-      // Skip distant bugs' lights
       if (distSq > 300 * 300) continue;
       
       const grad = ctx.createRadialGradient(bug.x, bug.y, 0, bug.x, bug.y, bug.size * 3);

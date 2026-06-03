@@ -374,9 +374,10 @@ export class BugRenderer {
       ctx.globalAlpha = 0.4 + flicker * 0.4;
     }
     
-    if (!this.isLowEnd && this.currentFps > 45) {
+    // Only shadowBlur on bosses/tanks when FPS is healthy — per-bug shadow is expensive
+    if (!this.isLowEnd && this.currentFps > 45 && (bug.type === 'boss' || bug.type === 'tank')) {
       ctx.shadowColor = bug.color;
-      ctx.shadowBlur = 15;
+      ctx.shadowBlur = 10;
     }
 
     // Body Detailing
@@ -497,16 +498,27 @@ export class BugRenderer {
     ctx.restore();
   }
 
+  // Cache trail gradients per color to avoid GC pressure
+  private trailGradientCache = new Map<string, CanvasGradient>();
+
   drawBugTrail(bug: Bug) {
     const ctx = this.engine.ctx;
+    const r = bug.size * 2;
+    
+    // Use cached gradient — createRadialGradient is expensive
+    let grad = this.trailGradientCache.get(bug.color);
+    if (!grad) {
+      grad = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+      grad.addColorStop(0, `${bug.color}33`);
+      grad.addColorStop(1, 'transparent');
+      this.trailGradientCache.set(bug.color, grad);
+    }
+
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
-    const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, bug.size * 2);
-    grad.addColorStop(0, `${bug.color}33`);
-    grad.addColorStop(1, 'transparent');
     ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.arc(0, 0, Math.max(0, bug.size * 2), 0, Math.PI * 2);
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
@@ -514,6 +526,18 @@ export class BugRenderer {
   drawBugBody(bug: Bug, legSwing: number) {
     const ctx = this.engine.ctx;
     const t = this.engine.globalTime;
+
+    // Skip detailed body rendering on critically low FPS — use simple circle
+    if (this.currentFps < 25) {
+      ctx.fillStyle = bug.color;
+      ctx.beginPath();
+      ctx.arc(0, 0, 15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      return;
+    }
 
     if (bug.type === 'scout') {
       this.drawScoutBody(bug, legSwing);
@@ -567,13 +591,8 @@ export class BugRenderer {
       this.drawLegSegment(10, y, 1, -swing, 15, 10);
     }
 
-    // Body segments with AAA shading
-    const grad = ctx.createRadialGradient(-5, -5, 0, 0, 0, 30);
-    grad.addColorStop(0, '#ffffff'); // Highlight
-    grad.addColorStop(0.2, bug.color);
-    grad.addColorStop(1, '#000000'); // Shadow
-
-    ctx.fillStyle = grad;
+    // Body segments with solid fill (avoids expensive gradient per bug)
+    ctx.fillStyle = bug.color;
     
     // Abdomen (Large back)
     ctx.beginPath();

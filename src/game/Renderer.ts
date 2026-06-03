@@ -26,6 +26,14 @@ export class Renderer {
   private particles: ParticleRenderer;
   private ui: UIRenderer;
 
+  // Cached gradients to avoid GC pressure (created once, invalidated on resize)
+  private cachedVignette: CanvasGradient | null = null;
+  private lastVignetteWidth: number = 0;
+  private lastVignetteHeight: number = 0;
+  private lastHealthRatio: number = -1;
+  private lastCrisis: boolean = false;
+  private lastVOpacity: number = -1;
+
   constructor(engine: GameEngine) {
     this.engine = engine;
     this.scaler = new PerformanceScaler(engine);
@@ -162,28 +170,32 @@ export class Renderer {
     }
 
     const ps = this.engine.particleSystem;
-    ctx.globalCompositeOperation = 'screen';
-    for (let i = 0; i < ps.splatters.length; i++) {
-      const s = ps.splatters[i];
-      if (s.active) this.particles.drawSplatter(s);
-    }
+    const hasEffects = ps.hasActiveEffects;
+    
+    if (hasEffects) {
+      ctx.globalCompositeOperation = 'screen';
+      for (let i = 0; i < ps.splatters.length; i++) {
+        const s = ps.splatters[i];
+        if (s.active) this.particles.drawSplatter(s);
+      }
 
-    ctx.globalCompositeOperation = 'lighter';
-    for (let i = 0; i < ps.shockwaves.length; i++) {
-      const sw = ps.shockwaves[i];
-      if (sw.active) this.particles.drawShockwave(sw);
-    }
-    for (let i = 0; i < ps.particles.length; i++) {
-      const p = ps.particles[i];
-      if (p.active) this.particles.drawParticle(p);
-    }
-    for (let i = 0; i < ps.lasers.length; i++) {
-      const l = ps.lasers[i];
-      if (l.active) this.particles.drawLaser(l);
-    }
-    for (let i = 0; i < ps.muzzleFlashes.length; i++) {
-      const mf = ps.muzzleFlashes[i];
-      if (mf.active) this.particles.drawMuzzleFlash(mf);
+      ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < ps.shockwaves.length; i++) {
+        const sw = ps.shockwaves[i];
+        if (sw.active) this.particles.drawShockwave(sw);
+      }
+      for (let i = 0; i < ps.particles.length; i++) {
+        const p = ps.particles[i];
+        if (p.active) this.particles.drawParticle(p);
+      }
+      for (let i = 0; i < ps.lasers.length; i++) {
+        const l = ps.lasers[i];
+        if (l.active) this.particles.drawLaser(l);
+      }
+      for (let i = 0; i < ps.muzzleFlashes.length; i++) {
+        const mf = ps.muzzleFlashes[i];
+        if (mf.active) this.particles.drawMuzzleFlash(mf);
+      }
     }
 
     ctx.globalCompositeOperation = 'source-over';
@@ -205,8 +217,13 @@ export class Renderer {
     const bugs = this.engine.bugs;
     for (let i = 0; i < bugs.length; i++) this.bugs.drawBug(bugs[i]);
 
-    this.environment.drawScanlines();
-    this.environment.drawCRTOverlay();
+    // Skip expensive overlay passes when FPS is struggling
+    if (this.currentFps > 30) {
+      this.environment.drawScanlines();
+    }
+    if (this.currentFps > 25) {
+      this.environment.drawCRTOverlay();
+    }
 
     if (this.chromaticOffset > 0) {
       this.environment.drawChromaticAberration();
@@ -234,21 +251,28 @@ export class Renderer {
       ? 0.5 + Math.sin(this.engine.globalTime * 8) * 0.2
       : Math.min(0.25, (this.engine.wave / 50) * 0.25);
 
-    const vignette = ctx.createRadialGradient(
-      width / 2,
-      height / 2,
-      width / 4,
-      width / 2,
-      height / 2,
-      width * 0.8
-    );
-    vignette.addColorStop(0, 'rgba(0,0,0,0)');
-    vignette.addColorStop(
-      1,
-      isCrisis ? `rgba(255, 0, 0, ${vOpacity * 0.5})` : `rgba(0, 0, 0, ${vOpacity})`
-    );
+    // Cache vignette gradient — recreate only on dimension/state change
+    if (this.cachedVignette === null ||
+        this.lastVignetteWidth !== width ||
+        this.lastVignetteHeight !== height ||
+        this.lastCrisis !== isCrisis ||
+        this.lastVOpacity !== vOpacity) {
+      this.cachedVignette = ctx.createRadialGradient(
+        width / 2, height / 2, width / 4,
+        width / 2, height / 2, width * 0.8
+      );
+      this.cachedVignette.addColorStop(0, 'rgba(0,0,0,0)');
+      this.cachedVignette.addColorStop(
+        1,
+        isCrisis ? `rgba(255, 0, 0, ${vOpacity * 0.5})` : `rgba(0, 0, 0, ${vOpacity})`
+      );
+      this.lastVignetteWidth = width;
+      this.lastVignetteHeight = height;
+      this.lastCrisis = isCrisis;
+      this.lastVOpacity = vOpacity;
+    }
 
-    ctx.fillStyle = vignette;
+    ctx.fillStyle = this.cachedVignette;
     ctx.fillRect(0, 0, width, height);
 
     this.ui.drawActivePowerupUI(width, height);

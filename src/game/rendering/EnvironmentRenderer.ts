@@ -10,6 +10,14 @@ import { OffscreenEnvironmentCache } from './OffscreenEnvironmentCache';
 
 export class EnvironmentRenderer {
   private staticLayerCache = new OffscreenEnvironmentCache();
+  
+  // Cached background gradient — recreated only on dimension/biome change
+  private cachedBgGradient: CanvasGradient | null = null;
+  private lastBgWidth: number = 0;
+  private lastBgHeight: number = 0;
+  private lastBiomeId: string = '';
+  private lastHealthRatio: number = -1;
+
   constructor(
     protected engine: GameEngine,
     protected parent: Renderer,
@@ -43,30 +51,42 @@ export class EnvironmentRenderer {
       case 'golden_spire': colorA = '#0a0a05'; colorB = '#1a1a10'; break;
     }
 
-    const grad = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, width);
-    
-    // Dynamic shift based on intensity/health
     const healthRatio = this.engine.health / this.engine.maxHealth;
-    const intensity = Math.min(1, this.engine.performanceFactor * 0.1);
     
-    if (healthRatio < 0.3) {
-      // Emergency red shift
-      const pulse = Math.sin(t * 8) * 0.2 + 0.2;
-      grad.addColorStop(0, colorB);
-      grad.addColorStop(1, `rgba(180, 0, 0, ${pulse})`); 
-    } else if (intensity > 0.4) {
-      // High intensity pulse
-      const pulse = Math.sin(t * 4) * 0.1;
-      grad.addColorStop(0, colorB);
-      grad.addColorStop(1, colorA);
-      ctx.fillStyle = `rgba(255, 255, 255, ${0.02 + pulse})`; // Global flash
-    } else {
-      grad.addColorStop(0, colorB);
-      grad.addColorStop(1, colorA);
+    // Cache background gradient — recreate only on dimension/biome/health change
+    if (this.cachedBgGradient === null ||
+        this.lastBgWidth !== width ||
+        this.lastBgHeight !== height ||
+        this.lastBiomeId !== biomeId ||
+        Math.abs(this.lastHealthRatio - healthRatio) > 0.15) {
+      
+      this.cachedBgGradient = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, width);
+      this.cachedBgGradient.addColorStop(0, colorB);
+      
+      if (healthRatio < 0.3) {
+        const pulse = Math.sin(t * 8) * 0.2 + 0.2;
+        this.cachedBgGradient.addColorStop(1, `rgba(180, 0, 0, ${pulse})`);
+      } else {
+        this.cachedBgGradient.addColorStop(1, colorA);
+      }
+      
+      this.lastBgWidth = width;
+      this.lastBgHeight = height;
+      this.lastBiomeId = biomeId;
+      this.lastHealthRatio = healthRatio;
     }
     
-    ctx.fillStyle = grad;
+    ctx.fillStyle = this.cachedBgGradient;
     ctx.fillRect(0, 0, width, height);
+    
+    const intensity = Math.min(1, this.engine.performanceFactor * 0.1);
+    
+    // Global flash during high intensity — skip gradient, just tint
+    if (healthRatio >= 0.3 && intensity > 0.4) {
+      const pulse = Math.sin(t * 4) * 0.1;
+      ctx.fillStyle = `rgba(255, 255, 255, ${0.02 + pulse})`;
+      ctx.fillRect(0, 0, width, height);
+    }
 
     // Biome specific background particles/grid (cached offscreen when static)
     if (biomeId === 'neon_core' || biomeId === 'golden_cache') {
@@ -81,9 +101,19 @@ export class EnvironmentRenderer {
       );
       if (!cached) this.drawStarfield(count);
     } else if (biomeId === 'ember_depths') {
-      this.drawLavaBubbles();
+      if (this.currentFps >= 30) {
+        this.staticLayerCache.blitPeriodicLayer(
+          this.engine, `lava_${biomeId}`, 100,
+          (c) => this.paintLavaBubbles(c as CanvasRenderingContext2D)
+        );
+      }
     } else if (biomeId === 'frostbyte') {
-      this.drawSnowflakes();
+      if (this.currentFps >= 30) {
+        this.staticLayerCache.blitPeriodicLayer(
+          this.engine, `snow_${biomeId}`, 100,
+          (c) => this.paintSnowflakes(c as CanvasRenderingContext2D)
+        );
+      }
     }
 
     ctx.restore();
@@ -140,14 +170,10 @@ export class EnvironmentRenderer {
     }
   }
 
-  drawLavaBubbles() {
-    // Skip on low FPS
-    if (this.currentFps < 30) return;
-    
-    const ctx = this.engine.ctx;
+  /** Version for offscreen canvas (takes target context, uses game time for consistency) */
+  private paintLavaBubbles(ctx: CanvasRenderingContext2D) {
     const t = this.engine.globalTime;
-    // Reduce from 20 to 10 bubbles on low FPS
-    const count = this.currentFps < 50 ? 5 : 10;
+    const count = 10;
     for (let i = 0; i < count; i++) {
         const x = (Math.sin(i * 500) * 0.5 + 0.5) * this.engine.width;
         const y = (this.engine.height - (t * 50 + i * 40) % (this.engine.height + 100));
@@ -157,20 +183,26 @@ export class EnvironmentRenderer {
     }
   }
 
-  drawSnowflakes() {
-    // Skip on low FPS
-    if (this.currentFps < 30) return;
-    
-    const ctx = this.engine.ctx;
+  drawLavaBubbles() {
+    // Fallback: draw directly if cache unavailable
+    this.paintLavaBubbles(this.engine.ctx);
+  }
+
+  /** Version for offscreen canvas (takes target context, uses game time for consistency) */
+  private paintSnowflakes(ctx: CanvasRenderingContext2D) {
     const t = this.engine.globalTime;
-    // Reduce from 40 to 20 snowflakes on normal FPS, 10 on low FPS
-    const count = this.currentFps < 50 ? 10 : 20;
+    const count = 20;
     for (let i = 0; i < count; i++) {
         const x = (Math.sin(i * 1000 + t * 0.5) * 0.5 + 0.5) * this.engine.width;
         const y = (t * 80 + i * 30) % (this.engine.height + 50);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
         ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI * 2); ctx.fill();
     }
+  }
+
+  drawSnowflakes() {
+    // Fallback: draw directly if cache unavailable
+    this.paintSnowflakes(this.engine.ctx);
   }
 
   drawDynamicMesh() {
@@ -330,11 +362,9 @@ export class EnvironmentRenderer {
     
     ctx.save();
     ctx.globalCompositeOperation = 'overlay';
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
-    // Draw every 10px instead of every 5px to reduce draw calls
-    for (let i = 0; i < height; i += 10) {
-      ctx.fillRect(0, i, width, 1);
-    }
+    
+    // Use cached offscreen scanlines — avoids 60+ fillRect calls per frame
+    this.staticLayerCache.blitScanlines(this.engine, 10, 'rgba(0, 0, 0, 0.03)');
     
     // Skip moving scanline pulse on low FPS
     if (this.currentFps > 40) {

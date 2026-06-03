@@ -224,19 +224,17 @@ describe('ParticleSystem', () => {
   });
 
   describe('spawnInputFeedback', () => {
-    it('should create 3 shockwaves', () => {
+    it('should create 1 shockwave (optimized from 3)', () => {
       ps.spawnInputFeedback(100, 100);
 
       const active = ps.shockwaves.filter(sw => sw.active);
-      expect(active.length).toBe(3);
+      expect(active.length).toBe(1);
     });
 
-    it('should have increasing speeds', () => {
+    it('should have the correct speed', () => {
       ps.spawnInputFeedback(0, 0);
       const active = ps.shockwaves.filter(sw => sw.active);
-      expect(active[0].speed).toBe(200);
-      expect(active[1].speed).toBe(300);
-      expect(active[2].speed).toBe(400);
+      expect(active[0].speed).toBe(300);
     });
   });
 
@@ -253,7 +251,7 @@ describe('ParticleSystem', () => {
       expect(l.y2).toBe(200);
       expect(l.color).toBe('#ff00ff');
       expect(l.width).toBe(3);
-      expect(l.life).toBe(0.15);
+      expect(l.life).toBe(0.12);
     });
 
     it('should also spawn particles at target point', () => {
@@ -275,10 +273,10 @@ describe('ParticleSystem', () => {
       }
     });
 
-    it('should create 20 sparks by default', () => {
+    it('should create 12 sparks by default (optimized from 20)', () => {
       ps.spawnSparkExplosion(0, 0, '#fff');
       const count = ps.particles.filter(p => p.active && p.type === 'spark').length;
-      expect(count).toBe(20);
+      expect(count).toBe(12);
     });
   });
 

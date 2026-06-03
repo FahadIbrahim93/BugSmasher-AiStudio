@@ -571,7 +571,10 @@ export class GameEngine {
     const intensity = isBoss ? 4.0 : ((bug.type === 'tank' || bug.type === 'swarmer') ? 1.4 : (bug.type === 'scout' ? 0.7 : 0.9));
     this.shake(isBoss ? 0.6 : 0.15 * intensity, isBoss ? 40 : 8 * intensity);
 
-    this.particleSystem.spawnSplatter(bug.x, bug.y, bug.color);
+    // Reduce particle count on low-end or during surge — skip splatters (most expensive)
+    if (this.renderer.currentFps > 30) {
+      this.particleSystem.spawnSplatter(bug.x, bug.y, bug.color);
+    }
     this.particleSystem.spawnExplosion(bug.x, bug.y, bug.color);
 
     this.spawnResource(bug.x, bug.y, bug.type);
@@ -593,13 +596,16 @@ export class GameEngine {
         this.spawnPowerup(bug.x + (Math.random() - 0.5) * 50, bug.y + (Math.random() - 0.5) * 50, true);
       }
 
-      for (let i = 0; i < 40; i++) {
+      // Cap boss death particles based on current FPS
+      const bossParticleCount = this.renderer.currentFps > 30 ? 40 : 15;
+      for (let i = 0; i < bossParticleCount; i++) {
         this.particleSystem.spawnParticle(bug.x, bug.y, bug.color);
       }
     }
 
-    // Swarmer splitting logic
-    if (bug.type === 'swarmer' || this.currentBiome === 'golden_cache') {
+    // Swarmer splitting logic — skip on low FPS to prevent entity explosion
+    const shouldSplit = this.renderer.currentFps >= 25;
+    if (shouldSplit && (bug.type === 'swarmer' || this.currentBiome === 'golden_cache')) {
       const splitCount = this.currentBiome === 'golden_cache' ? 2 : 3;
       for (let i = 0; i < splitCount; i++) {
         const angle = (Math.PI * 2 / splitCount) * i;

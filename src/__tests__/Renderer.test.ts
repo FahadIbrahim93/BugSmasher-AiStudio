@@ -129,9 +129,9 @@ describe('Renderer', () => {
 
     it('should initialize performance scaler state', () => {
       expect(renderer.currentFps).toBe(60);
-      // Default High preset (0.95 vfx keeps headroom; Ultra would be 1.0)
-      expect(renderer.vfxScalar).toBe(0.95);
-      expect(renderer.meshComplexityStep).toBe(10);
+      // Default Balanced preset (starts at 0.8 for cloud/vercel environments)
+      expect(renderer.vfxScalar).toBe(0.8);
+      expect(renderer.meshComplexityStep).toBe(16);
     });
   });
 
@@ -161,9 +161,9 @@ describe('Renderer', () => {
 
   describe('updatePerformanceScaler', () => {
     it('should use default values on first call', () => {
-      // First call sets baseline (High preset starts at 0.95)
+      // First call sets baseline (Balanced preset starts at 0.8)
       renderer.updatePerformanceScaler();
-      expect(renderer.vfxScalar).toBe(0.95);
+      expect(renderer.vfxScalar).toBe(0.8);
     });
 
     it('should calculate FPS after accumulating frames', () => {
@@ -208,7 +208,7 @@ describe('Renderer', () => {
 
       renderer.updatePerformanceScaler();
 
-      expect(renderer.meshComplexityStep).toBe(80);
+      expect(renderer.meshComplexityStep).toBe(100);
     });
 
     it('should increase meshComplexityStep at medium low fps', () => {
@@ -217,16 +217,16 @@ describe('Renderer', () => {
       (renderer as any).scaler.frameCount = 25;
 
       renderer.updatePerformanceScaler();
-      expect(renderer.meshComplexityStep).toBe(40);
+      expect(renderer.meshComplexityStep).toBe(60);
     });
 
-    it('should set meshComplexityStep to 20 for fps between 30-40', () => {
+    it('should set meshComplexityStep to 30 for fps between 30-40', () => {
       (renderer as any).scaler.fpsBuffer = [35, 35, 35];
       (renderer as any).scaler.lastFpsTime = performance.now() - 1000;
       (renderer as any).scaler.frameCount = 35;
 
       renderer.updatePerformanceScaler();
-      expect(renderer.meshComplexityStep).toBe(20);
+      expect(renderer.meshComplexityStep).toBe(30);
     });
   });
 

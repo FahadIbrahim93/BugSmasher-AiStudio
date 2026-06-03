@@ -1,6 +1,7 @@
 import { GameEngine } from './GameEngine';
 import { Bug } from './GameTypes';
 import { GameConfig } from './GameConfig';
+import { soundManager } from './SoundManager';
 
 export class WaveManager {
   engine: GameEngine;
@@ -38,7 +39,9 @@ export class WaveManager {
     if (this.isBossWave) {
         this.bugsToSpawn = 1 + Math.floor(this.engine.wave * 1.5); // Boss + minions
     } else {
-        const perfBonus = Math.floor(this.engine.performanceFactor * 5);
+        // Cap performance bonus to prevent feedback loop: more bugs → more kills → higher perfFactor → even more bugs
+        const cappedPerf = Math.min(this.engine.performanceFactor, 1.5);
+        const perfBonus = Math.floor(cappedPerf * 3);
         this.bugsToSpawn = GameConfig.waves.baseBugs + this.engine.wave * GameConfig.waves.bugsPerWave + perfBonus;
     }
     
@@ -68,7 +71,7 @@ export class WaveManager {
     else this.engine.currentBiome = 'neon_core';
 
     if (oldBiome !== this.engine.currentBiome) {
-        import('./SoundManager').then(({ soundManager }) => soundManager.playBiomeMusic(this.engine.currentBiome));
+        soundManager.playBiomeMusic(this.engine.currentBiome);
     }
   }
 
@@ -82,7 +85,7 @@ export class WaveManager {
         }
         
         if (this.bossIntroTimer < 2.0 && !this.bossWarningSounded) {
-             import('./SoundManager').then(({ soundManager }) => soundManager.bossWarning());
+             soundManager.bossWarning();
              this.bossWarningSounded = true;
         }
         return; // Don't spawn anything during intro
@@ -126,8 +129,8 @@ export class WaveManager {
       this.spawnTimer = 0;
       // Group sizes scale with performance
       const baseGroup = this.surgeActive ? 2 : 1;
-      const perfBonus = this.engine.performanceFactor > 1.5 ? 1 : 0;
-      const groupSize = baseGroup + perfBonus;
+      // Don't add extra group from performance - this compounds the feedback loop
+      const groupSize = baseGroup;
       
       for (let i = 0; i < groupSize; i++) {
         if (this.bugsToSpawn > 0) this.spawnBug();
@@ -161,7 +164,7 @@ export class WaveManager {
 
     this.engine.bugs.push(bug);
     if (!this.bossWarningSounded) {
-        import('./SoundManager').then(({ soundManager }) => soundManager.bossWarning());
+        soundManager.bossWarning();
         this.bossWarningSounded = true;
     }
   }

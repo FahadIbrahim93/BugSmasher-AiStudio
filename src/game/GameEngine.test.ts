@@ -57,9 +57,10 @@ describe('GameEngine', () => {
 
   it('should spawn bugs correctly', () => {
     engine.startWave();
-    // bugsToSpawn includes a performance factor bonus (perfFactor=1.0 => +5)
+    // bugsToSpawn includes a capped performance factor bonus (perfFactor=1.0 capped at 1.5 => +3)
     const expectedBase = GameConfig.waves.baseBugs + engine.wave * GameConfig.waves.bugsPerWave;
-    const perfBonus = Math.floor(engine.performanceFactor * 5);
+    const cappedPerf = Math.min(engine.performanceFactor, 1.5);
+    const perfBonus = Math.floor(cappedPerf * 3);
     expect(engine.waveManager.bugsToSpawn).toBe(expectedBase + perfBonus);
     
     (engine.waveManager as any).spawnBug();

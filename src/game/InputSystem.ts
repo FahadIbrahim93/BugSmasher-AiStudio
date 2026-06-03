@@ -8,7 +8,22 @@ export class InputSystem {
   private engine: GameEngine;
   public lastMouseX: number = 0;
   public lastMouseY: number = 0;
-  
+  private lastClickTime: number = 0;
+  private rapidClickCount: number = 0;
+  private rapidClickWindow: number = 0;
+
+  private get isClickThrottled(): boolean {
+    const now = performance.now();
+    // Reset click burst counter every 500ms
+    if (now - this.rapidClickWindow > 500) {
+      this.rapidClickCount = 0;
+      this.rapidClickWindow = now;
+    }
+    this.rapidClickCount++;
+    // Throttle heavy effects when clicking faster than 8 clicks/sec
+    return this.rapidClickCount > 4;
+  }
+
   constructor(engine: GameEngine) {
     this.engine = engine;
     this.lastMouseX = engine.width / 2;
@@ -189,20 +204,32 @@ export class InputSystem {
 
     const cx = engine.width / 2;
     const cy = engine.height / 2;
+    const throttled = this.isClickThrottled;
+    const lowEnd = engine.renderer?.isLowEnd ?? false;
 
-    engine.particleSystem.spawnInputFeedback(x, y);
-    engine.particleSystem.spawnClickPulse(x, y);
-    engine.particleSystem.spawnMuzzleFlash(cx, cy, 50);
+    if (!throttled) {
+      // Full effects for first few clicks in a burst
+      engine.particleSystem.spawnInputFeedback(x, y);
+      engine.particleSystem.spawnClickPulse(x, y);
+      engine.particleSystem.spawnMuzzleFlash(cx, cy, lowEnd ? 25 : 50);
+    } else {
+      // Throttled: minimal effects — skip input feedback and muzzle flash
+      engine.particleSystem.spawnClickPulse(x, y);
+    }
     engine.renderer.clickFlash = 1.0;
     engine.renderer.fireAlpha = 1.0; // Trigger core fire animation
-    engine.shake(0.06, 3);
+    if (!throttled) {
+      engine.shake(0.06, 3);
+    }
     
     // Animate base kick
-    engine.baseScale = 0.82;
-    engine.baseRecoil = 14;
+    engine.baseScale = lowEnd ? 0.9 : 0.82;
+    engine.baseRecoil = lowEnd ? 8 : 14;
     engine.baseRecoilAngle = Math.atan2(y - cy, x - cx);
     
-    engine.particleSystem.spawnLaser(cx, cy, x, y, '#ffffff', 3);
+    // Laser intensity based on performance
+    const laserWidth = lowEnd ? 1.5 : (throttled ? 2 : 3);
+    engine.particleSystem.spawnLaser(cx, cy, x, y, '#ffffff', laserWidth);
 
     if (engine.spikeBurstTimer > 0) {
       engine.particleSystem.spawnShockwave(x, y, '#ff3300', 150);
