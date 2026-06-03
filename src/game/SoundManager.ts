@@ -1,3 +1,5 @@
+import { audioAssets } from './AudioAssetLoader';
+
 /**
  * BUGSMASHER — Professional Sound System
  * 
@@ -479,6 +481,7 @@ export class SoundManager {
 
       this.updateGains();
       this.enabled = true;
+      void audioAssets.init(this.ctx);
     }
 
     if (this.ctx.state === 'suspended') {
@@ -701,6 +704,8 @@ export class SoundManager {
   // ─── SFX Methods ──────────────────────────────────────────────────
 
   shoot() {
+    if (this.ctx && this.sfxGain && audioAssets.play('shoot', this.sfxGain, this.sfxVolume * 0.5))
+      return;
     // Punchy sci-fi gunshot: transient click + mid punch + noise tail
     this.playRichTone({
       frequencies: [1200, 600, 200],
@@ -715,6 +720,8 @@ export class SoundManager {
   }
 
   splat() {
+    if (this.ctx && this.sfxGain && audioAssets.play('splat', this.sfxGain, this.sfxVolume * 0.6))
+      return;
     // Satisfying wet squish: pitched noise + squelch
     this.playShapedNoise(0.2, 0.1, 2000, 30, 'lowpass');
     this.playRichTone({
@@ -1086,6 +1093,8 @@ export class SoundManager {
   }
 
   uiClick() {
+    if (this.ctx && this.sfxGain && audioAssets.play('ui_click', this.sfxGain, this.sfxVolume * 0.4))
+      return;
     // Satisfying click: transient + body
     this.playRichTone({
       frequencies: [1000, 1500],

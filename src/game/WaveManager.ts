@@ -26,7 +26,8 @@ export class WaveManager {
   startWave() {
     this.waveActive = true;
     const bossInterval = this.engine.challengeModifiers?.bossWaveInterval || 10;
-    this.isBossWave = (this.engine.wave % bossInterval === 0);
+    this.isBossWave = this.engine.gameModeConfig.bossEveryWave
+      || (this.engine.wave % bossInterval === 0);
     this.bossSpawned = false;
     this.bossWarningSounded = false;
     this.bossIntroActive = this.isBossWave;
@@ -135,8 +136,14 @@ export class WaveManager {
     } else if (this.engine.bugs.length === 0) {
       this.waveActive = false;
       this.engine.wave++;
-      this.engine.stop();
-      this.engine.onWaveComplete?.();
+      const mode = this.engine.gameModeConfig;
+      if (mode.endlessWaves) {
+        this.engine.onWaveComplete?.();
+        this.startWave();
+      } else {
+        this.engine.stop();
+        this.engine.onWaveComplete?.();
+      }
     }
   }
 

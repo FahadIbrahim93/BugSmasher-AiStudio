@@ -4,6 +4,7 @@ import { SaveManager } from '../game/SaveManager';
 import { ProgressionManager } from '../game/ProgressionManager';
 import { useEffect, useState } from 'react';
 import { isTodaysChallengeCompleted, getStreakInfo } from '../game/DailyChallengeManager';
+import { generateShareCardImage, downloadShareCard } from '../lib/shareCard';
 
 export function GameOver({ score, wave, onRetry, onMainMenu }: { score: number, wave: number, onRetry: () => void, onMainMenu: () => void }) {
   const [isNewHigh, setIsNewHigh] = useState(false);
@@ -102,6 +103,20 @@ export function GameOver({ score, wave, onRetry, onMainMenu }: { score: number, 
         </div>
         
         <div className="flex flex-col space-y-4">
+          <button
+            onClick={async () => {
+              soundManager.uiClick();
+              try {
+                const blob = await generateShareCardImage({ score, wave });
+                downloadShareCard(blob);
+              } catch (e) {
+                console.warn('Share card failed', e);
+              }
+            }}
+            className="w-full py-3 rounded-xl border border-white/10 text-zinc-300 font-mono text-xs uppercase tracking-widest hover:bg-white/5"
+          >
+            Share Score Card
+          </button>
           <button 
             onClick={() => { soundManager.init(); soundManager.uiClick(); onRetry(); }}
             onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}

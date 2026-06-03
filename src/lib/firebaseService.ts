@@ -12,6 +12,8 @@ import {
   increment
 } from 'firebase/firestore';
 import { db, auth } from './firebase';
+import { ChecksumSystem } from './checksum';
+import type { GameSaveData } from '../game/SaveManager';
 
 export interface LeaderboardEntry {
   userId: string;
@@ -77,13 +79,16 @@ export class FirebaseService {
   /**
    * Game Saves
    */
-  static async uploadSave(userId: string, data: any) {
+  static async uploadSave(userId: string, data: GameSaveData) {
     try {
+      const { checksum, ...pure } = data;
+      const computed = checksum ?? (await ChecksumSystem.generate(pure));
       const saveRef = doc(db, 'users', userId, 'private', 'saves');
-      await setDoc(saveRef, { 
-        userId, 
-        data, 
-        updatedAt: new Date().toISOString() 
+      await setDoc(saveRef, {
+        userId,
+        data: pure,
+        checksum: computed,
+        updatedAt: new Date().toISOString(),
       });
       return true;
     } catch (error) {
@@ -92,12 +97,22 @@ export class FirebaseService {
     }
   }
 
-  static async downloadSave(userId: string): Promise<any | null> {
+  static async downloadSave(userId: string): Promise<GameSaveData | null> {
     try {
       const saveRef = doc(db, 'users', userId, 'private', 'saves');
       const snap = await getDoc(saveRef);
       if (!snap.exists()) return null;
-      return snap.data().data;
+      const docData = snap.data();
+      const payload = docData.data as Record<string, unknown>;
+      const checksum = docData.checksum as string | undefined;
+      if (checksum) {
+        const valid = await ChecksumSystem.verify(payload, checksum);
+        if (!valid) {
+          console.error('[FirebaseService] Cloud save checksum invalid — rejected');
+          return null;
+        }
+      }
+      return { ...payload, checksum } as GameSaveData;
     } catch (error) {
       handleFirestoreError(error, OperationType.GET, `users/${userId}/private/saves`);
       return null;

@@ -2,6 +2,7 @@ import { GameEngine } from './GameEngine';
 import { GameConfig } from './GameConfig';
 import { soundManager } from './SoundManager';
 import { Bug, Powerup } from './GameTypes';
+import { loadControlBindings, matchesBinding } from './ControlBindings';
 
 export class InputSystem {
   private engine: GameEngine;
@@ -71,7 +72,8 @@ export class InputSystem {
   private handleKeyDown(e: KeyboardEvent) {
     if (e.repeat) return;
     if (this.engine.isPaused || !this.engine.isRunning) return;
-    if (e.key === ' ' || e.key === 'Shift') {
+    const bindings = loadControlBindings();
+    if (matchesBinding(e.code, bindings.dash) || e.key === 'Shift') {
       e.preventDefault();
       this.engine.triggerDash(this.lastMouseX, this.lastMouseY);
     }
@@ -235,6 +237,9 @@ export class InputSystem {
       const clickRadius = bug.size * GameConfig.player.baseClickRadiusMultiplier * engine.clickRadiusMultiplier;
       if (distSq < clickRadius * clickRadius) {
         hit = true;
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          navigator.vibrate(12);
+        }
         engine.damageBug(bug, 1);
         break;
       }

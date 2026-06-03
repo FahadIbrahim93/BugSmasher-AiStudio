@@ -41,7 +41,7 @@ service cloud.firestore {
       return data.userId == request.auth.uid
         && data.data is map
         && data.keys().hasAll(['userId', 'data'])
-        && data.keys().size() >= 2;
+        && (!('checksum' in data) || (data.checksum is string && data.checksum.size() == 64));
     }
 
     function isValidProgression(data) {

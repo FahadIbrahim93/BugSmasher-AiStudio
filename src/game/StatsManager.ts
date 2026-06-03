@@ -6,6 +6,8 @@ export interface UserStats {
   totalPowerupsCollected: number;
   bossesKilled: number;
   lastPlayed: string;
+  totalRuns: number;
+  bestWaveReached: number;
 }
 
 export const INITIAL_STATS: UserStats = {
@@ -15,7 +17,9 @@ export const INITIAL_STATS: UserStats = {
   totalPlayTime: 0,
   totalPowerupsCollected: 0,
   bossesKilled: 0,
-  lastPlayed: new Date().toISOString()
+  lastPlayed: new Date().toISOString(),
+  totalRuns: 0,
+  bestWaveReached: 0,
 };
 
 export class StatsManager {
@@ -50,6 +54,20 @@ export class StatsManager {
   static setStats(newStats: UserStats) {
       this.stats = { ...newStats };
       this.saveLocal();
+  }
+
+  static recordRunStart(): void {
+    this.stats.totalRuns = (this.stats.totalRuns || 0) + 1;
+    this.saveLocal();
+  }
+
+  static recordRunEnd(wave: number, score: number): void {
+    this.stats.bestWaveReached = Math.max(this.stats.bestWaveReached || 0, wave);
+    if (score > 0) {
+      this.stats.totalScore = Math.max(this.stats.totalScore || 0, score);
+    }
+    this.stats.lastPlayed = new Date().toISOString();
+    this.saveLocal();
   }
 
   private static saveLocal() {

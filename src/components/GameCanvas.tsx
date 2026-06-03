@@ -1,16 +1,20 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { GameEngine } from '../game/GameEngine';
+import type { GameModeId } from '../game/GameMode';
+import { StatsManager } from '../game/StatsManager';
 
 interface GameCanvasProps {
+  gameMode?: GameModeId;
   onGameOver: (score: number) => void;
   onWaveComplete: () => void;
   onStoryTrigger?: (type: 'wave_start' | 'boss_kill' | 'game_start' | 'prestige', value: number) => void;
 }
 
-export const GameCanvas = forwardRef<GameEngine | null, GameCanvasProps>(({ 
+export const GameCanvas = forwardRef<GameEngine | null, GameCanvasProps>(({
+  gameMode = 'standard',
   onGameOver,
   onWaveComplete,
-  onStoryTrigger
+  onStoryTrigger,
 }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<GameEngine | null>(null);
@@ -41,10 +45,12 @@ export const GameCanvas = forwardRef<GameEngine | null, GameCanvasProps>(({
     const engine = new GameEngine(canvasRef.current);
     engineRef.current = engine;
 
+    engine.setGameMode(gameMode);
     engine.onGameOver = onGameOver;
     engine.onWaveComplete = onWaveComplete;
     engine.onStoryTrigger = onStoryTrigger;
 
+    StatsManager.recordRunStart();
     engine.start();
 
     return () => {

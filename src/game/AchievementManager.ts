@@ -1,11 +1,12 @@
 import { StatsManager, UserStats } from './StatsManager';
+import type { AchievementSession } from './AchievementSession';
 
 export interface Achievement {
   id: string;
   title: string;
   description: string;
   icon: string;
-  check: (stats: UserStats, session: any) => boolean;
+  check: (stats: UserStats, session: AchievementSession) => boolean;
   unlocked: boolean;
 }
 
@@ -30,7 +31,14 @@ export class AchievementManager {
     return saved ? new Set(JSON.parse(saved)) : new Set();
   }
 
-  static checkAchievements(sessionData: any) {
+  static getAll(): (Omit<Achievement, 'unlocked'> & { unlocked: boolean })[] {
+    return ACHIEVEMENTS_DATA.map((a) => ({
+      ...a,
+      unlocked: this.isUnlocked(a.id),
+    }));
+  }
+
+  static checkAchievements(sessionData: AchievementSession) {
     const stats = StatsManager.getStats();
     let newlyUnlocked = false;
 

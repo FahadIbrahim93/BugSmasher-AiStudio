@@ -20,6 +20,7 @@ import {
   subscribeAccessibility,
   type AccessibilitySettings,
 } from './AccessibilitySettings';
+import { getGameModeConfig, type GameModeId, type GameModeConfig } from './GameMode';
 
 export class GameEngine {
   canvas: HTMLCanvasElement;
@@ -107,6 +108,8 @@ export class GameEngine {
   playTimeAccumulator: number = 0;
   accessibility: AccessibilitySettings = loadAccessibilitySettings();
   private unsubscribeAccessibility?: () => void;
+  gameMode: GameModeId = 'standard';
+  gameModeConfig: GameModeConfig = getGameModeConfig('standard');
 
   baseScale: number = 1.0;
   baseRecoil: number = 0;
@@ -179,6 +182,11 @@ export class GameEngine {
       this.accessibility = settings;
       this.applyAccessibility();
     });
+  }
+
+  setGameMode(mode: GameModeId): void {
+    this.gameMode = mode;
+    this.gameModeConfig = getGameModeConfig(mode);
   }
 
   applyAccessibility(): void {

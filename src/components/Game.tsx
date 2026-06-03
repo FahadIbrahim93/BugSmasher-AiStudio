@@ -12,6 +12,7 @@ import { GameConfig } from '../game/GameConfig';
 import { SaveManager } from '../game/SaveManager';
 
 import { StatsManager } from '../game/StatsManager';
+import type { GameModeId } from '../game/GameMode';
 import { AchievementManager } from '../game/AchievementManager';
 
 import { StoryCutscene } from './StoryCutscene';
@@ -43,7 +44,15 @@ function checkWinCondition(engine: GameEngine, condition: WinCondition): boolean
   }
 }
 
-export function Game({ onMainMenu, challengeModifiers }: { onMainMenu: () => void; challengeModifiers?: ChallengeModifierId[] }) {
+export function Game({
+  onMainMenu,
+  challengeModifiers,
+  gameMode = 'standard',
+}: {
+  onMainMenu: () => void;
+  challengeModifiers?: ChallengeModifierId[];
+  gameMode?: GameModeId;
+}) {
   const [isGameOver, setIsGameOver] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [isProgressionOpen, setIsProgressionOpen] = useState(false);
@@ -70,10 +79,9 @@ export function Game({ onMainMenu, challengeModifiers }: { onMainMenu: () => voi
   const handleGameOver = useCallback((score: number) => {
     setFinalScore(score);
     setIsGameOver(true);
-    analytics.track('game_over', {
-      score,
-      wave: engineRef.current?.wave ?? 0,
-    });
+    const wave = engineRef.current?.wave ?? 0;
+    StatsManager.recordRunEnd(wave, score);
+    analytics.track('game_over', { score, wave });
 
     // Check challenge completion
     if (engineRef.current?.isChallengeMode) {
@@ -262,6 +270,7 @@ export function Game({ onMainMenu, challengeModifiers }: { onMainMenu: () => voi
         <GameCanvas
           ref={engineRef}
           key={gameId}
+          gameMode={gameMode}
           onGameOver={handleGameOver}
           onWaveComplete={handleWaveComplete}
           onStoryTrigger={handleStoryTrigger}

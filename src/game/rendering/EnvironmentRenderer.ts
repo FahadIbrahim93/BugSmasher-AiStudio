@@ -6,8 +6,10 @@ import { GameConfig } from '../GameConfig';
 import { getActiveCoreThemeConfig } from '../CosmeticsManager';
 import type { Renderer } from '../Renderer';
 import type { PerformanceScaler } from './PerformanceScaler';
+import { OffscreenEnvironmentCache } from './OffscreenEnvironmentCache';
 
 export class EnvironmentRenderer {
+  private staticLayerCache = new OffscreenEnvironmentCache();
   constructor(
     protected engine: GameEngine,
     protected parent: Renderer,
@@ -66,11 +68,18 @@ export class EnvironmentRenderer {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, width, height);
 
-    // Biome specific background particles/grid
+    // Biome specific background particles/grid (cached offscreen when static)
     if (biomeId === 'neon_core' || biomeId === 'golden_cache') {
-      this.drawGrid(200, 'rgba(255, 255, 255, 0.01)');
+      const cached = this.staticLayerCache.blitStaticLayer(this.engine, biomeId, (c) =>
+        this.paintGrid(c as CanvasRenderingContext2D, 200, 'rgba(255, 255, 255, 0.01)')
+      );
+      if (!cached) this.drawGrid(200, 'rgba(255, 255, 255, 0.01)');
     } else if (biomeId === 'quantum_void' || biomeId === 'void_abyss') {
-      this.drawStarfield(biomeId === 'void_abyss' ? 100 : 50);
+      const count = biomeId === 'void_abyss' ? 100 : 50;
+      const cached = this.staticLayerCache.blitStaticLayer(this.engine, biomeId, (c) =>
+        this.paintStarfield(c as CanvasRenderingContext2D, count)
+      );
+      if (!cached) this.drawStarfield(count);
     } else if (biomeId === 'ember_depths') {
       this.drawLavaBubbles();
     } else if (biomeId === 'frostbyte') {
@@ -83,31 +92,41 @@ export class EnvironmentRenderer {
     this.drawDynamicMesh();
   }
 
-  drawGrid(size: number, color: string) {
-    // Skip grid on very low FPS
-    if (this.currentFps < 30) return;
-    
-    const ctx = this.engine.ctx;
+  private paintGrid(ctx: CanvasRenderingContext2D, size: number, color: string) {
     ctx.strokeStyle = color;
     ctx.lineWidth = 1;
-    
-    // Batch draw calls using a single path
     ctx.beginPath();
     for (let x = 0; x < this.engine.width; x += size) {
-      ctx.moveTo(x, 0); 
+      ctx.moveTo(x, 0);
       ctx.lineTo(x, this.engine.height);
     }
     for (let y = 0; y < this.engine.height; y += size) {
-      ctx.moveTo(0, y); 
+      ctx.moveTo(0, y);
       ctx.lineTo(this.engine.width, y);
     }
     ctx.stroke();
   }
 
+  drawGrid(size: number, color: string) {
+    if (this.currentFps < 30) return;
+    this.paintGrid(this.engine.ctx, size, color);
+  }
+
+  private paintStarfield(ctx: CanvasRenderingContext2D, count: number) {
+    const step = 2;
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    for (let i = 0; i < count; i += step) {
+      const x = ((i * 137) % this.engine.width);
+      const y = ((i * 89) % this.engine.height);
+      const s = (i % 3) + 1;
+      ctx.beginPath();
+      ctx.arc(x, y, s, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
   drawStarfield(count: number) {
-    // Skip on very low FPS
     if (this.currentFps < 25) return;
-    
     const ctx = this.engine.ctx;
     const t = this.engine.globalTime;
     // Reduce draw calls - skip every other star

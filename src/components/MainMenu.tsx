@@ -11,16 +11,25 @@ import { DailyChallengeModal } from './DailyChallengeModal';
 import { isTodaysChallengeCompleted, getStreakInfo } from '../game/DailyChallengeManager';
 import { isSupporter } from '../game/CosmeticsManager';
 import { type ChallengeModifierId } from '../game/DailyChallengeManager';
+import type { GameModeId } from '../game/GameMode';
+import { AchievementGallery } from './AchievementGallery';
 
-export function MainMenu({ onStart, onSettings, onIntel }: { 
-  onStart: (challengeMods?: ChallengeModifierId[]) => void, 
-  onSettings: () => void, 
-  onIntel?: () => void 
+export function MainMenu({
+  onStart,
+  onSettings,
+  onIntel,
+  friendChallenge,
+}: {
+  onStart: (challengeMods?: ChallengeModifierId[], mode?: GameModeId) => void;
+  onSettings: () => void;
+  onIntel?: () => void;
+  friendChallenge?: { score: number; wave: number } | null;
 }) {
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isDailyChallengeOpen, setIsDailyChallengeOpen] = useState(false);
   const [isArmoryOpen, setIsArmoryOpen] = useState(false);
+  const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const supporter = isSupporter();
   const highScore = SaveManager.getHighScore();
   const challengeCompleted = isTodaysChallengeCompleted();
@@ -29,6 +38,7 @@ export function MainMenu({ onStart, onSettings, onIntel }: {
   return (
     <div className="flex flex-col items-center justify-center h-full bg-[#050505] relative p-4">
       {isArmoryOpen && <Armory onClose={() => setIsArmoryOpen(false)} />}
+      {isAchievementsOpen && <AchievementGallery onClose={() => setIsAchievementsOpen(false)} />}
       {isAccountOpen && <AccountMenu onClose={() => setIsAccountOpen(false)} />}
       {isLeaderboardOpen && <Leaderboard onClose={() => setIsLeaderboardOpen(false)} />}
       {isDailyChallengeOpen && (
@@ -80,9 +90,26 @@ export function MainMenu({ onStart, onSettings, onIntel }: {
           <p className="text-sm sm:text-base md:text-lg text-zinc-500 font-medium tracking-[0.2em] font-mono">
             DEFEND THE CORE. SMASH THE SWARM.
           </p>
+          {friendChallenge && (
+            <p className="text-xs font-mono text-cyan-400 border border-cyan-500/30 rounded-lg px-4 py-2">
+              Friend challenge: beat {friendChallenge.score} pts / wave {friendChallenge.wave}
+            </p>
+          )}
         </div>
         
         <div className="w-full flex flex-col items-center space-y-6 mt-12">
+          <div className="flex flex-wrap gap-2 justify-center w-full">
+            {(['endless', 'boss_rush'] as GameModeId[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => { soundManager.uiClick(); onStart(undefined, mode); }}
+                className="px-4 py-2 rounded-full border border-white/10 text-[10px] font-mono uppercase text-zinc-400 hover:text-white hover:bg-white/10"
+              >
+                {mode.replace('_', ' ')}
+              </button>
+            ))}
+          </div>
+
           <button 
             onClick={() => { soundManager.init(); soundManager.uiClick(); onStart(); }}
             onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
@@ -154,6 +181,14 @@ export function MainMenu({ onStart, onSettings, onIntel }: {
           >
             <User className="w-4 h-4" />
             <span>Terminal Access</span>
+          </button>
+
+          <button
+            onClick={() => { soundManager.uiClick(); setIsAchievementsOpen(true); }}
+            className="flex items-center space-x-3 text-zinc-500 hover:text-white transition-colors font-mono text-xs uppercase tracking-widest"
+          >
+            <Trophy className="w-4 h-4" />
+            <span>Achievements</span>
           </button>
 
           <button 

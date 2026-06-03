@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MainMenu } from './components/MainMenu';
 import { Game } from './components/Game';
 import { SettingsMenu } from './components/SettingsMenu';
@@ -9,12 +9,24 @@ import { Preloader } from './components/Preloader';
 import { AchievementToast } from './components/AchievementToast';
 import { CustomCursor } from './components/CustomCursor';
 import type { ChallengeModifierId } from './game/DailyChallengeManager';
+import type { GameModeId } from './game/GameMode';
 
 export default function App() {
   const [gameState, setGameState] = useState<'preloading' | 'menu' | 'playing'>('preloading');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isIntelOpen, setIsIntelOpen] = useState(false);
   const [challengeModifiers, setChallengeModifiers] = useState<ChallengeModifierId[] | undefined>(undefined);
+  const [gameMode, setGameMode] = useState<GameModeId>('standard');
+  const [friendChallenge, setFriendChallenge] = useState<{ score: number; wave: number } | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const score = parseInt(params.get('challengeScore') || '', 10);
+    const wave = parseInt(params.get('challengeWave') || '', 10);
+    if (!isNaN(score) && !isNaN(wave)) {
+      setFriendChallenge({ score, wave });
+    }
+  }, []);
 
   return (
     <ErrorBoundary>
@@ -26,9 +38,11 @@ export default function App() {
         )}
         {gameState === 'menu' && (
           <>
-            <MainMenu 
-              onStart={(challengeMods?: ChallengeModifierId[]) => {
+            <MainMenu
+              friendChallenge={friendChallenge}
+              onStart={(challengeMods?: ChallengeModifierId[], mode?: GameModeId) => {
                 setChallengeModifiers(challengeMods);
+                setGameMode(mode ?? 'standard');
                 setGameState('playing');
               }}
               onSettings={() => setIsSettingsOpen(true)}
@@ -54,6 +68,7 @@ export default function App() {
               setGameState('menu');
             }} 
             challengeModifiers={challengeModifiers}
+            gameMode={gameMode}
           />
         )}
       </div>
