@@ -275,6 +275,7 @@ export class GameEngine {
     this.syncSkills();
     this.applyAccessibility();
     this.health = this.maxHealth;
+    this.health = Math.min(this.health, this.maxHealth); // defensive for late modifiers (e.g. challenge post-start)
     this.wave = 1;
     this.resetEntities();
 
@@ -697,6 +698,7 @@ export class GameEngine {
     if (this.challengeModifiers) {
       this.maxHealth *= this.challengeModifiers.maxHealthMultiplier;
       this.damageMultiplier *= this.challengeModifiers.playerDamageMultiplier;
+      this.health = Math.min(this.health, this.maxHealth);
     }
   }
 
@@ -705,6 +707,7 @@ export class GameEngine {
     this.isChallengeMode = true;
     this.challengeModifiers = computeModifierState(modifiers);
     this.syncSkills(); // Apply glass_cannon health/damage multipliers immediately
+    this.health = Math.min(this.health, this.maxHealth);
   }
 
   useConsumable(id: string): boolean {
