@@ -1,6 +1,8 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { GameEngine } from '../game/GameEngine';
+import type { EngineHandle } from '../game/EngineHandle';
 import type { GameModeId } from '../game/GameMode';
+import type { ChallengeModifierId } from '../game/DailyChallengeManager';
 import { StatsManager } from '../game/StatsManager';
 
 interface GameCanvasProps {
@@ -8,30 +10,36 @@ interface GameCanvasProps {
   onGameOver: (score: number) => void;
   onWaveComplete: () => void;
   onStoryTrigger?: (type: 'wave_start' | 'boss_kill' | 'game_start' | 'prestige', value: number) => void;
+  challengeModifiers?: ChallengeModifierId[];
 }
 
-export const GameCanvas = forwardRef<GameEngine | null, GameCanvasProps>(({
+export const GameCanvas = forwardRef<EngineHandle, GameCanvasProps>(({
   gameMode = 'standard',
   onGameOver,
   onWaveComplete,
   onStoryTrigger,
+  challengeModifiers,
 }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<GameEngine | null>(null);
 
-  useImperativeHandle(ref, (): GameEngine => {
-    return new Proxy({} as GameEngine, {
+  useImperativeHandle(ref, (): EngineHandle => {
+    return new Proxy({} as EngineHandle, {
       get: (_, prop) => {
         if (!engineRef.current) return undefined;
-        const value = (engineRef.current as any)[prop];
+        const key = prop as keyof GameEngine;
+        const value = engineRef.current[key];
         if (typeof value === 'function') {
-          return value.bind(engineRef.current);
+          return (value as Function).bind(engineRef.current);
         }
         return value;
       },
       set: (_, prop, value) => {
         if (engineRef.current) {
-          (engineRef.current as any)[prop] = value;
+          // Intentionally allow mutation through EngineHandle for HUD/upgrade flows
+          // (e.g. score, isPaused, killsInSubwave, missedClicksInSubwave).
+          // Narrow cast to declared handle surface (no broad unknown).
+          (engineRef.current as unknown as Record<keyof EngineHandle, unknown>)[prop as keyof EngineHandle] = value;
           return true;
         }
         return false;
@@ -52,6 +60,11 @@ export const GameCanvas = forwardRef<GameEngine | null, GameCanvasProps>(({
 
     StatsManager.recordRunStart();
     engine.start();
+
+    // Apply daily challenge modifiers at engine creation (avoids race on ref in parent)
+    if (challengeModifiers && challengeModifiers.length > 0) {
+      engine.setChallengeModifiers(challengeModifiers);
+    }
 
     return () => {
       engine.destroy();

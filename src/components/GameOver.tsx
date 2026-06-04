@@ -1,12 +1,20 @@
-import { Skull, RotateCcw, Home, Trophy, Zap, Gift } from 'lucide-react';
+import { Skull, RotateCcw, Home, Trophy, Zap, Gift, Play } from 'lucide-react';
 import { soundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
 import { ProgressionManager } from '../game/ProgressionManager';
 import { useEffect, useState } from 'react';
 import { isTodaysChallengeCompleted, getStreakInfo } from '../game/DailyChallengeManager';
 import { generateShareCardImage, downloadShareCard } from '../lib/shareCard';
+import { t } from '../i18n';
 
-export function GameOver({ score, wave, onRetry, onMainMenu }: { score: number, wave: number, onRetry: () => void, onMainMenu: () => void }) {
+export function GameOver({ score, wave, onRetry, onMainMenu, onContinueAd, continueAdPending }: { 
+  score: number; 
+  wave: number; 
+  onRetry: () => void; 
+  onMainMenu: () => void; 
+  onContinueAd?: () => Promise<void>;
+  continueAdPending?: boolean;
+}) {
   const [isNewHigh, setIsNewHigh] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isPrestigeAnimation, setIsPrestigeAnimation] = useState(false);
@@ -57,9 +65,9 @@ export function GameOver({ score, wave, onRetry, onMainMenu }: { score: number, 
             <Skull className="w-8 h-8 text-red-500 opacity-90" />
           </div>
           <div>
-            <h2 className="text-4xl sm:text-5xl font-black text-white font-display tracking-tight mb-2 cyber-text-glow">DEFENSE DOWN</h2>
+            <h2 className="text-4xl sm:text-5xl font-black text-white font-display tracking-tight mb-2 cyber-text-glow">{t('game.over')}</h2>
             <div className="h-[2px] w-12 bg-red-500 mx-auto my-4" />
-            <p className="text-red-500/60 text-sm font-mono tracking-widest uppercase animate-pulse">Core Connection Severed</p>
+            <p className="text-red-500/60 text-sm font-mono tracking-widest uppercase animate-pulse">{t('game.overSubtitle')}</p>
           </div>
         </div>
         
@@ -69,20 +77,20 @@ export function GameOver({ score, wave, onRetry, onMainMenu }: { score: number, 
           {isNewHigh && (
             <div className="absolute top-0 right-0 p-3 transform rotate-12 translate-x-4 -translate-y-2">
               <span className="bg-yellow-500 text-black text-[10px] font-black px-3 py-1 rounded shadow-lg uppercase tracking-tighter flex items-center border border-black/10">
-                <Trophy className="w-3 h-3 mr-1" /> WORLD FIRST
+                <Trophy className="w-3 h-3 mr-1" /> {t('game.newHigh')}
               </span>
             </div>
           )}
           
           <div className="relative z-10">
-            <p className="text-xs text-zinc-500 uppercase tracking-widest font-mono mb-4 border-b border-white/5 pb-2">Operational Summary</p>
+            <p className="text-xs text-zinc-500 uppercase tracking-widest font-mono mb-4 border-b border-white/5 pb-2">{t('game.summary')}</p>
             <div className="flex justify-between items-center mb-6">
               <div className="text-left">
-                <div className="text-[10px] text-zinc-500 uppercase font-mono">Archive Score</div>
+                <div className="text-[10px] text-zinc-500 uppercase font-mono">{t('game.archiveScore')}</div>
                 <p className="text-4xl font-black text-white font-mono">{score.toLocaleString()}</p>
               </div>
               <div className="text-right">
-                <div className="text-[10px] text-zinc-500 uppercase font-mono tracking-widest">Wave</div>
+                <div className="text-[10px] text-zinc-500 uppercase font-mono tracking-widest">{t('game.wave')}</div>
                 <p className="text-4xl font-black text-white font-mono">{wave.toString().padStart(2, '0')}</p>
               </div>
             </div>
@@ -92,9 +100,9 @@ export function GameOver({ score, wave, onRetry, onMainMenu }: { score: number, 
               <div className="mt-4 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/20 rounded-xl px-4 py-3 flex items-center space-x-3">
                 <Gift className="w-5 h-5 text-emerald-400 shrink-0" />
                 <div className="text-left">
-                  <p className="text-sm font-bold text-emerald-400">Daily Directive Complete</p>
+                  <p className="text-sm font-bold text-emerald-400">{t('game.dailyComplete')}</p>
                   <p className="text-[10px] text-emerald-500/60 font-mono">
-                    Rewards granted. Streak: {streak.currentStreak}d
+                    {t('game.dailyRewards', { streak: streak.currentStreak })}
                   </p>
                 </div>
               </div>
@@ -102,8 +110,25 @@ export function GameOver({ score, wave, onRetry, onMainMenu }: { score: number, 
           </div>
         </div>
         
-        <div className="flex flex-col space-y-4">
-          <button
+        <div className="flex flex-col space-y-4">          {onContinueAd && (
+            <button
+              onClick={() => {
+                soundManager.uiClick();
+                void onContinueAd();
+              }}
+              disabled={continueAdPending}
+              onMouseEnter={() => soundManager.uiHover()}
+              className={`w-full py-4 rounded-xl font-black text-sm uppercase tracking-widest flex items-center justify-center space-x-3 transition-all ${
+                continueAdPending
+                  ? 'bg-zinc-800 text-zinc-500 cursor-wait'
+                  : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)]'
+              }`}
+            >
+              <Play className="w-4 h-4" />
+              <span>{continueAdPending ? t('game.continueAdPending') : t('game.continueAd')}</span>
+            </button>
+          )}
+          <button 
             onClick={async () => {
               soundManager.uiClick();
               try {
@@ -115,7 +140,7 @@ export function GameOver({ score, wave, onRetry, onMainMenu }: { score: number, 
             }}
             className="w-full py-3 rounded-xl border border-white/10 text-zinc-300 font-mono text-xs uppercase tracking-widest hover:bg-white/5"
           >
-            Share Score Card
+            {t('game.share')}
           </button>
           <button 
             onClick={() => { soundManager.init(); soundManager.uiClick(); onRetry(); }}

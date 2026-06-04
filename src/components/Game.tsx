@@ -1,4 +1,5 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, lazy, Suspense } from 'react';
+import { t } from '../i18n';
 import { GameCanvas } from './GameCanvas';
 import { HUD } from './HUD';
 import { GameOver } from './GameOver';
@@ -6,8 +7,9 @@ import { UpgradeMenu } from './UpgradeMenu';
 import { PauseMenu } from './PauseMenu';
 import { SettingsMenu } from './SettingsMenu';
 import { TutorialOverlay } from './TutorialOverlay';
-import { ProgressionCenter } from './ProgressionCenter';
-import { GameEngine } from '../game/GameEngine';
+
+const ProgressionCenter = lazy(() => import('./ProgressionCenter').then(m => ({ default: m.ProgressionCenter })));
+import type { EngineHandle } from '../game/EngineHandle';
 import { GameConfig } from '../game/GameConfig';
 import { SaveManager } from '../game/SaveManager';
 
@@ -33,8 +35,11 @@ import {
   type AccessibilitySettings,
 } from '../game/AccessibilitySettings';
 import { analytics } from '../lib/analytics';
+import { AdsService } from '../lib/ads';
+import { auth } from '../lib/firebase';
+import { FirebaseService } from '../lib/firebaseService';
 
-function checkWinCondition(engine: GameEngine, condition: WinCondition): boolean {
+function checkWinCondition(engine: EngineHandle, condition: WinCondition): boolean {
   switch (condition.type) {
     case 'wave':
       return engine.wave >= condition.value;
@@ -66,12 +71,15 @@ export function Game({
   // We strictly manage these here ONLY for the menus that need them when paused
   const [finalScore, setFinalScore] = useState(0);
   const [currentWave, setCurrentWave] = useState(1);
+  const [continueAdPending, setContinueAdPending] = useState(false);
   
-  const engineRef = useRef<GameEngine | null>(null);
+  const engineRef = useRef<EngineHandle | null>(null);
   const [a11y, setA11y] = useState<AccessibilitySettings>(loadAccessibilitySettings);
 
   useEffect(() => {
     analytics.track('session_start', { mode: challengeModifiers ? 'daily' : 'standard' });
+    // Preload rewarded ad so it's ready when game over triggers
+    AdsService.preload();
     return () => analytics.track('session_end');
   }, [gameId, challengeModifiers]);
 
@@ -80,6 +88,7 @@ export function Game({
   const handleGameOver = useCallback((score: number) => {
     setFinalScore(score);
     setIsGameOver(true);
+    setContinueAdPending(false);
     const wave = engineRef.current?.wave ?? 0;
     StatsManager.recordRunEnd(wave, score);
     analytics.track('game_over', { score, wave });
@@ -104,6 +113,12 @@ export function Game({
         totalScore: score,
         totalPlayTime: engineRef.current.playTimeAccumulator
       });
+    }
+
+    // Auto-sync score to leaderboard if Firebase Auth is active
+    if (auth.currentUser) {
+      const username = auth.currentUser.displayName || 'Anonymous';
+      FirebaseService.submitScore(auth.currentUser.uid, username, score, wave);
     }
   }, []);
 
@@ -205,6 +220,27 @@ export function Game({
     }
   }, [togglePause]);
 
+  const handleContinueRun = useCallback(async () => {
+    if (continueAdPending || !engineRef.current) return;
+    setContinueAdPending(true);
+    try {
+      const reward = await AdsService.showRewarded('continue_run');
+      if (reward && reward.type === 'continue_run' && engineRef.current) {
+        const restorePercent = reward.amount || 30;
+        engineRef.current.health = Math.min(
+          engineRef.current.maxHealth,
+          engineRef.current.health + engineRef.current.maxHealth * (restorePercent / 100)
+        );
+        setIsGameOver(false);
+        engineRef.current.resume();
+      }
+    } catch {
+      // ad failed silently
+    } finally {
+      setContinueAdPending(false);
+    }
+  }, [continueAdPending]);
+
   useEffect(() => {
     // Check for game start story beat
     const introBeat = StoryManager.getTriggeredBeat('game_start', 0);
@@ -237,23 +273,19 @@ export function Game({
     }
   }, []);
 
-    // Apply challenge modifiers to engine when canvas ref is set
-  useEffect(() => {
-    if (engineRef.current && challengeModifiers && !engineRef.current.isChallengeMode) {
-      engineRef.current.setChallengeModifiers(challengeModifiers);
-    }
-  }, [engineRef.current, challengeModifiers]);
-
-  // Listen for challenge reward events to grant progression
+  // Listen for challenge reward events to grant progression (resources only; skins handled in DailyChallengeManager)
+  interface ChallengeRewardDetail {
+    type: 'resources';
+    id: ResourceType;
+  }
   useEffect(() => {
     const handleReward = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (detail.type === 'resources') {
-        // Defer to ProgressionManager via dynamic import to avoid circular deps
-        import('../game/ProgressionManager').then(({ ProgressionManager }) => {
-          ProgressionManager.addResource(detail.id as ResourceType, detail.id === 'crystals' ? 25 : 500);
-        });
-      }
+      const detail = (e as CustomEvent<ChallengeRewardDetail>).detail;
+      if (!detail || detail.type !== 'resources' || !detail.id) return;
+      // Defer to ProgressionManager via dynamic import to avoid circular deps
+      import('../game/ProgressionManager').then(({ ProgressionManager }) => {
+        ProgressionManager.addResource(detail.id, detail.id === 'crystals' ? 25 : 500);
+      });
     };
     window.addEventListener('challenge_reward', handleReward);
     return () => window.removeEventListener('challenge_reward', handleReward);
@@ -266,7 +298,7 @@ export function Game({
       <div
         className="absolute inset-0 w-full h-full"
         style={canvasA11yStyle}
-        aria-label="Game battlefield"
+        aria-label={t('game.battlefieldAria')}
       >
         <GameCanvas
           ref={engineRef}
@@ -275,6 +307,7 @@ export function Game({
           onGameOver={handleGameOver}
           onWaveComplete={handleWaveComplete}
           onStoryTrigger={handleStoryTrigger}
+          challengeModifiers={challengeModifiers}
         />
       </div>
       
@@ -309,12 +342,14 @@ export function Game({
         />
       )}
 
-      {isProgressionOpen && (
-        <ProgressionCenter onClose={() => {
-          setIsProgressionOpen(false);
-          if (engineRef.current) engineRef.current.syncSkills();
-        }} />
-      )}
+      <Suspense fallback={null}>
+        {isProgressionOpen && (
+          <ProgressionCenter onClose={() => {
+            setIsProgressionOpen(false);
+            if (engineRef.current) engineRef.current.syncSkills();
+          }} />
+        )}
+      </Suspense>
 
       {!isGameOver && !isUpgrading && (
         <TutorialOverlay engineRef={engineRef} />
@@ -324,6 +359,8 @@ export function Game({
         <GameOver 
           score={finalScore} 
           wave={currentWave}
+          onContinueAd={AdsService.isEnabled() ? handleContinueRun : undefined}
+          continueAdPending={continueAdPending}
           onRetry={() => {
             // Reset state thoroughly
             setIsGameOver(false);

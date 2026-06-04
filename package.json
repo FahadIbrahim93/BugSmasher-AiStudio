@@ -16,6 +16,7 @@
     "lint": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "cross-env PLAYWRIGHT_BROWSERS_PATH=0 npx playwright test",
     "ci": "npm run lint && npm run validate:functions && npm test && npm run build",
     "validate:functions": "cd functions && npm ci && npm run build",
     "deploy:hosting": "npm run build && firebase deploy --only hosting",
@@ -27,20 +28,23 @@
     "firebase": "^12.13.0",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
+    "posthog-js": "^1.379.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "vite": "^6.2.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@types/node": "^22.14.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitest/ui": "^4.1.5",
+    "cross-env": "^10.1.0",
     "jsdom": "^29.1.1",
+    "playwright": "^1.60.0",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
-    "vite": "^6.2.0",
     "vite-plugin-pwa": "^1.3.0",
     "vitest": "^4.1.5"
   }

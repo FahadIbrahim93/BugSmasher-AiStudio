@@ -5,6 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { FirebaseService } from '../lib/firebaseService';
 import { soundManager } from '../game/SoundManager';
 import { StatsManager, UserStats } from '../game/StatsManager';
+import { analytics } from '../lib/analytics';
+import { t } from '../i18n';
 
 export function AccountMenu({ onClose }: { onClose: () => void }) {
   const { user, profile, loading: authLoading, signIn, logOut } = useAuth();
@@ -17,6 +19,12 @@ export function AccountMenu({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (user) {
       setActiveTab('profile');
+      // Identify user in analytics on login
+      analytics.identify(user.uid, {
+        email: user.email || undefined,
+        displayName: user.displayName || undefined,
+        hasPhoto: !!user.photoURL,
+      });
     } else {
       setActiveTab('auth');
     }
@@ -53,8 +61,8 @@ export function AccountMenu({ onClose }: { onClose: () => void }) {
               <Shield className="w-5 h-5 text-white/60" />
             </div>
             <div>
-              <h2 className="text-xl font-black tracking-tight text-white">CENTRAL ACCESS</h2>
-              <p className="text-[10px] font-mono text-zinc-500 tracking-widest uppercase">Secure Identity Management</p>
+              <h2 className="text-xl font-black tracking-tight text-white">{t('account.title')}</h2>
+              <p className="text-[10px] font-mono text-zinc-500 tracking-widest uppercase">{t('account.subtitle')}</p>
             </div>
           </div>
           <button 
@@ -71,7 +79,7 @@ export function AccountMenu({ onClose }: { onClose: () => void }) {
             active={activeTab === 'auth' || activeTab === 'profile'} 
             onClick={() => setActiveTab(user ? 'profile' : 'auth')}
             icon={<LucideUser className="w-4 h-4" />}
-            label="Profile"
+            label={t('app.profile')}
           />
           <TabButton 
             active={activeTab === 'stats'} 
@@ -80,7 +88,7 @@ export function AccountMenu({ onClose }: { onClose: () => void }) {
               setActiveTab('stats');
             }}
             icon={<BarChart3 className="w-4 h-4" />}
-            label="Statistics"
+            label={t('app.statistics')}
           />
         </div>
 
@@ -90,7 +98,7 @@ export function AccountMenu({ onClose }: { onClose: () => void }) {
               <motion.div key="auth" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
                 <div className="space-y-8">
                   <div className="text-center space-y-2">
-                    <p className="text-zinc-400 text-sm">Welcome back, operative. Sync your progress to the grid.</p>
+                    <p className="text-zinc-400 text-sm">{t('account.welcome')}</p>
                   </div>
 
                   <div className="space-y-4">
@@ -98,7 +106,7 @@ export function AccountMenu({ onClose }: { onClose: () => void }) {
                       <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-start space-x-3 mb-4">
                         <AlertCircle className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
                         <p className="text-[10px] text-blue-300/80 font-mono leading-relaxed">
-                          RUNNING IN SANDBOX: If social login fails to redirect, try opening the <a href={window.location.href} target="_blank" rel="noreferrer" className="underline text-blue-400">Direct Link</a>.
+                          {t('account.sandboxWarning')}<a href={window.location.href} target="_blank" rel="noreferrer" className="underline text-blue-400">{t('account.directLink')}</a>.
                         </p>
                       </div>
                     )}
@@ -114,11 +122,11 @@ export function AccountMenu({ onClose }: { onClose: () => void }) {
                         <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                         <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                       </svg>
-                      <span>Continue with Google</span>
+                      <span>{t('account.continueGoogle')}</span>
                     </button>
 
                     <p className="text-[10px] text-zinc-600 font-mono text-center">
-                      SECURE AUTHENTICATION VIA GOOGLE IDENTITY SERVICE
+                      {t('account.secureAuth')}
                     </p>
                   </div>
                 </div>
@@ -131,7 +139,7 @@ export function AccountMenu({ onClose }: { onClose: () => void }) {
                   <div className="flex items-center space-x-6">
                     <div className="w-20 h-20 bg-gradient-to-br from-white/10 to-white/5 rounded-2xl border border-white/10 flex items-center justify-center shadow-lg overflow-hidden">
                       {user.photoURL ? (
-                        <img src={user.photoURL} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        <img src={user.photoURL} alt={t('account.avatarAlt')} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       ) : (
                         <LucideUser className="w-10 h-10 text-white/20" />
                       )}
@@ -139,9 +147,9 @@ export function AccountMenu({ onClose }: { onClose: () => void }) {
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
                         <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                        <h3 className="text-sm font-mono text-zinc-400 uppercase">Authenticated Оперативная</h3>
+                        <h3 className="text-sm font-mono text-zinc-400 uppercase">{t('account.authenticated')}</h3>
                       </div>
-                      <p className="text-xl font-bold text-white truncate max-w-[200px]">{profile?.username || user.displayName || 'Unknown Host'}</p>
+                      <p className="text-xl font-bold text-white truncate max-w-[200px]">{profile?.username || user.displayName || t('account.unknownHost')}</p>
                       <p className="text-[10px] font-mono text-zinc-600">{user.email}</p>
                     </div>
                   </div>
@@ -149,13 +157,13 @@ export function AccountMenu({ onClose }: { onClose: () => void }) {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
                       <Cloud className="w-4 h-4 text-blue-400 mb-2" />
-                      <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Sync Status</p>
-                      <p className="text-sm font-bold text-white">READY</p>
+                      <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">{t('account.syncStatus')}</p>
+                      <p className="text-sm font-bold text-white">{t('account.syncReady')}</p>
                     </div>
                     <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
                       <History className="w-4 h-4 text-purple-400 mb-2" />
-                      <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Active Session</p>
-                      <p className="text-sm font-bold text-white">ONLINE</p>
+                      <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">{t('account.activeSession')}</p>
+                      <p className="text-sm font-bold text-white">{t('account.sessionOnline')}</p>
                     </div>
                   </div>
 
@@ -163,7 +171,7 @@ export function AccountMenu({ onClose }: { onClose: () => void }) {
                     onClick={handleLogout}
                     className="w-full py-4 text-red-400 hover:text-red-300 border border-red-500/10 hover:bg-red-500/5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all mt-4"
                   >
-                    Terminate Session
+                    {t('account.terminateSession')}
                   </button>
                 </div>
               </motion.div>
@@ -173,25 +181,25 @@ export function AccountMenu({ onClose }: { onClose: () => void }) {
               <motion.div key="stats" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Aggregate Operative Performance</h3>
+                    <h3 className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">{t('account.statsTitle')}</h3>
                     <div className="flex items-center space-x-2 text-[9px] font-mono text-blue-400 uppercase">
                       <Cloud className="w-3 h-3" />
-                      <span>Persistent Memory Active</span>
+                      <span>{t('account.statsPersistent')}</span>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <StatCard icon={<Zap className="w-4 h-4" />} label="Total Score" value={stats.totalScore.toLocaleString()} />
-                    <StatCard icon={<Target className="w-4 h-4" />} label="Anomalies Purged" value={stats.totalBugsKilled.toLocaleString()} />
-                    <StatCard icon={<History className="w-4 h-4" />} label="Wave Intervals" value={stats.totalWavesCompleted.toLocaleString()} />
-                    <StatCard icon={<Clock className="w-4 h-4" />} label="Runtime (Sec)" value={Math.floor(stats.totalPlayTime).toLocaleString()} />
-                    <StatCard icon={<Zap className="w-4 h-4 text-yellow-400" />} label="Cores Collected" value={stats.totalPowerupsCollected.toLocaleString()} />
-                    <StatCard icon={<Cpu className="w-4 h-4 text-red-400" />} label="Overseers Neutralized" value={stats.bossesKilled.toLocaleString()} />
+                    <StatCard icon={<Zap className="w-4 h-4" />} label={t('account.statsTotalScore')} value={stats.totalScore.toLocaleString()} />
+                    <StatCard icon={<Target className="w-4 h-4" />} label={t('account.statsBugsKilled')} value={stats.totalBugsKilled.toLocaleString()} />
+                    <StatCard icon={<History className="w-4 h-4" />} label={t('account.statsWavesCompleted')} value={stats.totalWavesCompleted.toLocaleString()} />
+                    <StatCard icon={<Clock className="w-4 h-4" />} label={t('account.statsPlayTime')} value={Math.floor(stats.totalPlayTime).toLocaleString()} />
+                    <StatCard icon={<Zap className="w-4 h-4 text-yellow-400" />} label={t('account.statsPowerups')} value={stats.totalPowerupsCollected.toLocaleString()} />
+                    <StatCard icon={<Cpu className="w-4 h-4 text-red-400" />} label={t('account.statsBossesKilled')} value={stats.bossesKilled.toLocaleString()} />
                   </div>
                   
                   <div className="p-4 bg-white/5 rounded-2xl border border-white/5 mt-4">
-                     <p className="text-[9px] font-mono text-zinc-600 uppercase tracking-widest mb-1">Security Timestamp</p>
-                     <p className="text-xs font-mono text-zinc-400 uppercase">Session Active Since: {new Date(stats.lastPlayed).toLocaleString()}</p>
+                     <p className="text-[9px] font-mono text-zinc-600 uppercase tracking-widest mb-1">{t('account.securityTimestamp')}</p>
+                     <p className="text-xs font-mono text-zinc-400 uppercase">{t('account.sessionSince', { date: new Date(stats.lastPlayed).toLocaleString() })}</p>
                   </div>
                 </div>
               </motion.div>
@@ -203,7 +211,7 @@ export function AccountMenu({ onClose }: { onClose: () => void }) {
   );
 }
 
-function StatCard({ icon, label, value }: { icon: any, label: string, value: string }) {
+function StatCard({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) {
   return (
     <div className="p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
       <div className="flex items-center space-x-2 text-zinc-500 mb-2">
@@ -215,7 +223,7 @@ function StatCard({ icon, label, value }: { icon: any, label: string, value: str
   );
 }
 
-function TabButton({ active, icon, label, onClick }: { active: boolean, icon: any, label: string, onClick: () => void }) {
+function TabButton({ active, icon, label, onClick }: { active: boolean, icon: React.ReactNode, label: string, onClick: () => void }) {
   return (
     <button 
       onClick={() => { soundManager.uiHover(); onClick(); }}

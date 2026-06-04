@@ -5,6 +5,7 @@ import { SaveManager } from '../game/SaveManager';
 import { useState } from 'react';
 import { AccountMenu } from './AccountMenu';
 import { IntelHub } from './IntelHub';
+import { t } from '../i18n';
 
 export function PauseMenu({ 
   onResume, 
@@ -39,10 +40,10 @@ export function PauseMenu({
         </div>
         
         <h2 className="text-3xl font-black text-white font-display mb-2 uppercase tracking-widest">
-          System Paused
+          {t('pause.title')}
         </h2>
         <p className="text-zinc-500 font-mono tracking-widest text-sm uppercase mb-10 text-center">
-          Operations Suspended
+          {t('pause.subtitle')}
         </p>
 
         <div className="w-full flex flex-col space-y-4">
@@ -53,7 +54,7 @@ export function PauseMenu({
           >
             <span className="flex items-center justify-center">
               <Play className="w-4 h-4 mr-3" />
-              Resume
+              {t('pause.resume')}
             </span>
           </button>
 
@@ -64,7 +65,7 @@ export function PauseMenu({
               className="py-3 bg-zinc-800/80 border border-white/10 hover:bg-zinc-700/80 text-zinc-300 rounded-2xl font-mono text-xs uppercase tracking-widest transition-colors flex items-center justify-center"
             >
               <Save className="w-4 h-4 mr-2 opacity-70" />
-              Save Game
+              {t('pause.save')}
             </button>
             <button 
               onClick={() => { soundManager.uiClick(); onLoad(); }}
@@ -73,7 +74,7 @@ export function PauseMenu({
               className="py-3 bg-zinc-800/80 border border-white/10 hover:bg-zinc-700/80 text-zinc-300 rounded-2xl font-mono text-xs uppercase tracking-widest transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <Download className="w-4 h-4 mr-2 opacity-70" />
-              Load Game
+              {t('pause.load')}
             </button>
           </div>
 
@@ -84,7 +85,7 @@ export function PauseMenu({
               className="py-3 bg-zinc-800/50 border border-white/10 hover:bg-white/5 text-zinc-400 rounded-2xl font-mono text-[10px] uppercase tracking-widest transition-colors flex items-center justify-center"
             >
               <Trophy className="w-3.5 h-3.5 mr-2 opacity-70" />
-              Rankings
+              {t('pause.rankings')}
             </button>
             <button 
               onClick={() => { soundManager.uiClick(); setIsIntelOpen(true); }}
@@ -92,7 +93,7 @@ export function PauseMenu({
               className="py-3 bg-zinc-800/50 border border-white/10 hover:bg-white/5 text-zinc-400 rounded-2xl font-mono text-[10px] uppercase tracking-widest transition-colors flex items-center justify-center"
             >
               <BookOpen className="w-3.5 h-3.5 mr-2 opacity-70" />
-              System Intel
+              {t('pause.systemIntel')}
             </button>
           </div>
 
@@ -102,7 +103,7 @@ export function PauseMenu({
             className="w-full py-3 bg-zinc-800/50 border border-white/10 hover:bg-white/5 text-zinc-400 rounded-2xl font-mono text-xs uppercase tracking-widest transition-colors flex items-center justify-center"
           >
             <Settings2 className="w-4 h-4 mr-2 opacity-70" />
-            Settings
+            {t('pause.settings')}
           </button>
           
           <button 
@@ -111,7 +112,7 @@ export function PauseMenu({
             className="w-full py-3 bg-transparent hover:text-red-400 text-zinc-500 rounded-full font-medium text-xs font-mono uppercase tracking-widest transition-colors flex items-center justify-center"
           >
             <Home className="w-4 h-4 mr-3 opacity-50" />
-            Main Menu
+            {t('pause.mainMenu')}
           </button>
         </div>
       </motion.div>

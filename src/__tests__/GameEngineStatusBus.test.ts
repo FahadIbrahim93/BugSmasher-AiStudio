@@ -15,6 +15,11 @@ describe('GameEngineStatusBus', () => {
       dashCooldown: 3,
       rapidFireTimer: 0,
       spikeBurstTimer: 0,
+      shieldTimer: 0,
+      multiplierTimer: 0,
+      slowMoTimer: 0,
+      overdriveTimer: 0,
+      waveModifier: null,
     };
     GameEngineStatusBus.publish(status);
     expect(GameEngineStatusBus.getSnapshot()).toEqual(status);

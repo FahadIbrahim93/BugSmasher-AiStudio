@@ -722,6 +722,117 @@ describe('storage compatibility', () => {
 });
 
 // =============================================================================
+// Persistence Validation — localStorage Round-Trip
+// =============================================================================
+
+describe('persistence validation', () => {
+  it('should persist active core theme through simulated page reload', () => {
+    // Setup: unlock and set a theme
+    const data = {
+      unlockedSkins: [], activeSkin: null,
+      unlockedCoreThemes: ['theme_frost'],
+      activeCoreTheme: 'theme_frost',
+      isSupporter: true, supporterTier: 'ultimate' as SupporterTier, devUnlocked: false,
+    };
+    localStorage.setItem('bugsmasher_cosmetics', JSON.stringify(data));
+
+    // Verify it's readable immediately
+    expect(getActiveCoreTheme()).toBe('theme_frost');
+
+    // Simulate page reload: localStorage persists but module state is fresh
+    // Since loadExtended() always reads from localStorage, re-reading gives the same result
+    expect(getActiveCoreThemeConfig()!.name).toBe('Frost Protocol');
+    expect(getActiveCoreThemeConfig()!.colors.primary).toBe('#22d3ee');
+  });
+
+  it('should persist active skin through multiple set/read cycles', () => {
+    // Unlock several skins
+    const data = {
+      unlockedSkins: ['skin_plasma_arc', 'skin_shadow_ops', 'skin_solar_flare'],
+      activeSkin: null,
+      unlockedCoreThemes: [], activeCoreTheme: null,
+      isSupporter: true, supporterTier: 'premium' as SupporterTier, devUnlocked: false,
+    };
+    localStorage.setItem('bugsmasher_cosmetics', JSON.stringify(data));
+
+    // Cycle through them and verify each persists
+    setActiveSkin('skin_plasma_arc');
+    expect(getActiveSkin()).toBe('skin_plasma_arc');
+
+    setActiveSkin('skin_shadow_ops');
+    expect(getActiveSkin()).toBe('skin_shadow_ops');
+
+    setActiveSkin('skin_solar_flare');
+    expect(getActiveSkin()).toBe('skin_solar_flare');
+
+    // Clear selection
+    setActiveSkin(null);
+    expect(getActiveSkin()).toBeNull();
+  });
+
+  it('should not lose previously set values when updating unrelated fields', () => {
+    // Set initial state with a theme
+    const initial = {
+      unlockedSkins: ['skin_plasma_arc'],
+      activeSkin: 'skin_plasma_arc',
+      unlockedCoreThemes: ['theme_void'],
+      activeCoreTheme: 'theme_void',
+      isSupporter: true,
+      supporterTier: 'basic' as SupporterTier,
+      devUnlocked: false,
+    };
+    localStorage.setItem('bugsmasher_cosmetics', JSON.stringify(initial));
+
+    // Update only the skin (CosmeticsManager writes entire object)
+    setActiveSkin(null);
+
+    // Theme should still be intact
+    expect(getActiveCoreTheme()).toBe('theme_void');
+    expect(isSupporter()).toBe(true);
+  });
+
+  it('should correctly serialize and deserialize all field types', () => {
+    devUnlockAll();
+
+    const raw = localStorage.getItem('bugsmasher_cosmetics');
+    expect(raw).not.toBeNull();
+
+    const parsed = JSON.parse(raw!);
+    // Verify all fields survive JSON round-trip
+    expect(Array.isArray(parsed.unlockedSkins)).toBe(true);
+    expect(Array.isArray(parsed.unlockedCoreThemes)).toBe(true);
+    expect(typeof parsed.isSupporter).toBe('boolean');
+    expect(typeof parsed.devUnlocked).toBe('boolean');
+    expect(parsed.activeSkin === null || typeof parsed.activeSkin === 'string').toBe(true);
+    expect(parsed.activeCoreTheme === null || typeof parsed.activeCoreTheme === 'string').toBe(true);
+    expect(parsed.supporterTier === null || typeof parsed.supporterTier === 'string').toBe(true);
+  });
+
+  it('should survive 100 consecutive write/read cycles without data corruption', () => {
+    const cycle = (i: number) => {
+      const data = {
+        unlockedSkins: [`skin_test_${i}`],
+        activeSkin: `skin_test_${i}`,
+        unlockedCoreThemes: i % 2 === 0 ? ['theme_void'] : ['theme_frost'],
+        activeCoreTheme: i % 2 === 0 ? 'theme_void' : 'theme_frost',
+        isSupporter: i % 3 === 0,
+        supporterTier: i % 3 === 0 ? 'ultimate' : null,
+        devUnlocked: false,
+      };
+      localStorage.setItem('bugsmasher_cosmetics', JSON.stringify(data));
+      const read = JSON.parse(localStorage.getItem('bugsmasher_cosmetics')!);
+      expect(read.activeSkin).toBe(data.activeSkin);
+      expect(read.activeCoreTheme).toBe(data.activeCoreTheme);
+      expect(read.isSupporter).toBe(data.isSupporter);
+    };
+
+    for (let i = 0; i < 100; i++) {
+      cycle(i);
+    }
+  });
+});
+
+// =============================================================================
 // Edge Cases
 // =============================================================================
 

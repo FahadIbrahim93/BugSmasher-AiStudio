@@ -1,20 +1,21 @@
 import { useEffect, useState } from 'react';
 import { assetManager } from '../game/AssetManager';
 import { Bug } from 'lucide-react';
+import { t } from '../i18n';
 
 export function Preloader({ onComplete }: { onComplete: () => void }) {
   const [progress, setProgress] = useState(0);
   const [readouts, setReadouts] = useState<string[]>([]);
   
-  const strings = [
-    "INITIATING PROJECT NEXUS...",
-    "HANDSHAKE WITH CORE... OK",
-    "DECRYPTING SECTOR 7 DATA...",
-    "CALIBRATING OPTIC NEURAL SENSORS...",
-    "MOUNTING QUANTUM VOLUMES...",
-    "SUPPRESSING EMOTIONAL SUBROUTINES...",
-    "READY TO CONNECT."
-  ];
+  const readoutKeys = [
+    'preloader.readout1',
+    'preloader.readout2',
+    'preloader.readout3',
+    'preloader.readout4',
+    'preloader.readout5',
+    'preloader.readout6',
+    'preloader.readout7',
+  ] as const;
 
   useEffect(() => {
     let mounted = true;
@@ -23,7 +24,7 @@ export function Preloader({ onComplete }: { onComplete: () => void }) {
         if (!mounted) return;
         setReadouts(prev => {
             const nextIdx = prev.length;
-            if (nextIdx < strings.length) return [...prev, strings[nextIdx]];
+            if (nextIdx < readoutKeys.length) return [...prev, t(readoutKeys[nextIdx])];
             return prev;
         });
     }, 400);
@@ -69,7 +70,7 @@ export function Preloader({ onComplete }: { onComplete: () => void }) {
         </div>
         
         <div className="flex justify-between w-full text-[9px] text-zinc-600 uppercase tracking-widest font-black">
-          <span>Uplink Established</span>
+          <span>{t('preloader.uplink')}</span>
           <span>{progress}%</span>
         </div>
       </div>

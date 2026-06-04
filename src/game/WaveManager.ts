@@ -20,6 +20,10 @@ export class WaveManager {
   difficultySpeedMultiplier: number = 1;
   difficultyHpMultiplier: number = 1;
 
+  // Wave modifiers
+  waveModifier: string | null = null;
+  waveModifierTimer: number = 0;
+
   constructor(engine: GameEngine) {
     this.engine = engine;
   }
@@ -45,6 +49,15 @@ export class WaveManager {
         this.bugsToSpawn = GameConfig.waves.baseBugs + this.engine.wave * GameConfig.waves.bugsPerWave + perfBonus;
     }
     
+    // Roll wave modifier (20% chance, not on boss waves)
+    if (!this.isBossWave && Math.random() < 0.2) {
+      const modifiers = ['no_healers', 'armored', 'swarm', 'toxic_regen'];
+      this.waveModifier = modifiers[Math.floor(Math.random() * modifiers.length)];
+      this.waveModifierTimer = 0;
+    } else {
+      this.waveModifier = null;
+    }
+
     this.spawnTimer = 0;
     this.intensity = 1;
     this.intensityTimer = 0;
@@ -202,7 +215,17 @@ export class WaveManager {
     
     // Special units chance
     const healerWeight = this.engine.challengeModifiers?.healerSpawnMultiplier || 1;
-    if (wave > 8 && r < 0.05 * healerWeight) return 'healer';
+    if (wave > 8 && r < 0.05 * healerWeight && this.waveModifier !== 'no_healers') return 'healer';
+
+    // Wave modifier: swarm replaces most types with double basic
+    if (this.waveModifier === 'swarm') {
+      return Math.random() < 0.7 ? 'basic' : 'scout';
+    }
+
+    // Sniper enemy — unlocked from wave 7
+    if (wave >= 7 && Math.random() < 0.08) return 'sniper';
+    // Burrower enemy — unlocked from wave 12
+    if (wave >= 12 && Math.random() < 0.06) return 'burrower';
 
     const types = ['basic', 'scout', 'tank', 'swarmer', 'ghost', 'phase', 'ember', 'frost'];
     if (wave < 6) return r < 0.6 ? 'basic' : (r < 0.8 ? 'scout' : 'swarmer');
@@ -246,7 +269,7 @@ export class WaveManager {
       (1 + (this.engine.performanceFactor - 1) * 0.2) *
       this.difficultySpeedMultiplier;
 
-    return {
+    const bug: Bug = {
       active: true,
       x, y,
       type: typeName,
@@ -261,5 +284,18 @@ export class WaveManager {
       offsetTime: Math.random() * 100,
       hitTimer: 0
     };
+
+    // Apply wave modifier effects
+    if (this.waveModifier === 'armored') {
+      bug.armor = 0.5; // 50% damage reduction
+      bug.color = '#888888'; // Grey metallic tint
+    }
+
+    // Apply challenge frostbite modifier
+    if (this.engine.challengeModifiers?.frostbiteActive && typeName !== 'boss') {
+      bug.color = '#aaddff';
+    }
+
+    return bug;
   }
 }

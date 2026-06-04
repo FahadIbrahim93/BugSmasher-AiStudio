@@ -1,14 +1,15 @@
 import { motion } from 'motion/react';
-import { Volume2, VolumeX, Settings2, ArrowLeft, MousePointer2, Monitor, Gem, Accessibility, Keyboard } from 'lucide-react';
+import { Volume2, VolumeX, Settings2, ArrowLeft, MousePointer2, Monitor, Gem, Accessibility, Keyboard, Globe } from 'lucide-react';
 import { soundManager } from '../game/SoundManager';
 import { useState, useEffect, useCallback } from 'react';
-import {
-  loadAccessibilitySettings,
+import { loadAccessibilitySettings,
   saveAccessibilitySettings,
   type AccessibilitySettings,
   type ColorblindMode,
   type DifficultyId,
 } from '../game/AccessibilitySettings';
+import { t, setLocale, getLocale, subscribeLocale, type LocaleId } from '../i18n';
+import { analytics } from '../lib/analytics';
 import {
   loadControlBindings,
   saveControlBindings,
@@ -20,6 +21,7 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
   const [sfxVol, setSfxVol] = useState(soundManager.sfxVolume);
   const [musicVol, setMusicVol] = useState(soundManager.musicVolume);
   const [isMuted, setIsMuted] = useState(soundManager.isMuted);
+  const [currentLocale, setCurrentLocale] = useState<LocaleId>(getLocale());
   const [a11y, setA11y] = useState<AccessibilitySettings>(loadAccessibilitySettings);
 
   const updateA11y = (patch: Partial<AccessibilitySettings>) => {
@@ -98,10 +100,18 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
   const toggleVFX = () => {
     const newValue = !highFidelityVFX;
     setHighFidelityVFX(newValue);
+    analytics.track('settings_changed', { key: 'highFidelityVfx', value: newValue });
     if (typeof window !== 'undefined') {
       localStorage.setItem('nexus_high_fidelity_vfx', newValue ? 'true' : 'false');
       window.dispatchEvent(new CustomEvent('nexus_vfx_settings_changed', { detail: newValue }));
     }
+  };
+
+  useEffect(() => subscribeLocale((l) => setCurrentLocale(l)), []);
+
+  const handleLocaleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    soundManager.uiClick();
+    setLocale(e.target.value as LocaleId);
   };
 
   const togglePerformanceStats = () => {
@@ -131,7 +141,7 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
           <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-4">
             <Settings2 className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-3xl font-black text-white uppercase tracking-[0.2em] font-display">System Settings</h2>
+          <h2 className="text-3xl font-black text-white uppercase tracking-[0.2em] font-display">{t('settings.title')}</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
@@ -139,13 +149,13 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
           <section className="space-y-8">
             <div className="flex items-center space-x-3 text-zinc-500 font-mono text-xs uppercase tracking-widest border-b border-white/5 pb-2">
               <Volume2 className="w-4 h-4" />
-              <span>Audio Modules</span>
+              <span>{t('settings.audio')}</span>
             </div>
 
             <div className="space-y-6">
               <div className="space-y-3">
                 <div className="flex justify-between items-end">
-                  <label className="text-white font-mono text-xs uppercase tracking-widest">Master Gain</label>
+                  <label className="text-white font-mono text-xs uppercase tracking-widest">{t('settings.masterGain')}</label>
                   <button onClick={toggleMute} className="text-zinc-500 hover:text-white transition-colors">
                     {isMuted ? <VolumeX className="w-4 h-4 text-red-500" /> : <Volume2 className="w-4 h-4" />}
                   </button>
@@ -159,7 +169,7 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
               </div>
 
               <div className="space-y-3">
-                <label className="text-white font-mono text-xs uppercase tracking-widest">SFX Intensity</label>
+                <label className="text-white font-mono text-xs uppercase tracking-widest">{t('settings.sfxIntensity')}</label>
                 <input 
                   type="range" min="0" max="1" step="0.01" 
                   value={sfxVol} 
@@ -169,7 +179,7 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
               </div>
 
               <div className="space-y-3">
-                <label className="text-white font-mono text-xs uppercase tracking-widest">Ambient Stream</label>
+                <label className="text-white font-mono text-xs uppercase tracking-widest">{t('settings.ambientStream')}</label>
                 <input 
                   type="range" min="0" max="1" step="0.01" 
                   value={musicVol} 
@@ -188,10 +198,29 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
                   className="w-full flex items-center justify-center space-x-2 p-3 bg-white/5 rounded-xl border border-white/5 hover:bg-white/10 hover:text-white transition-colors text-zinc-400 font-mono text-[10px] uppercase tracking-wider"
                 >
                   <Volume2 className="w-3 h-3" />
-                  <span>Preview Audio</span>
+                  <span>{t('settings.previewAudio')}</span>
                 </button>
               )}
             </div>
+          </section>
+
+          {/* Language */}
+          <section className="space-y-6">
+            <div className="flex items-center space-x-3 text-zinc-500 font-mono text-xs uppercase tracking-widest border-b border-white/5 pb-2">
+              <Globe className="w-4 h-4" />
+              <span>{t('locale.label')}</span>
+            </div>
+            <select
+              id="locale-select"
+              data-testid="locale-select"
+              value={currentLocale}
+              onChange={handleLocaleChange}
+              aria-label={t('locale.label')}
+              className="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm normal-case focus:outline-none focus:border-white/30 transition-colors"
+            >
+              <option value="en">{t('locale.en')}</option>
+              <option value="es">{t('locale.es')}</option>
+            </select>
           </section>
 
           {/* Graphics & Controls */}
@@ -199,15 +228,15 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
             <section className="space-y-6">
               <div className="flex items-center space-x-3 text-zinc-500 font-mono text-xs uppercase tracking-widest border-b border-white/5 pb-2">
                 <Monitor className="w-4 h-4" />
-                <span>Visuals</span>
+                <span>{t('settings.visuals')}</span>
               </div>
               <div 
                 onClick={() => { soundManager.uiClick(); toggleVFX(); }}
                 className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group animate-fade-in"
               >
                 <div className="flex flex-col items-start text-left">
-                  <span className="text-zinc-400 group-hover:text-white transition-colors font-mono text-xs uppercase">High Fidelity VFX</span>
-                  <span className="text-[9px] text-zinc-500 font-mono uppercase tracking-wider">Glows, heavy shadow blurs & complex particles</span>
+                  <span className="text-zinc-400 group-hover:text-white transition-colors font-mono text-xs uppercase">{t('settings.highFidelityVfx')}</span>
+                  <span className="text-[9px] text-zinc-500 font-mono uppercase tracking-wider">{t('settings.highFidelityDesc')}</span>
                 </div>
                 <div className={`w-10 h-5 rounded-full relative transition-all duration-300 ${highFidelityVFX ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-zinc-700'}`}>
                   <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all duration-300 ${highFidelityVFX ? 'left-6' : 'left-1'}`} />
@@ -219,8 +248,8 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
                 className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group"
               >
                 <div className="flex flex-col items-start text-left">
-                  <span className="text-zinc-400 group-hover:text-white transition-colors font-mono text-xs uppercase">Show Performance Stats</span>
-                  <span className="text-[9px] text-zinc-500 font-mono uppercase tracking-wider">Monitor FPS & Engine diagnostics</span>
+                  <span className="text-zinc-400 group-hover:text-white transition-colors font-mono text-xs uppercase">{t('settings.showPerfStats')}</span>
+                  <span className="text-[9px] text-zinc-500 font-mono uppercase tracking-wider">{t('settings.showPerfDesc')}</span>
                 </div>
                 <div className={`w-10 h-5 rounded-full relative transition-all duration-300 ${showPerformance ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-zinc-700'}`}>
                   <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all duration-300 ${showPerformance ? 'left-6' : 'left-1'}`} />
@@ -231,16 +260,16 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
             <section className="space-y-6">
               <div className="flex items-center space-x-3 text-zinc-500 font-mono text-xs uppercase tracking-widest border-b border-white/5 pb-2">
                 <MousePointer2 className="w-4 h-4" />
-                <span>Input Method</span>
+                <span>{t('settings.inputMethod')}</span>
               </div>
               <div className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-2">
                 <div className="flex justify-between text-xs font-mono">
-                  <span className="text-zinc-500">Left Click / Tap</span>
-                  <span className="text-white uppercase">Eliminate</span>
+                  <span className="text-zinc-500">{t('settings.leftClick')}</span>
+                  <span className="text-white uppercase">{t('settings.leftClickAction')}</span>
                 </div>
                 <div className="flex justify-between text-xs font-mono">
-                  <span className="text-zinc-500">Hover / Collect</span>
-                  <span className="text-white uppercase">Powerups</span>
+                  <span className="text-zinc-500">{t('settings.hoverCollect')}</span>
+                  <span className="text-white uppercase">{t('settings.hoverCollectAction')}</span>
                 </div>
               </div>
             </section>
@@ -249,7 +278,7 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
             <section className="space-y-4">
               <div className="flex items-center space-x-3 text-zinc-500 font-mono text-xs uppercase tracking-widest border-b border-white/5 pb-2">
                 <Keyboard className="w-4 h-4" />
-                <span>Key Bindings</span>
+                <span>{t('settings.keyBindings')}</span>
               </div>
               {(['fire', 'dash', 'pause'] as const).map((action) => (
                 <div key={action} className="flex items-center justify-between">
@@ -265,12 +294,12 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
                         : 'border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-white/20'
                     }`}
                   >
-                    {listeningFor === action ? 'Press key...' : bindings[action]}
+                    {listeningFor === action ? t('settings.pressKey') : bindings[action]}
                   </button>
                 </div>
               ))}
               <p className="text-[8px] text-zinc-600 font-mono uppercase tracking-wider">
-                Click a binding, then press the desired key
+                {t('settings.clickBindingHint')}
               </p>
             </section>
           </div>
@@ -280,39 +309,37 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
         <section className="mt-8 pt-8 border-t border-white/5 space-y-6">
           <div className="flex items-center space-x-3 text-zinc-500 font-mono text-xs uppercase tracking-widest border-b border-white/5 pb-2">
             <Accessibility className="w-4 h-4" />
-            <span>Accessibility</span>
+            <span>{t('settings.accessibility')}</span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <label className="flex flex-col gap-2 font-mono text-xs text-zinc-400 uppercase">
-              Difficulty
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">              <label className="flex flex-col gap-2 font-mono text-xs text-zinc-400 uppercase">
+              {t('settings.difficulty')}
               <select
                 value={a11y.difficulty}
                 onChange={(e) => { soundManager.uiClick(); updateA11y({ difficulty: e.target.value as DifficultyId }); }}
                 className="bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-white text-sm normal-case"
               >
-                <option value="easy">Easy</option>
-                <option value="normal">Normal</option>
-                <option value="hard">Hard</option>
+                <option value="easy">{t('settings.difficultyEasy')}</option>
+                <option value="normal">{t('settings.difficultyNormal')}</option>
+                <option value="hard">{t('settings.difficultyHard')}</option>
               </select>
-            </label>
-            <label className="flex flex-col gap-2 font-mono text-xs text-zinc-400 uppercase">
-              Colorblind Assist
+            </label>              <label className="flex flex-col gap-2 font-mono text-xs text-zinc-400 uppercase">
+              {t('settings.colorblindAssist')}
               <select
                 value={a11y.colorblindMode}
                 onChange={(e) => { soundManager.uiClick(); updateA11y({ colorblindMode: e.target.value as ColorblindMode, showEnemyShapes: e.target.value !== 'off' }); }}
                 className="bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-white text-sm normal-case"
               >
-                <option value="off">Off</option>
-                <option value="protanopia">Protanopia</option>
-                <option value="deuteranopia">Deuteranopia</option>
-                <option value="tritanopia">Tritanopia</option>
+                <option value="off">{t('settings.colorblindOff')}</option>
+                <option value="protanopia">{t('settings.colorblindProtanopia')}</option>
+                <option value="deuteranopia">{t('settings.colorblindDeuteranopia')}</option>
+                <option value="tritanopia">{t('settings.colorblindTritanopia')}</option>
               </select>
             </label>
           </div>
           {[
-            { key: 'reducedMotion' as const, label: 'Reduced Motion', hint: 'Disables screen shake' },
-            { key: 'showEnemyShapes' as const, label: 'Enemy Shape Icons', hint: 'Shape markers on bugs' },
-            { key: 'gamepadEnabled' as const, label: 'Gamepad Support', hint: 'Left stick aim, A / RT fire' },
+            { key: 'reducedMotion' as const, label: t('settings.reducedMotion'), hint: t('settings.reducedMotionHint') },
+            { key: 'showEnemyShapes' as const, label: t('settings.enemyShapes'), hint: t('settings.enemyShapesHint') },
+            { key: 'gamepadEnabled' as const, label: t('settings.gamepadSupport'), hint: t('settings.gamepadHint') },
           ].map((item) => (
             <div
               key={item.key}
@@ -342,8 +369,8 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
             <div className="flex items-center space-x-3">
               <Gem className="w-5 h-5 text-purple-400" />
               <div className="text-left">
-                <span className="text-sm font-bold text-zinc-300 group-hover:text-white transition-colors">Armory</span>
-                <p className="text-[10px] font-mono text-zinc-500">Cursor skins, core themes & cosmetics</p>
+                <span className="text-sm font-bold text-zinc-300 group-hover:text-white transition-colors">{t('settings.armoryShortcut')}</span>
+                <p className="text-[10px] font-mono text-zinc-500">{t('settings.armoryDesc')}</p>
               </div>
             </div>
             <svg className="w-4 h-4 text-zinc-500 group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -357,7 +384,7 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
             onClick={() => { soundManager.uiClick(); onBack(); }}
             className="px-12 py-4 bg-white text-black font-black text-xs uppercase tracking-[0.3em] rounded-full hover:bg-zinc-200 transition-all hover:scale-105 active:scale-95"
           >
-            Apply Changes
+            {t('settings.applyChanges')}
           </button>
         </div>
       </motion.div>

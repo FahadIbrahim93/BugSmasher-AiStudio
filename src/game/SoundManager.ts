@@ -341,10 +341,16 @@ export class SoundManager {
   constructor() {
     this.loadSettings();
     this.preloadVoices();
+    this.preloadAudioAssets();
   }
 
   private async preloadVoices() {
     VoiceSynthesizer.preloadVoices();
+  }
+
+  /** Kick off audio file pre-fetches immediately (before AudioContext is ready). */
+  private preloadAudioAssets(): void {
+    void audioAssets.prefetch();
   }
 
   private loadSettings() {
@@ -703,41 +709,132 @@ export class SoundManager {
 
   // ─── SFX Methods ──────────────────────────────────────────────────
 
+  /** Whiff: spatula cuts empty air (missed click). */
+  whiff() {
+    if (!this.enabled || !this.ctx || !this.sfxGain) return;
+    const t = this.ctx.currentTime;
+    try {
+      const src = this.ctx.createBufferSource();
+      const f = this.ctx.createBiquadFilter();
+      const g = this.ctx.createGain();
+      src.buffer = this.noiseBuffer!;
+      f.type = 'bandpass';
+      f.frequency.setValueAtTime(2400, t);
+      f.frequency.exponentialRampToValueAtTime(600, t + 0.18);
+      f.Q.setValueAtTime(2.2, t);
+      g.gain.setValueAtTime(0.0, t);
+      g.gain.linearRampToValueAtTime(0.08, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+      src.connect(f); f.connect(g); g.connect(this.sfxGain);
+      src.start(t); src.stop(t + 0.22);
+      const tok = this.ctx.createOscillator();
+      const tokG = this.ctx.createGain();
+      tok.type = 'triangle';
+      tok.frequency.setValueAtTime(180, t);
+      tok.frequency.exponentialRampToValueAtTime(80, t + 0.05);
+      tokG.gain.setValueAtTime(0.12, t);
+      tokG.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+      tok.connect(tokG); tokG.connect(this.sfxGain);
+      tok.start(t); tok.stop(t + 0.06);
+    } catch (e) { /* ignore */ }
+  }
+
+  /** Squash: bug gets smushed. THWACK + CRACK + SQUISH + GURGLE + SQUELCH. */
+  squash() {
+    if (!this.enabled || !this.ctx || !this.sfxGain) return;
+    const t = this.ctx.currentTime;
+    try {
+      // THWACK — sub-bass body
+      const th = this.ctx.createOscillator();
+      const thG = this.ctx.createGain();
+      th.type = 'sine';
+      th.frequency.setValueAtTime(95, t);
+      th.frequency.exponentialRampToValueAtTime(35, t + 0.08);
+      thG.gain.setValueAtTime(0.0, t);
+      thG.gain.linearRampToValueAtTime(0.45, t + 0.005);
+      thG.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+      th.connect(thG); thG.connect(this.sfxGain);
+      th.start(t); th.stop(t + 0.13);
+      // CRACK — sharp transient
+      const cr = this.ctx.createOscillator();
+      const crG = this.ctx.createGain();
+      const crF = this.ctx.createBiquadFilter();
+      cr.type = 'square';
+      cr.frequency.setValueAtTime(2400, t);
+      cr.frequency.exponentialRampToValueAtTime(700, t + 0.025);
+      crF.type = 'bandpass';
+      crF.frequency.setValueAtTime(3000, t);
+      crF.Q.setValueAtTime(4, t);
+      crG.gain.setValueAtTime(0.18, t);
+      crG.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+      cr.connect(crF); crF.connect(crG); crG.connect(this.sfxGain);
+      cr.start(t); cr.stop(t + 0.05);
+      // SQUISH — filtered noise
+      const s1 = this.ctx.createBufferSource();
+      const f1 = this.ctx.createBiquadFilter();
+      const f2 = this.ctx.createBiquadFilter();
+      const g1 = this.ctx.createGain();
+      s1.buffer = this.noiseBuffer!;
+      f1.type = 'lowpass';
+      f1.frequency.setValueAtTime(3200, t);
+      f1.frequency.exponentialRampToValueAtTime(280, t + 0.22);
+      f1.Q.setValueAtTime(1.4, t);
+      f2.type = 'bandpass';
+      f2.frequency.setValueAtTime(1100, t);
+      f2.Q.setValueAtTime(3, t);
+      g1.gain.setValueAtTime(0.0, t);
+      g1.gain.linearRampToValueAtTime(0.28, t + 0.008);
+      g1.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+      s1.connect(f1); f1.connect(f2); f2.connect(g1); g1.connect(this.sfxGain);
+      s1.start(t); s1.stop(t + 0.3);
+      // GURGLE — FM modulated
+      const ca = this.ctx.createOscillator();
+      const mo = this.ctx.createOscillator();
+      const moG = this.ctx.createGain();
+      const guG = this.ctx.createGain();
+      ca.type = 'sawtooth';
+      ca.frequency.setValueAtTime(150, t);
+      ca.frequency.exponentialRampToValueAtTime(70, t + 0.18);
+      mo.type = 'sine';
+      mo.frequency.setValueAtTime(38, t);
+      mo.frequency.exponentialRampToValueAtTime(22, t + 0.18);
+      moG.gain.setValueAtTime(45, t);
+      moG.gain.exponentialRampToValueAtTime(2, t + 0.18);
+      guG.gain.setValueAtTime(0.0, t);
+      guG.gain.linearRampToValueAtTime(0.12, t + 0.012);
+      guG.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+      mo.connect(moG); moG.connect(ca.frequency);
+      ca.connect(guG); guG.connect(this.sfxGain);
+      ca.start(t); mo.start(t); ca.stop(t + 0.24); mo.stop(t + 0.24);
+      // SQUELCH — popping bandpass noise
+      const s2 = this.ctx.createBufferSource();
+      const pF = this.ctx.createBiquadFilter();
+      const pG = this.ctx.createGain();
+      s2.buffer = this.noiseBuffer!;
+      pF.type = 'bandpass';
+      pF.frequency.setValueAtTime(900, t + 0.05);
+      pF.frequency.exponentialRampToValueAtTime(2200, t + 0.13);
+      pF.Q.setValueAtTime(5, t + 0.05);
+      pG.gain.setValueAtTime(0.0, t);
+      pG.gain.linearRampToValueAtTime(0.08, t + 0.06);
+      pG.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+      s2.connect(pF); pF.connect(pG); pG.connect(this.sfxGain);
+      s2.start(t + 0.05); s2.stop(t + 0.17);
+    } catch (e) { /* ignore */ }
+  }
+
   shoot() {
-    if (this.ctx && this.sfxGain && audioAssets.play('shoot', this.sfxGain, this.sfxVolume * 0.5))
-      return;
-    // Punchy sci-fi gunshot: transient click + mid punch + noise tail
-    this.playRichTone({
-      frequencies: [1200, 600, 200],
-      types: ['square', 'sawtooth', 'sine'],
-      durations: [0.03, 0.08, 0.15],
-      volumes: [0.06, 0.04, 0.03],
-      slideTo: [200, 100, 30],
-      filterFreq: 8000,
-      filterType: 'highpass',
-    });
-    this.playShapedNoise(0.06, 0.03, 4000, 100, 'bandpass');
+    this.whiff();
   }
 
   splat() {
-    if (this.ctx && this.sfxGain && audioAssets.play('splat', this.sfxGain, this.sfxVolume * 0.6))
-      return;
-    // Satisfying wet squish: pitched noise + squelch
-    this.playShapedNoise(0.2, 0.1, 2000, 30, 'lowpass');
-    this.playRichTone({
-      frequencies: [300, 150, 80],
-      types: ['sawtooth', 'sine', 'sine'],
-      durations: [0.15, 0.25, 0.3],
-      volumes: [0.08, 0.06, 0.04],
-      slideTo: [50, 30, 20],
-      filterFreq: 1500,
-      filterType: 'lowpass',
-    });
-    // Wet squelch modulation
-    this.playModulatedTone(200, 35, 'sawtooth', 0.15, 0.05);
+    this.squash();
   }
 
+
   hitBase() {
+    if (this.ctx && this.sfxGain && audioAssets.play('hit_base', this.sfxGain, this.sfxVolume * 0.7))
+      return;
     // Heavy structural impact: deep bass + metallic hit + long rumble
     this.playImpact(80, 0.6, 0.35, true);
     this.playShapedNoise(0.5, 0.15, 800, 20, 'lowpass');
@@ -754,6 +851,8 @@ export class SoundManager {
   }
 
   powerup(type?: string) {
+    if (this.ctx && this.sfxGain && audioAssets.play('powerup', this.sfxGain, this.sfxVolume * 0.5))
+      return;
     if (type === 'shield') {
       // Sci-fi shield hum
       this.playRichTone({
@@ -925,6 +1024,8 @@ export class SoundManager {
   }
 
   bossWarning() {
+    if (this.ctx && this.sfxGain && audioAssets.play('boss_warning', this.sfxGain, this.sfxVolume * 0.7))
+      return;
     // Ominous alarm: pulsing low tone with glitch
     this.playRichTone({
       frequencies: [80, 80],
@@ -1080,6 +1181,8 @@ export class SoundManager {
   }
 
   uiHover() {
+    if (this.ctx && this.sfxGain && audioAssets.play('ui_hover', this.sfxGain, this.sfxVolume * 0.3))
+      return;
     // Subtle click
     this.playRichTone({
       frequencies: [800, 1200],

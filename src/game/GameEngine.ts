@@ -339,6 +339,10 @@ export class GameEngine {
     this.hitStopTimer = duration;
   }
 
+  get waveModifier(): string | null {
+    return this.waveManager?.waveModifier || null;
+  }
+
   get threatShakeIntensity(): number {
     const bugCount = this.bugs.length;
     return Math.min(3.5, bugCount * 0.12);
@@ -362,6 +366,11 @@ export class GameEngine {
       dashCooldown: this.dashCooldown,
       rapidFireTimer: this.rapidFireTimer,
       spikeBurstTimer: this.spikeBurstTimer,
+      shieldTimer: this.shieldTimer,
+      multiplierTimer: this.multiplierTimer,
+      slowMoTimer: this.slowMoTimer,
+      overdriveTimer: this.overdriveTimer,
+      waveModifier: this.waveManager?.waveModifier || null,
     };
     GameEngineStatusBus.publish(status);
     GameEngineStatusBus.syncLegacyWindowGlobal(status);
@@ -866,6 +875,120 @@ export class GameEngine {
     if (this.currentBiome === 'golden_spire') {
       bug.hp = Math.min(bug.maxHp, Math.max(0, bug.hp + dt * 0.5));
     }
+    // Sniper: charge and fire at distance
+    if (bug.type === 'sniper') {
+      const sniperRange = 250;
+      const distToCore = Math.sqrt(distSq);
+
+      if (distToCore > sniperRange) {
+        // Outside range — move toward core normally, no charging
+        bug.isCharging = false;
+        bug.shootTimer = 0;
+      } else {
+        // In range — stop and charge
+        bug.speed = 0; // Stop moving while aiming
+        bug.shootTimer = (bug.shootTimer || 0) + dt * timeScale;
+
+        if (bug.shootTimer > 1.5) {
+          // First 1s = charging telegraph, then fire at 1.5s
+          bug.isCharging = true;
+        }
+
+        if (bug.shootTimer > 2.0) {
+          // FIRE! Deal damage to core
+          bug.shootTimer = 0;
+          bug.isCharging = false;
+
+          // Visual indicator
+          this.particleSystem.spawnLaser(bug.x, bug.y, this.coreX, this.coreY, '#ff0066', 3);
+          this.shake(0.15, 8);
+          soundManager.bossHit();
+
+          if (this.shieldTimer <= 0) {
+            const sniperDamage = Math.max(3, 5 + this.wave * 0.5);
+            this.health -= sniperDamage;
+            this.renderer.impactFlash = 1.0;
+            this.impactFrame = 0.3;
+          }
+
+          // Brief cooldown before moving again
+          bug.speed = 0;
+          bug.shootTimer = -0.5; // Pause before resuming movement
+        }
+      }
+
+      // Resume speed after firing cooldown
+      if (bug.shootTimer && bug.shootTimer < 0) {
+        // Do nothing, timer is counting up from negative
+      } else if (distToCore > sniperRange) {
+        // Move at full speed when outside range
+        const conf = GameConfig.bugs.sniper;
+        bug.speed = conf.baseSpeed + this.wave * conf.speedPerWave;
+      }
+    }
+
+    // Burrower: cycle between burrowed and emerged
+    if (bug.type === 'burrower') {
+      const distToCore = Math.sqrt(distSq);
+
+      if (bug.isBurrowed === undefined) {
+        bug.isBurrowed = true;
+        bug.burrowTimer = Math.random() * 3 + 4; // 4-7s burrowed
+        bug.emergeTimer = 3.0; // 3s emerged
+      }
+
+      if (bug.isBurrowed) {
+        // Move toward core while burrowed
+        bug.burrowTimer = (bug.burrowTimer || 0) - dt * timeScale;
+
+        if (bug.burrowTimer! <= 0) {
+          // Emerge near the core
+          bug.isBurrowed = false;
+          bug.emergeTimer = 3.0;
+          bug.speed = 0;
+
+          // Teleport closer to core
+          const emergeAngle = Math.atan2(this.coreY - bug.y, this.coreX - bug.x);
+          bug.x = this.coreX - Math.cos(emergeAngle) * 80;
+          bug.y = this.coreY - Math.sin(emergeAngle) * 80;
+
+          this.particleSystem.spawnShockwave(bug.x, bug.y, bug.color, 60);
+        }
+      } else {
+        // Emerged — vulnerable, stationary, attacks
+        bug.emergeTimer = (bug.emergeTimer || 0) - dt * timeScale;
+        bug.shootTimer = (bug.shootTimer || 0) + dt * timeScale;
+
+        // Attack periodically
+        if (bug.shootTimer! > 1.5) {
+          bug.shootTimer = 0;
+          const burrowerDamage = Math.max(2, 4 + this.wave * 0.3);
+          if (this.shieldTimer <= 0) {
+            this.health -= burrowerDamage;
+            this.renderer.impactFlash = 1.0;
+          }
+          this.triggerHitStop(0.06);
+          this.shake(0.1, 5);
+          this.particleSystem.spawnShockwave(bug.x, bug.y, bug.color, 40);
+        }
+
+        if (bug.emergeTimer! <= 0) {
+          // Burrow back underground
+          bug.isBurrowed = true;
+          bug.burrowTimer = Math.random() * 3 + 3; // 3-6s
+          this.particleSystem.spawnShockwave(bug.x, bug.y, bug.color, 30);
+
+          const conf = GameConfig.bugs.burrower;
+          bug.speed = conf.baseSpeed + this.wave * conf.speedPerWave;
+        }
+      }
+    }
+
+    // Toxic regen wave modifier: bugs regenerate health
+    if (this.waveManager.waveModifier === 'toxic_regen' && bug.type !== 'boss' && !bug.isBurrowed) {
+      bug.hp = Math.min(bug.maxHp, bug.hp + dt * 0.3);
+    }
+
     if (bug.type === 'healer') {
       bug.healCooldown = (bug.healCooldown || 0) + dt * timeScale;
       if (bug.healCooldown > 3.0) {

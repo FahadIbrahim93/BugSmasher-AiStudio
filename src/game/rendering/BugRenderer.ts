@@ -484,6 +484,28 @@ export class BugRenderer {
       case 'healer':
         ctx.arc(0, 0, r * 0.75, 0, Math.PI * 2);
         break;
+      case 'sniper':
+        // Diamond with crosshair
+        ctx.moveTo(0, -r);
+        ctx.lineTo(r * 0.7, 0);
+        ctx.lineTo(0, r);
+        ctx.lineTo(-r * 0.7, 0);
+        ctx.closePath();
+        ctx.moveTo(0, -r * 0.5);
+        ctx.lineTo(0, r * 0.5);
+        ctx.moveTo(-r * 0.35, 0);
+        ctx.lineTo(r * 0.35, 0);
+        break;
+      case 'burrower':
+        // Hexagon with dot
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2 - Math.PI / 2;
+          ctx[i === 0 ? 'moveTo' : 'lineTo'](Math.cos(a) * r, Math.sin(a) * r);
+        }
+        ctx.closePath();
+        ctx.moveTo(0, -r * 0.3);
+        ctx.arc(0, 0, r * 0.3, 0, Math.PI * 2);
+        break;
       case 'boss':
         ctx.moveTo(0, -r);
         ctx.lineTo(r, 0);
@@ -553,8 +575,10 @@ export class BugRenderer {
       this.drawPhaseBody(bug);
     } else if (bug.type === 'ember') {
       this.drawEmberBody(bug);
-    } else if (bug.type === 'frost') {
-      this.drawFrostBody(bug);
+    } else if (bug.type === 'sniper') {
+      this.drawSniperBody(bug);
+    } else if (bug.type === 'burrower') {
+      this.drawBurrowerBody(bug);
     } else {
       this.drawBeetleBody(bug, legSwing);
     }
@@ -861,6 +885,205 @@ export class BugRenderer {
     ctx.fill();
   }
 
+
+  drawSniperBody(bug: Bug) {
+    const ctx = this.engine.ctx;
+    const t = this.engine.globalTime;
+    const isCharging = !!bug.isCharging;
+
+    // Elongated sniper body — lean and aerodynamic
+    ctx.fillStyle = bug.color;
+
+    // Tail/abdomen
+    ctx.beginPath();
+    ctx.ellipse(0, 10, 12, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Thorax
+    ctx.beginPath();
+    ctx.ellipse(0, -5, 10, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Head
+    ctx.beginPath();
+    ctx.arc(0, -20, 9, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Sniper barrel (long aiming appendage)
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    const aimAngle = Math.atan2(this.engine.coreY - bug.y, this.engine.coreX - bug.x);
+    ctx.save();
+    ctx.rotate(aimAngle);
+    ctx.beginPath();
+    ctx.moveTo(5, -22);
+    ctx.lineTo(5, -42);
+    ctx.lineTo(-5, -42);
+    ctx.lineTo(-5, -22);
+    ctx.closePath();
+    ctx.stroke();
+
+    // Barrel tip glow when charging
+    if (isCharging) {
+      const glowPulse = Math.abs(Math.sin(t * 20)) * 0.8 + 0.2;
+      ctx.fillStyle = `rgba(255, 50, 50, ${glowPulse})`;
+      ctx.beginPath();
+      ctx.arc(0, -42, 4 + glowPulse * 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Charge beam indicator
+      ctx.strokeStyle = `rgba(255, 0, 0, ${glowPulse * 0.3})`;
+      ctx.setLineDash([4, 6]);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, -42);
+      ctx.lineTo(0, -120);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.restore();
+
+    // Long spindly legs
+    ctx.strokeStyle = bug.color;
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 3; i++) {
+      const y = -5 + i * 10;
+      const swing = Math.sin(bug.walkCycle + i) * 10;
+      ctx.beginPath();
+      ctx.moveTo(-8, y);
+      ctx.lineTo(-20, y + 10 + swing);
+      ctx.lineTo(-15, y + 20 + swing);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(8, y);
+      ctx.lineTo(20, y + 10 - swing);
+      ctx.lineTo(15, y + 20 - swing);
+      ctx.stroke();
+    }
+  }
+
+  drawBurrowerBody(bug: Bug) {
+    const ctx = this.engine.ctx;
+    const t = this.engine.globalTime;
+    const isBurrowed = !!bug.isBurrowed;
+
+    if (isBurrowed) {
+      // Subtle ground disturbance — only a faint mound/crack visible
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = '#8B6914';
+      ctx.strokeStyle = '#aa8833';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.ellipse(0, 5, 20, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Moving dirt particles
+      const dirtPhase = Math.sin(t * 10 + bug.offsetTime) * 0.5 + 0.5;
+      ctx.fillStyle = `rgba(139, 105, 20, ${dirtPhase * 0.5})`;
+      for (let i = 0; i < 3; i++) {
+        const dx = Math.sin(t * 8 + i * 2) * 15;
+        const dy = Math.cos(t * 7 + i * 3) * 5;
+        ctx.beginPath();
+        ctx.arc(dx, dy + 8, 2 + dirtPhase, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Directional indicator (faint arrow toward core)
+      const aimAngle = Math.atan2(this.engine.coreY - bug.y, this.engine.coreX - bug.x);
+      ctx.strokeStyle = 'rgba(200, 150, 50, 0.2)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, 5);
+      ctx.lineTo(Math.cos(aimAngle) * 15, Math.sin(aimAngle) * 15 + 5);
+      ctx.stroke();
+
+      ctx.globalAlpha = 1.0;
+    } else {
+      // Emerged — insectoid digging form with mandibles
+      ctx.fillStyle = bug.color;
+
+      // Thick armored abdomen
+      ctx.beginPath();
+      ctx.ellipse(0, 12, 18, 14, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Thorax
+      ctx.beginPath();
+      ctx.ellipse(0, -2, 14, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Head with digging mandibles
+      ctx.beginPath();
+      ctx.arc(0, -16, 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Large digging mandibles (open/close animation)
+      const mandAngle = Math.sin(t * 15) * 0.3 + 0.5;
+      ctx.strokeStyle = bug.color;
+      ctx.lineWidth = 3;
+      ctx.save();
+      ctx.rotate(-mandAngle);
+      ctx.beginPath();
+      ctx.moveTo(0, -20);
+      ctx.lineTo(-18, -30);
+      ctx.stroke();
+      ctx.restore();
+      ctx.save();
+      ctx.rotate(mandAngle);
+      ctx.beginPath();
+      ctx.moveTo(0, -20);
+      ctx.lineTo(18, -30);
+      ctx.stroke();
+      ctx.restore();
+
+      // Armored digging claws (front legs)
+      ctx.lineWidth = 2;
+      for (let side of [-1, 1]) {
+        ctx.beginPath();
+        ctx.moveTo(side * 10, -5);
+        ctx.lineTo(side * 25, -15);
+        ctx.lineTo(side * 30, -5);
+        ctx.stroke();
+      }
+
+      // Back legs
+      ctx.lineWidth = 1.5;
+      for (let i = 0; i < 2; i++) {
+        const y = 5 + i * 10;
+        const swing = Math.sin(bug.walkCycle + i * 2) * 8;
+        ctx.beginPath();
+        ctx.moveTo(-10, y);
+        ctx.lineTo(-22, y + 8 + swing);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(10, y);
+        ctx.lineTo(22, y + 8 - swing);
+        ctx.stroke();
+      }
+
+      // Angry glowing eyes
+      ctx.fillStyle = '#ff3300';
+      ctx.beginPath();
+      ctx.arc(-4, -20, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(4, -20, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Emerge timer indicator (pulsing ring)
+      if (bug.emergeTimer && bug.emergeTimer > 0) {
+        const emergePulse = Math.sin(t * 8) * 0.3 + 0.7;
+        ctx.strokeStyle = `rgba(255, 100, 0, ${emergePulse})`;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([3, 5]);
+        ctx.beginPath();
+        ctx.arc(0, 0, 30, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+  }
 
   drawSidePlates(bug: Bug) {
     const ctx = this.engine.ctx;

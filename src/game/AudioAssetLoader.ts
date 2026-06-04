@@ -22,8 +22,36 @@ const PATHS: Record<SfxId, string> = {
 
 export class AudioAssetLoader {
   private buffers = new Map<SfxId, AudioBuffer>();
+  private preFetched = new Map<SfxId, ArrayBuffer>();
   private ctx: AudioContext | null = null;
   private loadPromise: Promise<void> | null = null;
+  private prefetchPromise: Promise<void> | null = null;
+
+  /**
+   * Pre-fetch audio files into ArrayBuffers as early as possible,
+   * before the AudioContext is created. Call this on app startup
+   * (e.g., from Preloader) to eliminate cold-load latency.
+   */
+  async prefetch(): Promise<void> {
+    if (this.prefetchPromise) return this.prefetchPromise;
+    this.prefetchPromise = Promise.all(
+      (Object.keys(PATHS) as SfxId[]).map(async (id) => {
+        try {
+          const res = await fetch(PATHS[id]);
+          if (!res.ok) return;
+          const ab = await res.arrayBuffer();
+          this.preFetched.set(id, ab);
+        } catch {
+          /* file may not exist on first load; synthesis fallback applies later */
+        }
+      })
+    ).then(() => {});
+    return this.prefetchPromise;
+  }
+
+  get isPreFetched(): boolean {
+    return this.prefetchPromise !== null;
+  }
 
   async init(ctx: AudioContext): Promise<void> {
     this.ctx = ctx;
@@ -38,9 +66,13 @@ export class AudioAssetLoader {
     await Promise.all(
       (Object.keys(PATHS) as SfxId[]).map(async (id) => {
         try {
-          const res = await fetch(PATHS[id]);
-          if (!res.ok) return;
-          const ab = await res.arrayBuffer();
+          // Use pre-fetched ArrayBuffer if available, otherwise fetch now
+          let ab = this.preFetched.get(id);
+          if (!ab) {
+            const res = await fetch(PATHS[id]);
+            if (!res.ok) return;
+            ab = await res.arrayBuffer();
+          }
           const buf = await this.ctx!.decodeAudioData(ab.slice(0));
           this.buffers.set(id, buf);
         } catch {
@@ -48,6 +80,8 @@ export class AudioAssetLoader {
         }
       })
     );
+    // Release pre-fetched data to free memory
+    this.preFetched.clear();
   }
 
   has(id: SfxId): boolean {

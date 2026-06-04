@@ -34,6 +34,11 @@ export class Renderer {
   private lastCrisis: boolean = false;
   private lastVOpacity: number = -1;
 
+  // Error recovery: fault counter for graceful degradation on repeated crashes
+  private drawFaultCount: number = 0;
+  private drawFaultWindow: number[] = [];
+  private lastDrawError: string = '';
+
   constructor(engine: GameEngine) {
     this.engine = engine;
     this.scaler = new PerformanceScaler(engine);
@@ -95,7 +100,45 @@ export class Renderer {
     this.ui.drawBossHealthBar(width, height);
   }
 
+  /** Track errors for graceful degradation — if 3+ faults in 5s window, degrade quality */
+  private recordFault(error: unknown): void {
+    const now = performance.now();
+    this.drawFaultWindow.push(now);
+    // Keep only faults from the last 5 seconds
+    const cutoff = now - 5000;
+    this.drawFaultWindow = this.drawFaultWindow.filter(t => t > cutoff);
+    this.drawFaultCount = this.drawFaultWindow.length;
+    this.lastDrawError = String(error).slice(0, 120);
+    console.warn('[renderer] draw fault', this.drawFaultCount, this.lastDrawError);
+
+    // Auto-degrade: after 3 faults in 5s, force low-quality mode
+    if (this.drawFaultCount >= 3) {
+      this.scaler.forceLowQuality();
+      this.drawFaultWindow = [];
+      this.drawFaultCount = 0;
+    }
+  }
+
   draw(): void {
+    try {
+      this.drawSafe();
+    } catch (e) {
+      this.recordFault(e);
+      // Reset canvas state to prevent cascading failures
+      try {
+        const ctx = this.engine.ctx;
+        if (ctx) {
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.globalAlpha = 1;
+        }
+      } catch {
+        // Last-resort recovery failed — nothing more we can do
+      }
+    }
+  }
+
+  private drawSafe(): void {
     this.updatePerformanceScaler();
 
     const ctx = this.engine.ctx;
@@ -257,23 +300,30 @@ export class Renderer {
         this.lastVignetteHeight !== height ||
         this.lastCrisis !== isCrisis ||
         this.lastVOpacity !== vOpacity) {
-      this.cachedVignette = ctx.createRadialGradient(
-        width / 2, height / 2, width / 4,
-        width / 2, height / 2, width * 0.8
-      );
-      this.cachedVignette.addColorStop(0, 'rgba(0,0,0,0)');
-      this.cachedVignette.addColorStop(
-        1,
-        isCrisis ? `rgba(255, 0, 0, ${vOpacity * 0.5})` : `rgba(0, 0, 0, ${vOpacity})`
-      );
+      try {
+        this.cachedVignette = ctx.createRadialGradient(
+          width / 2, height / 2, width / 4,
+          width / 2, height / 2, width * 0.8
+        );
+        this.cachedVignette.addColorStop(0, 'rgba(0,0,0,0)');
+        this.cachedVignette.addColorStop(
+          1,
+          isCrisis ? `rgba(255, 0, 0, ${vOpacity * 0.5})` : `rgba(0, 0, 0, ${vOpacity})`
+        );
+      } catch {
+        // Gradient creation failed — skip vignette this frame
+        this.cachedVignette = null;
+      }
       this.lastVignetteWidth = width;
       this.lastVignetteHeight = height;
       this.lastCrisis = isCrisis;
       this.lastVOpacity = vOpacity;
     }
 
-    ctx.fillStyle = this.cachedVignette;
-    ctx.fillRect(0, 0, width, height);
+    if (this.cachedVignette) {
+      ctx.fillStyle = this.cachedVignette;
+      ctx.fillRect(0, 0, width, height);
+    }
 
     this.ui.drawActivePowerupUI(width, height);
     this.ui.drawBossHealthBar(width, height);

@@ -10,4 +10,14 @@ nul
 
 .vercel
 CLAUDE.md
+
+# Playwright E2E test artifacts
+test-results/
+e2e-results.json
 .openclaude/
+
+# Build / cache / tooling side effects
+functions/lib/
+.firebase/
+mcps/
+.review-artifacts/

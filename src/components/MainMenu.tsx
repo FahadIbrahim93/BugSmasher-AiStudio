@@ -2,17 +2,19 @@ import { Bug, Settings2, Trophy, User, BookOpen, ListOrdered, Zap, Calendar, Gem
 import { soundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
 import { ProgressionManager } from '../game/ProgressionManager';
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { AccountMenu } from './AccountMenu';
 import { IntelHub } from './IntelHub';
-import { Leaderboard } from './Leaderboard';
-import { Armory } from './Armory';
 import { DailyChallengeModal } from './DailyChallengeModal';
 import { isTodaysChallengeCompleted, getStreakInfo } from '../game/DailyChallengeManager';
 import { isSupporter } from '../game/CosmeticsManager';
 import { type ChallengeModifierId } from '../game/DailyChallengeManager';
 import type { GameModeId } from '../game/GameMode';
 import { AchievementGallery } from './AchievementGallery';
+import { t } from '../i18n';
+
+const Leaderboard = lazy(() => import('./Leaderboard').then(m => ({ default: m.Leaderboard })));
+const Armory = lazy(() => import('./Armory').then(m => ({ default: m.Armory })));
 
 export function MainMenu({
   onStart,
@@ -37,10 +39,14 @@ export function MainMenu({
 
   return (
     <div className="flex flex-col items-center justify-center h-full bg-[#050505] relative p-4">
-      {isArmoryOpen && <Armory onClose={() => setIsArmoryOpen(false)} />}
+      <Suspense fallback={null}>
+        {isArmoryOpen && <Armory onClose={() => setIsArmoryOpen(false)} />}
+      </Suspense>
       {isAchievementsOpen && <AchievementGallery onClose={() => setIsAchievementsOpen(false)} />}
       {isAccountOpen && <AccountMenu onClose={() => setIsAccountOpen(false)} />}
-      {isLeaderboardOpen && <Leaderboard onClose={() => setIsLeaderboardOpen(false)} />}
+      <Suspense fallback={null}>
+        {isLeaderboardOpen && <Leaderboard onClose={() => setIsLeaderboardOpen(false)} />}
+      </Suspense>
       {isDailyChallengeOpen && (
         <DailyChallengeModal 
           onStart={() => {
@@ -70,7 +76,7 @@ export function MainMenu({
               <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 flex items-center space-x-3">
                 <Trophy className="w-4 h-4 text-yellow-500 opacity-80" />
                 <div className="flex flex-col items-start leading-none">
-                  <span className="text-[10px] text-zinc-500 uppercase font-mono tracking-widest font-black">Archive Best</span>
+                  <span className="text-[10px] text-zinc-500 uppercase font-mono tracking-widest font-black">{t('menu.archiveBest')}</span>
                   <span className="text-sm font-mono text-white tracking-widest">{highScore.toString().padStart(6, '0')}</span>
                 </div>
               </div>
@@ -79,8 +85,8 @@ export function MainMenu({
                 <div className="bg-cyan-500/10 border border-cyan-500/20 rounded-xl px-4 py-2 flex items-center space-x-3">
                   <Zap className="w-4 h-4 text-cyan-400 opacity-80" />
                   <div className="flex flex-col items-start leading-none">
-                    <span className="text-[10px] text-cyan-500/60 uppercase font-mono tracking-widest font-black">Prestige Rank</span>
-                    <span className="text-sm font-mono text-cyan-400 tracking-widest">RANK {ProgressionManager.getData().prestigeLevel}</span>
+                    <span className="text-[10px] text-cyan-500/60 uppercase font-mono tracking-widest font-black">{t('menu.prestigeRank')}</span>
+                    <span className="text-sm font-mono text-cyan-400 tracking-widest">{t('menu.prestigeRankValue', { level: ProgressionManager.getData().prestigeLevel })}</span>
                   </div>
                 </div>
               )}
@@ -88,11 +94,11 @@ export function MainMenu({
           )}
 
           <p className="text-sm sm:text-base md:text-lg text-zinc-500 font-medium tracking-[0.2em] font-mono">
-            DEFEND THE CORE. SMASH THE SWARM.
+            {t('app.tagline')}
           </p>
           {friendChallenge && (
             <p className="text-xs font-mono text-cyan-400 border border-cyan-500/30 rounded-lg px-4 py-2">
-              Friend challenge: beat {friendChallenge.score} pts / wave {friendChallenge.wave}
+              {t('menu.friendChallenge', { score: friendChallenge.score, wave: friendChallenge.wave })}
             </p>
           )}
         </div>
@@ -105,7 +111,7 @@ export function MainMenu({
                 onClick={() => { soundManager.uiClick(); onStart(undefined, mode); }}
                 className="px-4 py-2 rounded-full border border-white/10 text-[10px] font-mono uppercase text-zinc-400 hover:text-white hover:bg-white/10"
               >
-                {mode.replace('_', ' ')}
+                {t(mode === 'endless' ? 'mode.endless' : 'mode.bossRush')}
               </button>
             ))}
           </div>
@@ -114,9 +120,10 @@ export function MainMenu({
             onClick={() => { soundManager.init(); soundManager.uiClick(); onStart(); }}
             onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
             aria-label="Start Game"
+            data-testid="main-start"
             className="group relative px-12 py-4 bg-white text-black hover:bg-zinc-200 rounded-full font-bold text-sm sm:text-base uppercase tracking-widest transition-all hover:scale-105 active:scale-95 flex items-center space-x-3 overflow-hidden w-full sm:w-auto"
           >
-            <span className="relative z-10 font-bold">Initialize Sequence</span>
+            <span className="relative z-10 font-bold">{t('menu.start')}</span>
             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
           </button>
 
@@ -124,6 +131,7 @@ export function MainMenu({
           <button 
             onClick={() => { soundManager.init(); soundManager.uiClick(); setIsArmoryOpen(true); }}
             onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
+            data-testid="main-armory"
             className={`group relative w-full sm:w-auto px-6 py-3 rounded-full font-bold text-xs uppercase tracking-widest transition-all overflow-hidden flex items-center justify-center space-x-2.5 ${
               supporter 
                 ? 'bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500/20' 
@@ -131,9 +139,9 @@ export function MainMenu({
             }`}
           >
             <Gem className="w-4 h-4" />
-            <span>Armory</span>
+            <span>{t('menu.armory')}</span>
             {supporter && (
-              <span className="text-[8px] bg-purple-500/20 px-1.5 py-0.5 rounded uppercase font-black tracking-wider">Unlocked</span>
+              <span className="text-[8px] bg-purple-500/20 px-1.5 py-0.5 rounded uppercase font-black tracking-wider">{t('menu.supporterUnlocked')}</span>
             )}
           </button>
 
@@ -141,6 +149,7 @@ export function MainMenu({
           <button 
             onClick={() => { soundManager.init(); soundManager.uiClick(); setIsDailyChallengeOpen(true); }}
             onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
+            data-testid="main-daily"
             className={`group relative w-full sm:w-auto px-6 py-3 rounded-full font-bold text-xs uppercase tracking-widest transition-all overflow-hidden flex items-center justify-center space-x-2.5 ${
               challengeCompleted 
                 ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' 
@@ -148,9 +157,9 @@ export function MainMenu({
             }`}
           >
             <Calendar className="w-4 h-4" />
-            <span>Daily Directive</span>
+            <span>{t('menu.daily')}</span>
             {challengeCompleted ? (
-              <span className="text-[8px] bg-emerald-500/20 px-1.5 py-0.5 rounded uppercase font-black tracking-wider">Done</span>
+              <span className="text-[8px] bg-emerald-500/20 px-1.5 py-0.5 rounded uppercase font-black tracking-wider">{t('menu.challengeDone')}</span>
             ) : streak.currentStreak >= 3 ? (
               <span className="text-[8px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded uppercase font-black tracking-wider">{streak.currentStreak}d</span>
             ) : null}
@@ -159,36 +168,40 @@ export function MainMenu({
           <button 
             onClick={() => { soundManager.init(); soundManager.uiClick(); onSettings(); }}
             onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
+            data-testid="main-settings"
             className="flex items-center space-x-3 text-zinc-500 hover:text-white transition-colors font-mono text-xs uppercase tracking-widest"
           >
             <Settings2 className="w-4 h-4" />
-            <span>Hardware Tuning</span>
+            <span>{t('menu.settings')}</span>
           </button>
 
           <button 
             onClick={() => { soundManager.init(); soundManager.uiClick(); setIsLeaderboardOpen(true); }}
             onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
+            data-testid="main-leaderboard"
             className="flex items-center space-x-3 text-zinc-500 hover:text-white transition-colors font-mono text-xs uppercase tracking-widest"
           >
             <ListOrdered className="w-4 h-4" />
-            <span>Nexus Rankings</span>
+            <span>{t('menu.leaderboard')}</span>
           </button>
 
           <button 
             onClick={() => { soundManager.init(); soundManager.uiClick(); setIsAccountOpen(true); }}
             onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
+            data-testid="main-terminal"
             className="flex items-center space-x-3 text-zinc-500 hover:text-white transition-colors font-mono text-xs uppercase tracking-widest"
           >
             <User className="w-4 h-4" />
-            <span>Terminal Access</span>
+            <span>{t('menu.terminal')}</span>
           </button>
 
           <button
             onClick={() => { soundManager.uiClick(); setIsAchievementsOpen(true); }}
+            data-testid="main-achievements"
             className="flex items-center space-x-3 text-zinc-500 hover:text-white transition-colors font-mono text-xs uppercase tracking-widest"
           >
             <Trophy className="w-4 h-4" />
-            <span>Achievements</span>
+            <span>{t('menu.achievements')}</span>
           </button>
 
           <button 
@@ -197,7 +210,7 @@ export function MainMenu({
             className="flex items-center space-x-3 text-zinc-500 hover:text-white transition-colors font-mono text-xs uppercase tracking-widest"
           >
             <BookOpen className="w-4 h-4" />
-            <span>System Intel</span>
+            <span>{t('menu.systemIntel')}</span>
           </button>
         </div>
       </div>

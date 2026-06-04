@@ -855,3 +855,95 @@ button:hover .theme-preview-particle:nth-child(6) {
   animation-delay: -4s;
   animation-duration: 4.8s;
 }
+
+/* ===== Spatula Cursor (replaces aim-sight) ===== */
+
+.spatula-cursor-container {
+  position: fixed;
+  pointer-events: none;
+  z-index: 1000;
+  transform: translate(-50%, -50%);
+  will-change: transform, left, top;
+}
+
+.spatula-wrap {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  transform-origin: 50% 50%;
+  animation: spatulaIdle 3.5s ease-in-out infinite;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.55));
+  transition: filter 0.2s ease;
+}
+
+.spatula-wrap svg {
+  overflow: visible;
+}
+
+/* Idle: subtle bobbing/rotating motion like a held spatula */
+@keyframes spatulaIdle {
+  0%, 100% { transform: rotate(-40deg) translateY(0); }
+  50%      { transform: rotate(-44deg) translateY(-1px); }
+}
+
+/* Hovering an interactive element: scale up & straighten the angle */
+.spatula-wrap.hovering {
+  animation: spatulaHover 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+@keyframes spatulaHover {
+  0%   { transform: rotate(-40deg) scale(1); }
+  100% { transform: rotate(-32deg) scale(1.12); }
+}
+
+/* Click: SNAPPY swing-down + squash. The blade tips down as if mid-whack. */
+.spatula-wrap.clicking {
+  animation: spatulaWhack 0.14s cubic-bezier(0.5, 0, 0.5, 1) forwards;
+}
+@keyframes spatulaWhack {
+  0%   { transform: rotate(-40deg) scale(1, 1) translateY(0); }
+  35%  { transform: rotate(20deg)  scale(0.92, 0.78) translateY(4px); }
+  70%  { transform: rotate(-10deg) scale(1.08, 0.95) translateY(2px); }
+  100% { transform: rotate(-40deg) scale(1, 1) translateY(0); }
+}
+
+/* Critical health: red pulse glow on the blade */
+.spatula-wrap.critical svg {
+  animation: spatulaCriticalPulse 0.6s ease-in-out infinite alternate;
+}
+@keyframes spatulaCriticalPulse {
+  0%   { filter: drop-shadow(0 0 4px rgba(244, 63, 94, 0.55)) drop-shadow(0 2px 4px rgba(0,0,0,0.55)); }
+  100% { filter: drop-shadow(0 0 12px rgba(244, 63, 94, 0.95)) drop-shadow(0 0 24px rgba(244, 63, 94, 0.4)) drop-shadow(0 2px 4px rgba(0,0,0,0.55)); }
+}
+
+/* Biome-tinted blade colors via CSS variables (applied at runtime by component) */
+.spatula-wrap {
+  --blade-base: #e8f8ff;
+  --blade-mid:  #9fcfe8;
+  --blade-tip:  #5d8fa6;
+}
+.spatula-wrap.biome-neon_core {
+  --blade-base: #e8f8ff; --blade-mid: #9fcfe8; --blade-tip: #5d8fa6;
+}
+.spatula-wrap.biome-quantum_void {
+  --blade-base: #f0e8ff; --blade-mid: #a994d4; --blade-tip: #6748a8;
+}
+.spatula-wrap.biome-ember_depths {
+  --blade-base: #fff0d8; --blade-mid: #e8a878; --blade-tip: #a8541a;
+}
+.spatula-wrap.biome-frostbyte {
+  --blade-base: #e8faff; --blade-mid: #88c8e8; --blade-tip: #2896c8;
+}
+.spatula-wrap.biome-void_abyss {
+  --blade-base: #f8f8ff; --blade-mid: #c8c8d8; --blade-tip: #787890;
+}
+.spatula-wrap.biome-golden_cache {
+  --blade-base: #fff8d8; --blade-mid: #f8d878; --blade-tip: #c89018;
+}
+.spatula-wrap.biome-golden_spire {
+  --blade-base: #fff0a8; --blade-mid: #f8c850; --blade-tip: #a86800;
+}
+.spatula-wrap.critical {
+  --blade-base: #ffe2e8;
+  --blade-mid:  #f8a0b0;
+  --blade-tip:  #c83848;
+}

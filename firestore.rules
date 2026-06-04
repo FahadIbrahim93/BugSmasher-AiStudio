@@ -79,7 +79,9 @@ service cloud.firestore {
         
       match /private/saves {
         allow get: if isOwner(userId);
-        allow write: if isOwner(userId) && isValidGameSave(incoming());
+        // Client writes disallowed: saves are created/updated exclusively via the saveGame
+        // Cloud Function (server-side checksum validation using admin SDK, which bypasses rules).
+        allow write: if false;
       }
       
       match /private/progression {

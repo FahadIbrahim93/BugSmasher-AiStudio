@@ -1,8 +1,10 @@
 import { X, Trophy, Medal, Hash, Skull } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { FirebaseService, LeaderboardEntry } from '../lib/firebaseService';
+import type { Timestamp } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 import { soundManager } from '../game/SoundManager';
+import { t } from '../i18n';
 
 interface LeaderboardProps {
   onClose: () => void;
@@ -40,8 +42,8 @@ export function Leaderboard({ onClose }: LeaderboardProps) {
               <Trophy className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-black tracking-tighter text-white uppercase font-display">Global Leaderboard</h2>
-              <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Nexus Archive / Sector Rankings</p>
+              <h2 className="text-xl font-black tracking-tighter text-white uppercase font-display">{t('leaderboard.title')}</h2>
+              <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">{t('leaderboard.subtitle')}</p>
             </div>
           </div>
           <button 
@@ -101,7 +103,16 @@ export function Leaderboard({ onClose }: LeaderboardProps) {
                       {entry.score.toLocaleString()}
                     </div>
                     <div className="text-[10px] text-zinc-600 font-mono uppercase tracking-widest">
-                      {entry.updatedAt?.toMillis ? new Date(entry.updatedAt.toMillis()).toLocaleDateString() : 'JUST NOW'}
+                      {(() => {
+                        const ua = entry.updatedAt;
+                        if (ua && typeof ua === 'object' && 'toMillis' in ua) {
+                          const ts = ua as Timestamp;
+                          if (typeof ts.toMillis === 'function') {
+                            return new Date(ts.toMillis()).toLocaleDateString();
+                          }
+                        }
+                        return 'JUST NOW';
+                      })()}
                     </div>
                   </div>
                 </motion.div>

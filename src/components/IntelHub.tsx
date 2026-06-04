@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import { X, Bug, Database, Info, Activity, Shield } from 'lucide-react';
 import { GameConfig } from '../game/GameConfig';
-import { ResourceType } from '../game/ResourceTypes';
+import { t } from '../i18n';
 
 interface IntelHubProps {
   onBack: () => void;
@@ -9,6 +9,8 @@ interface IntelHubProps {
 
 export const IntelHub = ({ onBack }: IntelHubProps) => {
   const bossIntel = GameConfig.bugs.boss.variants || [];
+  const sniperConf = GameConfig.bugs.sniper as { baseHp: number; hpPerWave: number; baseSpeed: number };
+  const burrowerConf = GameConfig.bugs.burrower as { baseHp: number; hpPerWave: number; baseSpeed: number };
 
   return (
     <motion.div 
@@ -22,9 +24,9 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
           <div>
             <h2 className="text-3xl font-bold cyber-text-glow flex items-center gap-3">
               <Database className="text-cyan-400" />
-              INTEL HUB: BIOLOGICAL THREATS
+              {t('intel.title')}
             </h2>
-            <p className="text-cyan-400/60 text-sm mt-1 uppercase tracking-widest">Database connection stable // Bio-scan active</p>
+            <p className="text-cyan-400/60 text-sm mt-1 uppercase tracking-widest">{t('intel.subtitle')}</p>
           </div>
           <button 
             onClick={onBack}
@@ -38,7 +40,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
           {/* Boss Section */}
           <section>
             <h3 className="text-xl font-bold text-red-500 mb-4 border-l-4 border-red-500 pl-3 uppercase tracking-tighter">
-              Class-V Apex Predators (Bosses)
+              {t('intel.bossSection')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {bossIntel.map((boss) => (
@@ -50,34 +52,88 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
                   <div className="space-y-2 text-sm text-red-200/70">
                     <div className="flex items-center gap-2">
                       <Shield size={14} className="text-red-500" />
-                      <span>Ability: {boss.logic === 'spider' ? 'Web Snare' : boss.logic === 'moth' ? 'Psionic Distortion' : 'Mandible Armor'}</span>
+                      <span>{t('intel.ability', { ability: boss.logic === 'spider' ? t('intel.bossAbilitySpider') : boss.logic === 'moth' ? t('intel.bossAbilityMoth') : t('intel.bossAbilityMandible') })}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Activity size={14} className="text-red-500" />
-                      <span>Threat Level: EXTREME</span>
+                      <span>{t('intel.threatLevel')}</span>
                     </div>
                     <p className="mt-4 text-xs italic opacity-60">
-                      {boss.id === 'arachne' && "A multi-limbed nightmare that restricts tactical movement with high-tensile polymer webs."}
-                      {boss.id === 'moth' && "Exhibits quantum phase-shifting and neural interference, distorting core targeting systems."}
-                      {boss.id === 'mandible' && "Possesses heavily reinforced chitin plating. Vulnerable only during aggressive outreach."}
+                      {boss.id === 'arachne' && t('intel.bossDescArachne')}
+                      {boss.id === 'moth' && t('intel.bossDescMoth')}
+                      {boss.id === 'mandible' && t('intel.bossDescMandible')}
                     </p>
                   </div>
                   <div className="mt-4 pt-4 border-t border-red-500/20 flex justify-between items-center text-[10px] font-mono uppercase">
-                    <span>Scan Status</span>
-                    <span className="text-red-500 animate-pulse">Analyzing...</span>
+                    <span>{t('intel.scanStatus')}</span>
+                    <span className="text-red-500 animate-pulse">{t('intel.scanAnalyzing')}</span>
                   </div>
                 </div>
               ))}
             </div>
           </section>
 
+          {/* Class-IV Advanced Threats (Sniper / Burrower) */}
+          <section>
+            <h3 className="text-xl font-bold text-amber-500 mb-4 border-l-4 border-amber-500 pl-3 uppercase tracking-tighter">
+              {t('intel.classThreatSection')}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Sniper Card */}
+              <div className="p-4 bg-amber-950/20 border border-amber-500/30 rounded-lg relative overflow-hidden group">
+                <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-20 transition-opacity">
+                  <Bug size={80} />
+                </div>
+                <h4 className="text-lg font-bold text-amber-400 mb-2">{t('intel.sniperName')}</h4>
+                <div className="space-y-2 text-sm text-amber-200/70">
+                  <div className="flex items-center gap-2">
+                    <Shield size={14} className="text-amber-500" />
+                    <span>{t('intel.ability', { ability: t('intel.sniperAbility') })}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Activity size={14} className="text-amber-500" />
+                    <span>{t('intel.threatLevel')}</span>
+                  </div>
+                  <p className="mt-4 text-xs italic opacity-60">{t('intel.sniperDesc')}</p>
+                </div>
+                <div className="mt-4 pt-4 border-t border-amber-500/20 flex justify-between items-center text-[10px] font-mono uppercase">
+                  <span>HP: {sniperConf.baseHp} +{sniperConf.hpPerWave}/W &nbsp; SPD: {sniperConf.baseSpeed}</span>
+                  <span className="text-amber-400">WAVE 7+</span>
+                </div>
+              </div>
+
+              {/* Burrower Card */}
+              <div className="p-4 bg-amber-950/20 border border-amber-500/30 rounded-lg relative overflow-hidden group">
+                <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-20 transition-opacity">
+                  <Bug size={80} />
+                </div>
+                <h4 className="text-lg font-bold text-amber-400 mb-2">{t('intel.burrowerName')}</h4>
+                <div className="space-y-2 text-sm text-amber-200/70">
+                  <div className="flex items-center gap-2">
+                    <Shield size={14} className="text-amber-500" />
+                    <span>{t('intel.ability', { ability: t('intel.burrowerAbility') })}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Activity size={14} className="text-amber-500" />
+                    <span>{t('intel.threatLevel')}</span>
+                  </div>
+                  <p className="mt-4 text-xs italic opacity-60">{t('intel.burrowerDesc')}</p>
+                </div>
+                <div className="mt-4 pt-4 border-t border-amber-500/20 flex justify-between items-center text-[10px] font-mono uppercase">
+                  <span>HP: {burrowerConf.baseHp} +{burrowerConf.hpPerWave}/W &nbsp; SPD: {burrowerConf.baseSpeed}</span>
+                  <span className="text-amber-400">WAVE 12+</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
           {/* Regular Bugs */}
           <section>
             <h3 className="text-xl font-bold text-cyan-500 mb-4 border-l-4 border-cyan-500 pl-3 uppercase tracking-tighter">
-              Standard Infestation Log
+              {t('intel.standardInfestation')}
             </h3>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {Object.entries(GameConfig.bugs).filter(([k]) => k !== 'boss' && k !== 'mini').map(([id, conf]: [string, any]) => (
+              {Object.entries(GameConfig.bugs).filter(([k]) => k !== 'boss' && k !== 'mini' && k !== 'sniper' && k !== 'burrower').map(([id, conf]: [string, any]) => (
                 <div key={id} className="p-3 bg-cyan-950/20 border border-cyan-500/20 rounded hover:border-cyan-400 transition-colors">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-mono text-cyan-400 uppercase">{id}</span>
@@ -95,7 +151,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
           {/* Biome Data */}
           <section>
              <h3 className="text-xl font-bold text-purple-500 mb-4 border-l-4 border-purple-500 pl-3 uppercase tracking-tighter">
-              Biome Archetypes
+              {t('intel.biomeArchetypes')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                {Object.entries(GameConfig.biomes).map(([id, b]) => (
@@ -105,7 +161,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
                    </div>
                    <div>
                      <h5 className="font-bold text-purple-300 uppercase text-xs tracking-widest">{b.name}</h5>
-                     <p className="text-[10px] text-purple-200/60 mt-1">{id === 'quantum_void' ? 'Anomalous teleportation active.' : id === 'ember_depths' ? 'Extreme thermal stress detected.' : 'Atmospheric conditions regulated.'}</p>
+                     <p className="text-[10px] text-purple-200/60 mt-1">{id === 'quantum_void' ? t('intel.biomeQuantumVoid') : id === 'ember_depths' ? t('intel.biomeEmberDepths') : t('intel.biomeDefault')}</p>
                    </div>
                  </div>
                ))}
@@ -115,7 +171,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
 
         <div className="p-4 bg-cyan-950/30 border-t border-cyan-500/20 text-center">
             <p className="text-[10px] font-mono text-cyan-500/60 tracking-widest uppercase">
-               Authorized personal only // Neural link established
+               {t('intel.footer')}
             </p>
         </div>
       </div>

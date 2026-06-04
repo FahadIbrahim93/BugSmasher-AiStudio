@@ -208,12 +208,13 @@ export class InputSystem {
     const lowEnd = engine.renderer?.isLowEnd ?? false;
 
     if (!throttled) {
-      // Full effects for first few clicks in a burst
+      // Full effects for first few clicks in a burst: input ripple + splat
       engine.particleSystem.spawnInputFeedback(x, y);
       engine.particleSystem.spawnClickPulse(x, y);
-      engine.particleSystem.spawnMuzzleFlash(cx, cy, lowEnd ? 25 : 50);
+      // Bug juice splat at the click point (small)
+      engine.particleSystem.spawnSplatter(x, y, 'rgba(180, 255, 80, 0.85)');
     } else {
-      // Throttled: minimal effects — skip input feedback and muzzle flash
+      // Throttled: minimal effects — just a click pulse
       engine.particleSystem.spawnClickPulse(x, y);
     }
     engine.renderer.clickFlash = 1.0;
@@ -221,15 +222,13 @@ export class InputSystem {
     if (!throttled) {
       engine.shake(0.06, 3);
     }
-    
+
     // Animate base kick
     engine.baseScale = lowEnd ? 0.9 : 0.82;
     engine.baseRecoil = lowEnd ? 8 : 14;
     engine.baseRecoilAngle = Math.atan2(y - cy, x - cx);
-    
-    // Laser intensity based on performance
-    const laserWidth = lowEnd ? 1.5 : (throttled ? 2 : 3);
-    engine.particleSystem.spawnLaser(cx, cy, x, y, '#ffffff', laserWidth);
+    // Small shockwave at the impact for tactile feedback
+    engine.particleSystem.spawnShockwave(x, y, 'rgba(180, 255, 80, 0.6)', 36);
 
     if (engine.spikeBurstTimer > 0) {
       engine.particleSystem.spawnShockwave(x, y, '#ff3300', 150);

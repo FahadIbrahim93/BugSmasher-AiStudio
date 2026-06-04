@@ -52,3 +52,42 @@ export const validateSaveOnWrite = functions.firestore
     }
     return null;
   });
+
+/**
+ * Callable for server-enforced save: validates checksum (prevents bad/tampered writes),
+ * then performs the write from trusted admin context.
+ * Client must call this (via FirebaseService) instead of direct setDoc.
+ * This replaces the ineffective post-facto onWrite pattern.
+ */
+export const saveGame = functions.https.onCall(async (data: unknown, context: any) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Authentication required to save game data.');
+  }
+  const uid = context.auth.uid;
+
+  const payload = (data as Record<string, unknown> | undefined)?.data as Record<string, unknown> | undefined;
+  const checksum = (data as Record<string, unknown> | undefined)?.checksum as string | undefined;
+
+  if (!payload || typeof checksum !== 'string' || checksum.length !== 64) {
+    throw new functions.https.HttpsError('invalid-argument', 'Save must include data payload and 64-char checksum');
+  }
+
+  const expected = generateChecksum(payload);
+  if (expected !== checksum) {
+    throw new functions.https.HttpsError(
+      'permission-denied',
+      'Save checksum mismatch — tampered data rejected'
+    );
+  }
+
+  // Write from server (bypasses client rules; checksum already validated)
+  const saveRef = admin.firestore().doc(`users/${uid}/private/saves`);
+  await saveRef.set({
+    userId: uid,
+    data: payload,
+    checksum,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return { success: true };
+});

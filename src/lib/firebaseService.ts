@@ -11,16 +11,18 @@ import {
   serverTimestamp,
   increment
 } from 'firebase/firestore';
-import { db, auth } from './firebase';
+import type { Timestamp } from 'firebase/firestore';
+import { db, auth, functions } from './firebase';
 import { ChecksumSystem } from './checksum';
 import type { GameSaveData } from '../game/SaveManager';
+import { httpsCallable } from 'firebase/functions';
 
 export interface LeaderboardEntry {
   userId: string;
   username: string;
   score: number;
   wave: number;
-  updatedAt: any;
+  updatedAt?: string | Timestamp | Date;
 }
 
 export enum OperationType {
@@ -83,13 +85,13 @@ export class FirebaseService {
     try {
       const { checksum, ...pure } = data;
       const computed = checksum ?? (await ChecksumSystem.generate(pure));
-      const saveRef = doc(db, 'users', userId, 'private', 'saves');
-      await setDoc(saveRef, {
-        userId,
-        data: pure,
-        checksum: computed,
-        updatedAt: new Date().toISOString(),
-      });
+      // Use server callable for true enforcement (validates checksum, writes via admin).
+      // Direct client writes to saves are now denied by rules.
+      const saveGameCallable = httpsCallable<{ data: Record<string, unknown>; checksum: string }, { success: boolean }>(
+        functions,
+        'saveGame'
+      );
+      await saveGameCallable({ data: pure, checksum: computed });
       return true;
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `users/${userId}/private/saves`);

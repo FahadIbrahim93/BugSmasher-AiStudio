@@ -1,6 +1,7 @@
 import { GameEngine } from '../GameEngine';
 import { Bug, Powerup, Hazard, ResourcePickup } from '../GameTypes';
 import { Splatter, Particle, Shockwave, Laser, MuzzleFlash } from '../ParticleSystem';
+import type { SplatterDrop } from '../ParticleSystem';
 import { assetManager } from '../AssetManager';
 import { GameConfig } from '../GameConfig';
 import { getActiveCoreThemeConfig } from '../CosmeticsManager';
@@ -139,7 +140,7 @@ export class ParticleRenderer {
     ctx.arc(0, 0, Math.max(0, s.size), 0, Math.PI * 2);
     ctx.fill();
     
-    s.drops.forEach((drop: any, index: number) => {
+    s.drops.forEach((drop: SplatterDrop, index: number) => {
       ctx.beginPath();
       // Every 3rd drop is a square for that digital glitch look
       if (index % 3 === 0) {
