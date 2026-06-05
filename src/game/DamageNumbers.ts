@@ -23,18 +23,17 @@ let nextId = 1;
 const DEFAULT_LIFE_MS = 900;
 const GRAVITY = 0.15;
 const RISE_SPEED = -2.5;
+const MAX_NUMBERS = 100;
 
 export class DamageNumberSystem {
   private numbers: DamageNumber[] = [];
-  private nextId = 0;
-  private maxNumbers = 100;
 
   get activeCount(): number {
     return this.numbers.length;
   }
 
   spawn(x: number, y: number, value: number, isCrit: boolean = false): void {
-    if (this.numbers.length >= this.maxNumbers) {
+    if (this.numbers.length >= MAX_NUMBERS) {
       this.numbers.shift();
     }
     const critMultiplier = isCrit ? 1.8 : 1;
@@ -68,6 +67,7 @@ export class DamageNumberSystem {
   }
 
   render(ctx: CanvasRenderingContext2D): void {
+    if (this.numbers.length === 0) return;
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -87,10 +87,6 @@ export class DamageNumberSystem {
 
   clear(): void {
     this.numbers = [];
-  }
-
-  get count(): number {
-    return this.numbers.length;
   }
 }
 

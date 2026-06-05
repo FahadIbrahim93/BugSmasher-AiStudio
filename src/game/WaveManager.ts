@@ -3,6 +3,7 @@ import { Bug } from './GameTypes';
 import { GameConfig } from './GameConfig';
 import { soundManager } from './SoundManager';
 import { MissionManager } from './MissionManager';
+import { emitMissionUpdate } from './missionEvents';
 
 export class WaveManager {
   engine: GameEngine;
@@ -146,6 +147,7 @@ export class WaveManager {
       this.waveActive = false;
       this.engine.wave++;
       MissionManager.updateProgress('survive_waves', 1);
+      emitMissionUpdate();
       const mode = this.engine.gameModeConfig;
       if (mode.endlessWaves) {
         this.engine.onWaveComplete?.();

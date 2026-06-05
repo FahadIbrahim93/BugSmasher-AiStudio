@@ -8,6 +8,8 @@ describe('MissionManager', () => {
     localStorage.clear();
     currentDate = new Date('2026-06-05T10:00:00Z');
     __test.setNow(() => currentDate);
+    __test.resetCache();
+    __test.resetFlushTimer();
   });
 
   it('generates 3 daily missions on first call', () => {

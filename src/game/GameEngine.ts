@@ -16,6 +16,7 @@ import { PCGSystem } from './PCGSystem';
 import { CustomMapManager } from './CustomMapManager';
 import { damageNumbers } from './DamageNumbers';
 import { MissionManager } from './MissionManager';
+import { emitMissionUpdate } from './missionEvents';
 import { computeModifierState, type ChallengeModifierId, type ChallengeModifierState } from './DailyChallengeManager';
 import { GameEngineStatusBus } from './GameEngineStatusBus';
 import {
@@ -585,6 +586,7 @@ export class GameEngine {
 
     StatsManager.updateStats({ totalBugsKilled: 1, bossesKilled: isBossKill ? 1 : 0 });
     MissionManager.updateProgress('kill_bugs', 1);
+    emitMissionUpdate();
 
     const mult = this.multiplierTimer > 0 ? 2 : 1;
     this.score += bug.scoreValue * mult;

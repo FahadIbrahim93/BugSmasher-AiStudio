@@ -5,6 +5,8 @@
  * Tracks progress during gameplay. Industry standard +25% DAU boost.
  *
  * Storage: localStorage (key: bugsmasher_missions)
+ * Performance: localStorage writes are batched (debounced) to avoid thrashing
+ * on rapid-fire events like bug kills.
  */
 
 export type MissionType =
@@ -42,7 +44,7 @@ export interface MissionState {
 
 const STORAGE_KEY = 'bugsmasher_missions';
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-const ONE_WEEK_MS = 7 * ONE_DAY_MS;
+const FLUSH_DEBOUNCE_MS = 500;
 
 const MISSION_TEMPLATES: Record<MissionType, { descriptions: string[]; icons: string; baseTargets: Record<MissionDifficulty, number> }> = {
   kill_bugs: {
@@ -93,15 +95,47 @@ const REWARDS: Record<MissionDifficulty, { crystals: number; xp: number }> = {
   hard: { crystals: 400, xp: 800 },
 };
 
-function getTodayString(): string {
-  return now().toISOString().slice(0, 10);
+function pad2(n: number): string {
+  return String(n).padStart(2, '0');
 }
 
-function getWeekId(): string {
+function getTodayString(): string {
   const d = now();
-  const startOfYear = new Date(d.getFullYear(), 0, 1);
-  const weekNum = Math.ceil(((d.getTime() - startOfYear.getTime()) / ONE_DAY_MS + startOfYear.getDay() + 1) / 7);
-  return `${d.getFullYear()}-W${weekNum}`;
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+/**
+ * ISO 8601 week number. Week 1 is the week containing Jan 4. Weeks start Monday.
+ * Returns format like "2026-W23".
+ */
+function getWeekId(): string {
+  const d = new Date();
+  // Copy date to avoid mutating
+  const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  // Shift to Thursday of current week: ISO uses Thursday to determine the week
+  const dayNum = target.getDay() || 7; // Mon=1, Sun=7
+  target.setDate(target.getDate() + 4 - dayNum);
+  const yearStart = new Date(target.getFullYear(), 0, 1);
+  const weekNum = Math.ceil(((target.getTime() - yearStart.getTime()) / ONE_DAY_MS + 1) / 7);
+  return `${target.getFullYear()}-W${pad2(weekNum)}`;
+}
+
+function getEndOfDay(): number {
+  const d = now();
+  d.setHours(23, 59, 59, 999);
+  return d.getTime();
+}
+
+/**
+ * End of the current ISO week (Sunday 23:59:59.999 local time).
+ */
+function getEndOfWeek(): number {
+  const d = now();
+  const dayNum = d.getDay() || 7; // Mon=1, Sun=7
+  const daysUntilSunday = 7 - dayNum;
+  d.setDate(d.getDate() + daysUntilSunday);
+  d.setHours(23, 59, 59, 999);
+  return d.getTime();
 }
 
 let _nowOverride: (() => Date) | null = null;
@@ -112,6 +146,16 @@ function now(): Date {
 export const __test = {
   setNow(fn: (() => Date) | null): void {
     _nowOverride = fn;
+  },
+  resetFlushTimer(): void {
+    if (pendingFlush) {
+      clearTimeout(pendingFlush);
+      pendingFlush = null;
+    }
+  },
+  resetCache(): void {
+    flushSync();
+    cachedState = null;
   },
 };
 
@@ -142,43 +186,94 @@ function generateMission(difficulty: MissionDifficulty, expiresAt: number): Miss
   };
 }
 
+// --- Batched localStorage writes with in-memory cache ---
+let cachedState: MissionState | null = null;
+let pendingFlush: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleFlush(): void {
+  if (pendingFlush) return;
+  pendingFlush = setTimeout(() => {
+    if (cachedState) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cachedState));
+      } catch (e) {
+        console.warn('MissionManager: failed to persist state', e);
+      }
+    }
+    pendingFlush = null;
+  }, FLUSH_DEBOUNCE_MS);
+}
+
+function flushSync(): void {
+  if (pendingFlush) {
+    clearTimeout(pendingFlush);
+    pendingFlush = null;
+  }
+  if (cachedState) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cachedState));
+    } catch {
+      // ignore
+    }
+  }
+}
+
+function readFromStorage(): MissionState | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as MissionState;
+  } catch {
+    return null;
+  }
+}
+
+function writeToStorage(state: MissionState): void {
+  cachedState = state;
+  scheduleFlush();
+}
+
 export class MissionManager {
   static getState(): MissionState {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        const fresh = this.generateNewState();
-        this.saveState(fresh);
-        return fresh;
-      }
-      const parsed = JSON.parse(raw) as MissionState;
-      const today = getTodayString();
-      if (parsed.date !== today) {
-        const fresh = this.generateNewState();
-        this.saveState(fresh);
-        return fresh;
-      }
-      return parsed;
-    } catch {
+    const today = getTodayString();
+    // If cached state is for a different day, regenerate
+    if (cachedState && cachedState.date !== today) {
       const fresh = this.generateNewState();
-      this.saveState(fresh);
+      cachedState = fresh;
+      flushSync();
       return fresh;
     }
+    if (cachedState) return cachedState;
+    const stored = readFromStorage();
+    if (stored) {
+      if (stored.date !== today) {
+        const fresh = this.generateNewState();
+        cachedState = fresh;
+        flushSync();
+        return fresh;
+      }
+      cachedState = stored;
+      return stored;
+    }
+    const fresh = this.generateNewState();
+    cachedState = fresh;
+    flushSync();
+    return fresh;
   }
 
   private static generateNewState(): MissionState {
-    const now = Date.now();
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
-    const endOfWeek = now + ONE_WEEK_MS;
+    const today = getTodayString();
+    const weekId = getWeekId();
+    const endOfDay = getEndOfDay();
+    const endOfWeek = getEndOfWeek();
 
     return {
-      date: getTodayString(),
-      weekId: getWeekId(),
+      date: today,
+      weekId,
       daily: [
-        generateMission('easy', endOfDay.getTime()),
-        generateMission('medium', endOfDay.getTime()),
-        generateMission('hard', endOfDay.getTime()),
+        generateMission('easy', endOfDay),
+        generateMission('medium', endOfDay),
+        generateMission('hard', endOfDay),
       ],
       weekly: [
         generateMission('medium', endOfWeek),
@@ -186,10 +281,6 @@ export class MissionManager {
         generateMission('hard', endOfWeek),
       ],
     };
-  }
-
-  private static saveState(state: MissionState): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }
 
   static getDaily(): Mission[] {
@@ -218,7 +309,7 @@ export class MissionManager {
       weekly: state.weekly.map(updateMission),
     };
 
-    this.saveState(newState);
+    writeToStorage(newState);
     return completedMissions;
   }
 
@@ -238,7 +329,8 @@ export class MissionManager {
       weekly: state.weekly.map(m => (m.id === missionId ? updated : m)),
     };
 
-    this.saveState(newState);
+    writeToStorage(newState);
+    flushSync();
     return { success: true, reward: mission.reward };
   }
 
@@ -253,6 +345,8 @@ export class MissionManager {
   }
 
   static reset(): void {
+    flushSync();
+    cachedState = null;
     localStorage.removeItem(STORAGE_KEY);
   }
 }

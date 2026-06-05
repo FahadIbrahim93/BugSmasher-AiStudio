@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LoginStreakManager, STREAK_REWARDS, type StreakReward } from '../game/LoginStreakManager';
 import { analytics } from '../lib/analytics';
@@ -11,14 +11,21 @@ export const LoginStreakWidget: React.FC<LoginStreakWidgetProps> = ({ onClaim })
   const [state, setState] = useState(LoginStreakManager.getState());
   const [showModal, setShowModal] = useState(false);
   const [pendingReward, setPendingReward] = useState<StreakReward | null>(null);
+  const checkedInRef = useRef(false);
 
   useEffect(() => {
+    if (checkedInRef.current) return;
+    checkedInRef.current = true;
     const result = LoginStreakManager.checkIn();
     if (result.isNewDay && result.reward) {
       setPendingReward(result.reward);
       setShowModal(true);
       setState(LoginStreakManager.getState());
-      analytics.track('login_streak_day', { day: result.streak, reward: result.reward.crystals });
+      analytics.track('login_streak_day', {
+        day: result.streak,
+        reward: result.reward.crystals,
+        usedFreeze: result.usedFreeze,
+      });
     }
   }, []);
 
@@ -32,6 +39,7 @@ export const LoginStreakWidget: React.FC<LoginStreakWidgetProps> = ({ onClaim })
   };
 
   const nextReward = LoginStreakManager.getNextReward(state.currentStreak);
+  const cycleDay = ((state.currentStreak - 1) % STREAK_REWARDS.length) + 1;
 
   return (
     <>
@@ -43,6 +51,7 @@ export const LoginStreakWidget: React.FC<LoginStreakWidgetProps> = ({ onClaim })
         <span className="streak-icon">🔥</span>
         <span className="streak-count">{state.currentStreak}</span>
         <span className="streak-label">day{state.currentStreak !== 1 ? 's' : ''}</span>
+        {state.freezeTokens > 0 && <span className="freeze-badge">❄️{state.freezeTokens}</span>}
       </button>
 
       <AnimatePresence>
@@ -69,8 +78,8 @@ export const LoginStreakWidget: React.FC<LoginStreakWidgetProps> = ({ onClaim })
 
               <div className="login-streak-rewards-grid">
                 {STREAK_REWARDS.map((reward) => {
-                  const isPast = state.currentStreak > reward.day;
-                  const isCurrent = state.currentStreak === reward.day;
+                  const isPast = cycleDay > reward.day;
+                  const isCurrent = cycleDay === reward.day;
                   return (
                     <div
                       key={reward.day}
