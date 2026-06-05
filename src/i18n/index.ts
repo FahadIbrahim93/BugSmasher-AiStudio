@@ -1,6 +1,7 @@
 import { en, type TranslationKey } from './en';
 import { es } from './es';
 
+export type { TranslationKey } from './en';
 export type LocaleId = 'en' | 'es';
 
 const STORAGE_KEY = 'bugsmasher_locale';

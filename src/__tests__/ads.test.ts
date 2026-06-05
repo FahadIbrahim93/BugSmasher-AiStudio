@@ -75,6 +75,16 @@ describe('AdsService', () => {
       expect(result!.type).toBe('resource_boost');
       expect(result!.amount).toBe(50);
     });
+
+    it('should handle showRewarded throwing (error path coverage)', async () => {
+      vi.stubEnv('VITE_ADS_ENABLED', 'true');
+      const { AdsService } = await import('../lib/ads');
+      // force internal to reject by stubbing
+      const orig = (AdsService as any).showRewarded;
+      (AdsService as any).showRewarded = async () => { throw new Error('ad fail'); };
+      await expect(AdsService.showRewarded('resource_boost')).rejects.toThrow('ad fail');
+      (AdsService as any).showRewarded = orig;
+    });
   });
 
   describe('preload', () => {

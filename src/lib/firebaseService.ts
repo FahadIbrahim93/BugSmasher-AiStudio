@@ -3,7 +3,6 @@ import {
   doc, 
   getDoc, 
   getDocs, 
-  setDoc, 
   updateDoc, 
   query, 
   orderBy, 
@@ -50,7 +49,7 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
       userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
+      email: auth.currentUser?.email ? '[REDACTED]' : null,
       emailVerified: auth.currentUser?.emailVerified,
     },
     operationType,
@@ -133,13 +132,12 @@ export class FirebaseService {
         return true;
       }
 
-      await setDoc(leaderboardRef, {
-        userId,
-        username: username || 'Anonymous User',
-        score,
-        wave,
-        updatedAt: serverTimestamp()
-      });
+      // Route write through server-enforced callable (monotonic + admin write). Client check above is best-effort/optimistic.
+      const submitScoreCallable = httpsCallable<{ username?: string; score: number; wave: number }, { success: boolean; skipped?: boolean }>(
+        functions,
+        'submitScore'
+      );
+      await submitScoreCallable({ username, score, wave });
       return true;
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `leaderboard/${userId}`);

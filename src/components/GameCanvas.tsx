@@ -1,4 +1,4 @@
-import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import { useEffect, useRef, forwardRef, useImperativeHandle, useMemo } from 'react';
 import { GameEngine } from '../game/GameEngine';
 import type { EngineHandle } from '../game/EngineHandle';
 import type { GameModeId } from '../game/GameMode';
@@ -23,29 +23,30 @@ export const GameCanvas = forwardRef<EngineHandle, GameCanvasProps>(({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<GameEngine | null>(null);
 
-  useImperativeHandle(ref, (): EngineHandle => {
-    return new Proxy({} as EngineHandle, {
-      get: (_, prop) => {
-        if (!engineRef.current) return undefined;
-        const key = prop as keyof GameEngine;
-        const value = engineRef.current[key];
-        if (typeof value === 'function') {
-          return (value as Function).bind(engineRef.current);
-        }
-        return value;
-      },
-      set: (_, prop, value) => {
-        if (engineRef.current) {
-          // Intentionally allow mutation through EngineHandle for HUD/upgrade flows
-          // (e.g. score, isPaused, killsInSubwave, missedClicksInSubwave).
-          // Narrow cast to declared handle surface (no broad unknown).
-          (engineRef.current as unknown as Record<keyof EngineHandle, unknown>)[prop as keyof EngineHandle] = value;
-          return true;
-        }
-        return false;
+  // Stable handle: memoized once per GameCanvas mount (key-remount in Game) to avoid identity churn for HUD etc consumers.
+  const engineHandle = useMemo((): EngineHandle => new Proxy({} as EngineHandle, {
+    get: (_, prop) => {
+      if (!engineRef.current) return undefined;
+      const key = prop as keyof GameEngine;
+      const value = engineRef.current[key];
+      if (typeof value === 'function') {
+        return (value as Function).bind(engineRef.current);
       }
-    });
-  });
+      return value;
+    },
+    set: (_, prop, value) => {
+      if (engineRef.current) {
+        // Intentionally allow mutation through EngineHandle for HUD/upgrade flows
+        // (e.g. score, isPaused, killsInSubwave, missedClicksInSubwave).
+        // Narrow cast to declared handle surface (no broad unknown).
+        (engineRef.current as unknown as Record<keyof EngineHandle, unknown>)[prop as keyof EngineHandle] = value;
+        return true;
+      }
+      return false;
+    }
+  }), []);
+
+  useImperativeHandle(ref, () => engineHandle, [engineHandle]);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -69,7 +70,9 @@ export const GameCanvas = forwardRef<EngineHandle, GameCanvasProps>(({
     return () => {
       engine.destroy();
     };
-  }, [onGameOver, onWaveComplete]);
+    // Captures gameMode / onStoryTrigger / challengeModifiers at mount time only.
+    // New game sessions force remount via key={gameId} in Game (avoids re-init mid-run).
+  }, [onGameOver, onWaveComplete, gameMode, onStoryTrigger, challengeModifiers]);
 
   return (
     <canvas 

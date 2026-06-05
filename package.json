@@ -20,7 +20,8 @@
     "ci": "npm run lint && npm run validate:functions && npm test && npm run build",
     "validate:functions": "cd functions && npm ci && npm run build",
     "deploy:hosting": "npm run build && firebase deploy --only hosting",
-    "deploy:rules": "firebase deploy --only firestore:rules"
+    "deploy:rules": "firebase deploy --only firestore:rules",
+    "build:itch": "node scripts/build-itch.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.14",

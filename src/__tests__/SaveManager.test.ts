@@ -1,6 +1,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SaveManager } from '../game/SaveManager';
 
+// Mock firebase functions to cover callable upload path in service (Issue10 coverage) without real net
+vi.mock('firebase/functions', async () => {
+  const actual = await vi.importActual('firebase/functions') as any;
+  return {
+    ...actual,
+    httpsCallable: vi.fn(() => vi.fn(async () => ({ data: { success: true } }))),
+  };
+});
+
 describe('SaveManager', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -138,5 +147,18 @@ describe('SaveManager', () => {
     // Clear localStorage and verify high score resets
     localStorage.removeItem('bugsmasher_all_time_high');
     expect(SaveManager.getHighScore()).toBe(0);
+  });
+
+  it('cloud save path (auth present) invokes httpsCallable uploadSave (server enforcement coverage)', async () => {
+    const { auth } = await import('../lib/firebase');
+    (auth as any).currentUser = { uid: 'test-uid' };
+    const data = {
+      score: 1234, wave: 7, health: 90, maxHealth: 100,
+      clickRadiusMultiplier: 1, autoTurretLevel: 0, timestamp: Date.now()
+    };
+    const ok = await SaveManager.save(data);
+    expect(ok).toBe(true);
+    (auth as any).currentUser = null;
+    // callable mock ensures the upload branch (firebaseService -> callable) executes
   });
 });

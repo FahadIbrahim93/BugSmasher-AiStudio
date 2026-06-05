@@ -27,9 +27,7 @@ export class SaveManager {
   static async save(data: GameSaveData): Promise<boolean> {
     try {
       const stats = StatsManager.getStats();
-      const rawData = { ...data, stats };
-      // @ts-ignore
-      delete rawData.checksum; // Ensure we don't hash the previous checksum
+      const { checksum: _ignored, ...rawData } = { ...data, stats }; // strip checksum before hashing (TS-safe)
 
       const checksum = await ChecksumSystem.generate(rawData);
       const fullData = { ...rawData, checksum };

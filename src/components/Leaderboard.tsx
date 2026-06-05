@@ -42,7 +42,7 @@ export function Leaderboard({ onClose }: LeaderboardProps) {
               <Trophy className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-black tracking-tighter text-white uppercase font-display">{t('leaderboard.title')}</h2>
+              <h2 data-testid="leaderboard-title" className="text-xl font-black tracking-tighter text-white uppercase font-display">{t('leaderboard.title')}</h2>
               <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">{t('leaderboard.subtitle')}</p>
             </div>
           </div>

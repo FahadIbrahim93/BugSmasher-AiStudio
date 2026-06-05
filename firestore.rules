@@ -97,10 +97,10 @@ service cloud.firestore {
     
     match /leaderboard/{userId} {
       allow read: if true; // Publicly readable for list and get
-      allow create: if isOwner(userId) && isValidLeaderboard(incoming()) && isValidId(userId);
-      allow update: if isOwner(userId) && isValidLeaderboard(incoming())
-        && incoming().userId == existing().userId
-        && incoming().diff(existing()).affectedKeys().hasOnly(['username', 'score', 'wave', 'updatedAt']);
+      // Client writes disallowed: authoritative writes only via submitScore Cloud Function (admin, monotonic enforced).
+      // isValid* kept for documentation / potential future.
+      allow create: if false;
+      allow update: if false;
     }
   }
 }

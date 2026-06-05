@@ -34,9 +34,9 @@ test.describe('BUGSMASHER — Smoke Tests', () => {
   test('daily challenge modal opens', async ({ page }) => {
     await page.goto('/');
     await page.getByTestId('main-daily').click();
-    await expect(page.getByText('Primary Objective')).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText('System Modifiers')).toBeVisible();
-    await expect(page.getByText('Mission Rewards')).toBeVisible();
+    await expect(page.getByTestId('challenge-primary-objective')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId('challenge-system-modifiers')).toBeVisible();
+    await expect(page.getByTestId('challenge-mission-rewards')).toBeVisible();
     // Close via Escape
     await page.keyboard.press('Escape');
   });
@@ -54,7 +54,7 @@ test.describe('BUGSMASHER — Smoke Tests', () => {
   test('leaderboard modal opens', async ({ page }) => {
     await page.goto('/');
     await page.getByTestId('main-leaderboard').click();
-    await expect(page.getByText('Global Leaderboard')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId('leaderboard-title')).toBeVisible({ timeout: 5000 });
     // Should show loading or entry list
     await expect(page.getByText(/Nexus Archive|Sector Rankings/)).toBeVisible();
   });
@@ -82,5 +82,8 @@ test.describe('BUGSMASHER — Smoke Tests', () => {
     await expect(page.getByTestId('hud-wave-label')).toContainText(/WAVE/i, { timeout: 5000 });
     // Health indicator should be present (initial value)
     await expect(page.getByTestId('hud-health')).toBeVisible({ timeout: 5000 });
+    // GameOver controls have stable testids (added for E2E robustness under locale/async); not present pre-over
+    await expect(page.getByTestId('gameover-retry')).toHaveCount(0);
+    await expect(page.getByTestId('gameover-mainmenu')).toHaveCount(0);
   });
 });

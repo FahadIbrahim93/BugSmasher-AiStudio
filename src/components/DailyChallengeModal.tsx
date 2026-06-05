@@ -9,7 +9,7 @@ import {
 } from '../game/DailyChallengeManager';
 import { soundManager } from '../game/SoundManager';
 import { motion, AnimatePresence } from 'motion/react';
-import { t } from '../i18n';
+import { t, getLocale } from '../i18n';
 import type { TranslationKey } from '../i18n/en';
 import { analytics } from '../lib/analytics';
 import {
@@ -203,14 +203,14 @@ function ModifierCard({
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center space-x-2">
-            <p className="text-sm font-bold text-white">{mod.name}</p>
+            <p className="text-sm font-bold text-white">{t(`challenge.mod.${modId}.name` as TranslationKey)}</p>
             {/* Difficulty badge */}
             <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold uppercase tracking-wider bg-white/5 text-zinc-500 border border-white/5">
               <span className={`w-1.5 h-1.5 rounded-full ${diffColor}`} />
               <span>{t(diffLabel)}</span>
             </span>
           </div>
-          <p className="text-xs text-zinc-400 mt-0.5">{mod.description}</p>
+          <p className="text-xs text-zinc-400 mt-0.5">{t(`challenge.mod.${modId}.description` as TranslationKey)}</p>
         </div>
         {/* Info indicator */}
         <div className={`shrink-0 transition-all duration-200 ${isTooltipOpen ? 'text-cyan-400' : 'text-zinc-600'}`}>
@@ -366,7 +366,7 @@ export function DailyChallengeModal({ onStart, onClose }: DailyChallengeModalPro
                 {t('challenge.title')}
               </h2>
               <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest">
-                {new Date().toLocaleDateString('en-US', {
+                {new Date().toLocaleDateString(getLocale() === 'es' ? 'es-ES' : 'en-US', {
                   weekday: 'long',
                   year: 'numeric',
                   month: 'long',
@@ -396,16 +396,16 @@ export function DailyChallengeModal({ onStart, onClose }: DailyChallengeModalPro
                 </div>
                 <div>
                   <span className="text-sm font-bold text-yellow-400">
-                    {streak.currentStreak}-day streak
+                    {t('challenge.streak', { days: streak.currentStreak })}
                   </span>
                   <p className="text-[10px] text-zinc-500 font-mono">
-                    Best: {streak.highestStreak} days
+                    {t('challenge.streakBest', { days: streak.highestStreak })}
                   </p>
                 </div>
               </div>
               {streak.currentStreak >= 3 && (
                 <span className="text-[10px] text-yellow-500/60 font-mono uppercase tracking-widest border border-yellow-500/20 rounded-lg px-2 py-1">
-                  Streak Active
+                  {t('challenge.streakActive')}
                 </span>
               )}
             </div>
@@ -413,18 +413,18 @@ export function DailyChallengeModal({ onStart, onClose }: DailyChallengeModalPro
 
           {/* Win Condition */}
           <div>
-            <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-2 flex items-center">
+            <p data-testid="challenge-primary-objective" className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-2 flex items-center">
               <Trophy className="w-3 h-3 mr-1.5" />
               {t('challenge.primaryObjective')}
             </p>
             <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3">
-              <p className="text-sm font-bold text-white">{challenge.winCondition.label}</p>
+              <p className="text-sm font-bold text-white">{t(`challenge.win.${challenge.winCondition.type}` as TranslationKey, { value: challenge.winCondition.value })}</p>
             </div>
           </div>
 
           {/* Modifiers */}
           <div>
-            <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-2 flex items-center">
+            <p data-testid="challenge-system-modifiers" className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-2 flex items-center">
               <Flame className="w-3 h-3 mr-1.5" />
               {t('challenge.systemModifiers')}
             </p>
@@ -442,7 +442,7 @@ export function DailyChallengeModal({ onStart, onClose }: DailyChallengeModalPro
 
           {/* Rewards */}
           <div>
-            <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-2 flex items-center">
+            <p data-testid="challenge-mission-rewards" className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-2 flex items-center">
               <Gift className="w-3 h-3 mr-1.5" />
               {t('challenge.missionRewards')}
             </p>
@@ -480,7 +480,7 @@ export function DailyChallengeModal({ onStart, onClose }: DailyChallengeModalPro
               <div className="mt-2 bg-gradient-to-r from-yellow-500/5 to-orange-500/5 border border-yellow-500/10 rounded-xl px-3 py-2 flex items-center space-x-2.5">
                 <Trophy className="w-4 h-4 text-yellow-500 shrink-0" />
                 <p className="text-[10px] text-yellow-400 font-mono">
-                  Streak bonus (3+ days): <span className="font-bold">{challenge.streakReward.name}</span>
+                  {t('challenge.streakBonus', { name: challenge.streakReward.name })}
                 </p>
               </div>
             )}
