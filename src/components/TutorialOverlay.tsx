@@ -1,130 +1,157 @@
-import { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { GameEngine } from '../game/GameEngine';
-import { MousePointer2, Zap, ShieldAlert } from 'lucide-react';
-import { soundManager } from '../game/SoundManager';
+import { analytics } from '../lib/analytics';
 
-export function TutorialOverlay({ engineRef }: { engineRef: React.RefObject<GameEngine | null> }) {
-  const [step, setStep] = useState(0);
-  const [isVisible, setIsVisible] = useState(true);
+const TUTORIAL_KEY = 'bugsmasher_tutorial_completed';
+
+interface TutorialStep {
+  id: string;
+  title: string;
+  body: string;
+  target?: string;
+  position: 'center' | 'top' | 'bottom' | 'left' | 'right';
+}
+
+const TUTORIAL_STEPS: TutorialStep[] = [
+  {
+    id: 'welcome',
+    title: 'Welcome to BugSmasher',
+    body: 'Click on bugs to smash them. Survive as many waves as possible. Ready?',
+    position: 'center',
+  },
+  {
+    id: 'first_click',
+    title: 'Click to Attack',
+    body: 'Tap or click on a bug to deal damage. Each click costs energy that regenerates over time.',
+    position: 'center',
+  },
+  {
+    id: 'powerups',
+    title: 'Collect Powerups',
+    body: 'Defeated bugs drop powerups. Grab them for temporary boosts like shields, nukes, and slow-motion.',
+    position: 'top',
+  },
+  {
+    id: 'waves',
+    title: 'Survive the Waves',
+    body: 'Each wave is harder than the last. Bosses appear every 5 waves. Defeat them for big rewards.',
+    position: 'center',
+  },
+  {
+    id: 'prestige',
+    title: 'Prestige System',
+    body: 'After dying, you can Prestige to reset progress and earn permanent upgrades. The deeper you go, the more you earn.',
+    position: 'bottom',
+  },
+  {
+    id: 'daily',
+    title: 'Daily Challenges',
+    body: 'Complete daily challenges for bonus crystals. Build your login streak for escalating rewards.',
+    position: 'left',
+  },
+];
+
+export const TutorialOverlay: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // If tutorial was previously completed, don't show it.
-    if (localStorage.getItem('bugsmasher_tutorial') === 'true') {
-      setIsVisible(false);
-      return;
+    const completed = localStorage.getItem(TUTORIAL_KEY) === 'true';
+    if (!completed) {
+      setVisible(true);
+      analytics.track('tutorial_started');
+    } else {
+      onComplete();
     }
+  }, [onComplete]);
 
-    let animationFrameId: number;
-    let forcedPowerup = false;
+  if (!visible) return null;
 
-    const checkTutorialState = () => {
-      const engine = engineRef.current;
-      if (engine) {
-        if (step === 0) {
-          // Progress when player gets their first kill
-          if (engine.totalKills >= 1) {
-            soundManager.uiClick();
-            setStep(1);
-          }
-        } else if (step === 1) {
-          // Force a powerup drop on the first kill after advancing to step 1
-          if (engine.powerups.length === 0 && engine.totalPowerupsCollected === 0 && !forcedPowerup && engine.bugs.length > 0) {
-             engine.forceNextPowerup = true;
-             forcedPowerup = true;
-          }
+  const step = TUTORIAL_STEPS[currentStep];
+  const isLast = currentStep === TUTORIAL_STEPS.length - 1;
+  const isFirst = currentStep === 0;
 
-          // Progress when player collects their first powerup
-          if (engine.totalPowerupsCollected >= 1) {
-            soundManager.uiClick();
-            setStep(2);
-          }
-        }
-      }
-      if (isVisible) {
-        animationFrameId = requestAnimationFrame(checkTutorialState);
-      }
-    };
-
-    if (isVisible) {
-      animationFrameId = requestAnimationFrame(checkTutorialState);
+  const handleNext = () => {
+    analytics.track('tutorial_step_completed', { step: currentStep + 1, stepId: step.id });
+    if (isLast) {
+      localStorage.setItem(TUTORIAL_KEY, 'true');
+      analytics.track('tutorial_completed');
+      setVisible(false);
+      onComplete();
+    } else {
+      setCurrentStep(s => s + 1);
     }
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [engineRef, step, isVisible]);
+  };
 
-  if (!isVisible) return null;
+  const handleSkip = () => {
+    analytics.track('tutorial_skipped', { atStep: currentStep + 1 });
+    localStorage.setItem(TUTORIAL_KEY, 'true');
+    setVisible(false);
+    onComplete();
+  };
 
-  const dismiss = () => {
-    soundManager.uiClick();
-    localStorage.setItem('bugsmasher_tutorial', 'true');
-    setIsVisible(false);
+  const handlePrev = () => {
+    if (!isFirst) setCurrentStep(s => s - 1);
   };
 
   return (
-    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 pointer-events-none w-[90%] max-w-md">
-      <AnimatePresence mode="wait">
-        {step === 0 && (
-          <motion.div 
-            key="step1"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-black/60 backdrop-blur-xl border border-white/20 p-5 rounded-2xl flex items-center space-x-4 shadow-[0_0_30px_rgba(0,0,0,0.8)]"
-          >
-            <div className="w-10 h-10 min-w-10 rounded-full border border-white/20 flex items-center justify-center animate-pulse bg-white/5">
-              <MousePointer2 className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest mb-1">System Directive</p>
-              <p className="text-white font-mono text-sm leading-snug">Tap or click hostile anomalies to eliminate them.</p>
-            </div>
-          </motion.div>
-        )}
-        
-        {step === 1 && (
-          <motion.div 
-            key="step2"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-black/60 backdrop-blur-xl border border-white/20 p-5 rounded-2xl flex items-center space-x-4 shadow-[0_0_30px_rgba(0,0,0,0.8)]"
-          >
-            <div className="w-10 h-10 min-w-10 rounded-full border border-cyan-400/50 flex items-center justify-center animate-pulse bg-cyan-400/10">
-              <Zap className="w-5 h-5 text-cyan-400" />
-            </div>
-            <div>
-              <p className="text-cyan-500 font-mono text-xs uppercase tracking-widest mb-1">Payload Dropped</p>
-              <p className="text-white font-mono text-sm leading-snug">Collect data cores by hovering or clicking them.</p>
-            </div>
-          </motion.div>
-        )}
-
-        {step === 2 && (
-          <motion.div 
-            key="step3"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-black/60 backdrop-blur-xl border border-white/20 p-5 rounded-2xl flex flex-col sm:flex-row items-center sm:space-x-4 shadow-[0_0_30px_rgba(0,0,0,0.8)] pointer-events-auto space-y-4 sm:space-y-0"
-          >
-            <div className="flex items-center space-x-4 flex-grow">
-              <div className="w-10 h-10 min-w-10 rounded-full border border-pink-500/50 flex items-center justify-center bg-pink-500/10">
-                <ShieldAlert className="w-5 h-5 text-pink-500" />
-              </div>
-              <div>
-                <p className="text-pink-500 font-mono text-xs uppercase tracking-widest mb-1">Armory Access</p>
-                <p className="text-white font-mono text-sm leading-snug">Survive the wave to access and install upgrades.</p>
-              </div>
-            </div>
-            <button 
-              onClick={dismiss}
-              className="w-full sm:w-auto px-6 py-3 bg-white text-black font-bold font-mono text-xs rounded-full uppercase tracking-widest hover:bg-zinc-200 transition-colors flex-shrink-0"
+    <AnimatePresence>
+      <motion.div
+        className="tutorial-overlay"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="tutorial-backdrop" />
+        <motion.div
+          className={`tutorial-card position-${step.position}`}
+          key={step.id}
+          initial={{ scale: 0.9, y: 20, opacity: 0 }}
+          animate={{ scale: 1, y: 0, opacity: 1 }}
+          exit={{ scale: 0.9, y: -20, opacity: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="tutorial-step-indicator">
+            Step {currentStep + 1} of {TUTORIAL_STEPS.length}
+          </div>
+          <h2 className="tutorial-step-title">{step.title}</h2>
+          <p className="tutorial-step-body">{step.body}</p>
+          <div className="tutorial-controls">
+            <button
+              className="tutorial-btn tutorial-btn-skip"
+              onClick={handleSkip}
+              aria-label="Skip tutorial"
             >
-              Acknowledge
+              Skip
             </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+            <div className="tutorial-dots">
+              {TUTORIAL_STEPS.map((_, i) => (
+                <span
+                  key={i}
+                  className={`tutorial-dot ${i === currentStep ? 'active' : ''} ${i < currentStep ? 'past' : ''}`}
+                />
+              ))}
+            </div>
+            <div className="tutorial-nav-buttons">
+              {!isFirst && (
+                <button className="tutorial-btn tutorial-btn-back" onClick={handlePrev}>
+                  Back
+                </button>
+              )}
+              <button className="tutorial-btn tutorial-btn-next" onClick={handleNext}>
+                {isLast ? 'Got it!' : 'Next'}
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
-}
+};
+
+export const resetTutorial = (): void => {
+  localStorage.removeItem(TUTORIAL_KEY);
+};
+
+export default TutorialOverlay;
