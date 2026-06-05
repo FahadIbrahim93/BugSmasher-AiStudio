@@ -14,6 +14,8 @@ import { PowerupSystem } from './PowerupSystem';
 import { HazardSystem } from './HazardSystem';
 import { PCGSystem } from './PCGSystem';
 import { CustomMapManager } from './CustomMapManager';
+import { damageNumbers } from './DamageNumbers';
+import { MissionManager } from './MissionManager';
 import { computeModifierState, type ChallengeModifierId, type ChallengeModifierState } from './DailyChallengeManager';
 import { GameEngineStatusBus } from './GameEngineStatusBus';
 import {
@@ -438,6 +440,7 @@ export class GameEngine {
 
     // Environmental Systems
     this.particleSystem.update(dt);
+    damageNumbers.update(dt);
     this.powerupSystem.updatePowerups(dt);
     this.powerupSystem.updateResources(dt);
     if (this.pcgSystem) {
@@ -549,6 +552,8 @@ export class GameEngine {
       this.shake(0.05, 2);
     }
 
+    damageNumbers.spawn(bug.x, bug.y - bug.size * 0.5, Math.round(finalAmount), isCrit);
+
     if (bug.hp <= 0) {
       this.killBug(bug);
     } else {
@@ -572,7 +577,14 @@ export class GameEngine {
 
     const isBossKill = bug.type === 'boss';
 
+    if (isBossKill) {
+      this.shake(0.4, 18);
+      this.triggerHitStop(0.15);
+      MissionManager.updateProgress('defeat_bosses', 1);
+    }
+
     StatsManager.updateStats({ totalBugsKilled: 1, bossesKilled: isBossKill ? 1 : 0 });
+    MissionManager.updateProgress('kill_bugs', 1);
 
     const mult = this.multiplierTimer > 0 ? 2 : 1;
     this.score += bug.scoreValue * mult;

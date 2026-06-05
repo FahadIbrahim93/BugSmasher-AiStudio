@@ -2,6 +2,7 @@ import { GameEngine } from './GameEngine';
 import { Bug } from './GameTypes';
 import { GameConfig } from './GameConfig';
 import { soundManager } from './SoundManager';
+import { MissionManager } from './MissionManager';
 
 export class WaveManager {
   engine: GameEngine;
@@ -144,6 +145,7 @@ export class WaveManager {
     } else if (this.engine.bugs.length === 0) {
       this.waveActive = false;
       this.engine.wave++;
+      MissionManager.updateProgress('survive_waves', 1);
       const mode = this.engine.gameModeConfig;
       if (mode.endlessWaves) {
         this.engine.onWaveComplete?.();

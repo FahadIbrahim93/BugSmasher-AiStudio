@@ -1,6 +1,7 @@
 import { GameEngine } from './GameEngine';
 import { Bug, Powerup, Hazard, ResourcePickup } from './GameTypes';
 import { Splatter, Particle, Shockwave, Laser, MuzzleFlash } from './ParticleSystem';
+import { damageNumbers } from './DamageNumbers';
 import { PerformanceScaler } from './rendering/PerformanceScaler';
 import { EnvironmentRenderer } from './rendering/EnvironmentRenderer';
 import { BugRenderer } from './rendering/BugRenderer';
@@ -283,6 +284,7 @@ export class Renderer {
     this.ui.drawActivePowerupUI(width, height);
     this.ui.drawBossHealthBar(width, height);
     this.ui.drawWaveTransition(width, height);
+    damageNumbers.render(this.engine.ctx);
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
   }

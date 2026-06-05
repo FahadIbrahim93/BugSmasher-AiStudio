@@ -3,6 +3,7 @@ import { GameConfig } from './GameConfig';
 import { soundManager } from './SoundManager';
 import { Bug, Powerup } from './GameTypes';
 import { loadControlBindings, matchesBinding } from './ControlBindings';
+import { MissionManager } from './MissionManager';
 
 export class InputSystem {
   private engine: GameEngine;
@@ -138,6 +139,7 @@ export class InputSystem {
 
         if (distSq < collectRadius * collectRadius) {
           this.engine.activatePowerup(p.type, p.x, p.y);
+          MissionManager.updateProgress('collect_powerups', 1);
           this.engine.powerups.splice(i, 1);
         }
       }

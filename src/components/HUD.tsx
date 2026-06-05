@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { soundManager } from '../game/SoundManager';
 import { ProgressionManager } from '../game/ProgressionManager';
 import { SaveManager, type SaveSyncStatus } from '../game/SaveManager';
+import { MissionPanel } from './MissionPanel';
 
 interface KillLog {
   id: string;
@@ -616,6 +617,10 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
           </motion.div>
         )}
       </AnimatePresence>
+
+      <div className="fixed bottom-4 right-4 w-72 max-w-[calc(100vw-2rem)] pointer-events-auto z-30">
+        <MissionPanel />
+      </div>
     </div>
   );
 }

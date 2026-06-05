@@ -16,6 +16,7 @@ import type { GameModeId } from '../game/GameMode';
 import { AchievementGallery } from './AchievementGallery';
 import { BattlegroundGenerator } from './BattlegroundGenerator';
 import { WorkspaceConsole } from './WorkspaceConsole';
+import { LoginStreakWidget } from './LoginStreakWidget';
 
 export function MainMenu({
   onStart,
@@ -82,6 +83,10 @@ export function MainMenu({
           onClose={() => setIsDailyChallengeOpen(false)}
         />
       )}
+
+      <div className="absolute top-4 right-4 z-20">
+        <LoginStreakWidget />
+      </div>
 
       <div className="z-10 flex flex-col items-center space-y-12 sm:space-y-16 w-full max-w-lg">
         <div className="text-center space-y-6">
