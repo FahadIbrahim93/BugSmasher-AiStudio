@@ -26,7 +26,12 @@ const RISE_SPEED = -2.5;
 
 export class DamageNumberSystem {
   private numbers: DamageNumber[] = [];
+  private nextId = 0;
   private maxNumbers = 100;
+
+  get activeCount(): number {
+    return this.numbers.length;
+  }
 
   spawn(x: number, y: number, value: number, isCrit: boolean = false): void {
     if (this.numbers.length >= this.maxNumbers) {
