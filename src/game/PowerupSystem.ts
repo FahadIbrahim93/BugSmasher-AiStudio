@@ -4,7 +4,6 @@ import { GameConfig } from './GameConfig';
 import { ProgressionManager } from './ProgressionManager';
 import { StatsManager } from './StatsManager';
 import { RESOURCES, ResourceType } from './ResourceTypes';
-import { analytics } from '../lib/analytics';
 
 /**
  * PowerupSystem — handles all powerup and resource logic.
@@ -119,7 +118,6 @@ export class PowerupSystem {
     this.engine.renderer.powerupAlpha = 1.0;
     this.engine.totalPowerupsCollected++;
     StatsManager.updateStats({ totalPowerupsCollected: 1 });
-    analytics.track('powerup_collected', { type });
     import('./SoundManager').then(({ soundManager }) => soundManager.powerup(type));
     this.engine.particleSystem.spawnShockwave(
       this.engine.coreX,

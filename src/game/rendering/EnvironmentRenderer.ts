@@ -7,6 +7,7 @@ import { getActiveCoreThemeConfig } from '../CosmeticsManager';
 import type { Renderer } from '../Renderer';
 import type { PerformanceScaler } from './PerformanceScaler';
 import { OffscreenEnvironmentCache } from './OffscreenEnvironmentCache';
+import { CustomMapManager } from '../CustomMapManager';
 
 export class EnvironmentRenderer {
   private staticLayerCache = new OffscreenEnvironmentCache();
@@ -17,6 +18,7 @@ export class EnvironmentRenderer {
   private lastBgHeight: number = 0;
   private lastBiomeId: string = '';
   private lastHealthRatio: number = -1;
+  private lastCustomMapId: string = '';
 
   constructor(
     protected engine: GameEngine,
@@ -42,37 +44,49 @@ export class EnvironmentRenderer {
     let colorA = '#050505';
     let colorB = '#0a0a0a';
     
-    switch(biomeId) {
-      case 'quantum_void': colorA = '#08001a'; colorB = '#1a0033'; break;
-      case 'ember_depths': colorA = '#1a0500'; colorB = '#330a00'; break;
-      case 'frostbyte': colorA = '#001a1a'; colorB = '#003344'; break;
-      case 'void_abyss': colorA = '#000000'; colorB = '#111111'; break;
-      case 'golden_cache': colorA = '#1a1a00'; colorB = '#333300'; break;
-      case 'golden_spire': colorA = '#0a0a05'; colorB = '#1a1a10'; break;
+    // Custom map override integration
+    const customMap = (this.engine.pcgSystem && this.engine.pcgSystem.activeMap) || CustomMapManager.getCustomMap(this.engine.wave);
+    if (biomeId === 'custom_map' && customMap) {
+      colorA = customMap.colorA || '#051515';
+      colorB = customMap.colorB || '#020a0a';
+    } else {
+      switch(biomeId) {
+        case 'quantum_void': colorA = '#08001a'; colorB = '#1a0033'; break;
+        case 'ember_depths': colorA = '#1a0500'; colorB = '#330a00'; break;
+        case 'frostbyte': colorA = '#001a1a'; colorB = '#003344'; break;
+        case 'void_abyss': colorA = '#000000'; colorB = '#111111'; break;
+        case 'golden_cache': colorA = '#1a1a00'; colorB = '#333300'; break;
+        case 'golden_spire': colorA = '#0a0a05'; colorB = '#1a1a10'; break;
+      }
     }
 
     const healthRatio = this.engine.health / this.engine.maxHealth;
+    const customMapId = (biomeId === 'custom_map' && customMap) ? (('id' in customMap) ? customMap.id : (customMap as any).seed || 'pcg') : '';
     
     // Cache background gradient — recreate only on dimension/biome/health change
     if (this.cachedBgGradient === null ||
         this.lastBgWidth !== width ||
         this.lastBgHeight !== height ||
         this.lastBiomeId !== biomeId ||
+        this.lastCustomMapId !== customMapId ||
         Math.abs(this.lastHealthRatio - healthRatio) > 0.15) {
       
       this.cachedBgGradient = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, width);
-      this.cachedBgGradient.addColorStop(0, colorB);
+      // Append CC (~80% opaccity) for seamless blending with the high-res gallery
+      const alphaVal = 'cc';
+      this.cachedBgGradient.addColorStop(0, colorB + alphaVal);
       
       if (healthRatio < 0.3) {
         const pulse = Math.sin(t * 8) * 0.2 + 0.2;
-        this.cachedBgGradient.addColorStop(1, `rgba(180, 0, 0, ${pulse})`);
+        this.cachedBgGradient.addColorStop(1, `rgba(180, 0, 0, ${pulse * 0.7 + 0.3})`);
       } else {
-        this.cachedBgGradient.addColorStop(1, colorA);
+        this.cachedBgGradient.addColorStop(1, colorA + alphaVal);
       }
       
       this.lastBgWidth = width;
       this.lastBgHeight = height;
       this.lastBiomeId = biomeId;
+      this.lastCustomMapId = customMapId;
       this.lastHealthRatio = healthRatio;
     }
     
@@ -89,18 +103,40 @@ export class EnvironmentRenderer {
     }
 
     // Biome specific background particles/grid (cached offscreen when static)
-    if (biomeId === 'neon_core' || biomeId === 'golden_cache') {
-      const cached = this.staticLayerCache.blitStaticLayer(this.engine, biomeId, (c) =>
-        this.paintGrid(c as CanvasRenderingContext2D, 200, 'rgba(255, 255, 255, 0.01)')
-      );
-      if (!cached) this.drawGrid(200, 'rgba(255, 255, 255, 0.01)');
-    } else if (biomeId === 'quantum_void' || biomeId === 'void_abyss') {
-      const count = biomeId === 'void_abyss' ? 100 : 50;
-      const cached = this.staticLayerCache.blitStaticLayer(this.engine, biomeId, (c) =>
-        this.paintStarfield(c as CanvasRenderingContext2D, count)
-      );
-      if (!cached) this.drawStarfield(count);
+    if (biomeId === 'neon_core') {
+      const cached = this.staticLayerCache.blitStaticLayer(this.engine, biomeId, (c) => {
+        this.paintGrid(c as CanvasRenderingContext2D, 160, 'rgba(57, 255, 20, 0.012)');
+        this.paintNeonCoreDetails(c as CanvasRenderingContext2D);
+      });
+      if (!cached) {
+        this.paintGrid(ctx, 160, 'rgba(57, 255, 20, 0.012)');
+        this.paintNeonCoreDetails(ctx);
+      }
+    } else if (biomeId === 'quantum_void') {
+      const cached = this.staticLayerCache.blitStaticLayer(this.engine, biomeId, (c) => {
+        this.paintStarfield(c as CanvasRenderingContext2D, 60);
+        this.paintQuantumVoidNebula(c as CanvasRenderingContext2D);
+      });
+      if (!cached) {
+        this.paintStarfield(ctx, 60);
+        this.paintQuantumVoidNebula(ctx);
+      }
+    } else if (biomeId === 'void_abyss') {
+      const cached = this.staticLayerCache.blitStaticLayer(this.engine, biomeId, (c) => {
+        this.paintStarfield(c as CanvasRenderingContext2D, 120);
+        this.paintVoidAbyssAnomalies(c as CanvasRenderingContext2D);
+      });
+      if (!cached) {
+        this.paintStarfield(ctx, 120);
+        this.paintVoidAbyssAnomalies(ctx);
+      }
     } else if (biomeId === 'ember_depths') {
+      const cached = this.staticLayerCache.blitStaticLayer(this.engine, 'ember_depths_bg', (c) => {
+        this.paintEmberMagmaCracks(c as CanvasRenderingContext2D);
+      });
+      if (!cached) {
+        this.paintEmberMagmaCracks(ctx);
+      }
       if (this.currentFps >= 30) {
         this.staticLayerCache.blitPeriodicLayer(
           this.engine, `lava_${biomeId}`, 100,
@@ -108,11 +144,34 @@ export class EnvironmentRenderer {
         );
       }
     } else if (biomeId === 'frostbyte') {
+      const cached = this.staticLayerCache.blitStaticLayer(this.engine, 'frostbyte_bg', (c) => {
+        this.paintFrostbyteCrystals(c as CanvasRenderingContext2D);
+      });
+      if (!cached) {
+        this.paintFrostbyteCrystals(ctx);
+      }
       if (this.currentFps >= 30) {
         this.staticLayerCache.blitPeriodicLayer(
           this.engine, `snow_${biomeId}`, 100,
           (c) => this.paintSnowflakes(c as CanvasRenderingContext2D)
         );
+      }
+    } else if (biomeId === 'golden_cache' || biomeId === 'golden_spire') {
+      const cached = this.staticLayerCache.blitStaticLayer(this.engine, biomeId, (c) => {
+        this.paintGrid(c as CanvasRenderingContext2D, 120, 'rgba(255, 204, 0, 0.015)');
+        this.paintGoldenCircuitry(c as CanvasRenderingContext2D);
+      });
+      if (!cached) {
+        this.paintGrid(ctx, 120, 'rgba(255, 204, 0, 0.015)');
+        this.paintGoldenCircuitry(ctx);
+      }
+    } else if (biomeId === 'custom_map' && customMap) {
+      const mapIdPart = 'id' in customMap ? customMap.id : (customMap as any).seed || 'pcg';
+      const cached = this.staticLayerCache.blitStaticLayer(this.engine, `custom_map_static_${mapIdPart}_${customMap.visualStyle}`, (c) => {
+        this.paintCustomMapDetails(c as CanvasRenderingContext2D, customMap);
+      });
+      if (!cached) {
+        this.paintCustomMapDetails(ctx, customMap);
       }
     }
 
@@ -120,6 +179,377 @@ export class EnvironmentRenderer {
     
     if (this.isLowEnd) return;
     this.drawDynamicMesh();
+  }
+
+  private paintCustomMapDetails(ctx: CanvasRenderingContext2D, map: any) {
+    const w = this.engine.width;
+    const h = this.engine.height;
+    const mainColor = map.color || '#00ffcc';
+    const gridColorStr = map.gridColor || 'rgba(0, 255, 204, 0.015)';
+    const size = map.gridSize || 120;
+    const labelText = map.label || 'SYSTEM_RUN_OK';
+
+    // 1. Always paint some grid if requested or standard
+    if (map.visualStyle === 'grid' || map.visualStyle === 'circuits') {
+      this.paintGrid(ctx, size, gridColorStr);
+    }
+
+    // 2. Specific styles
+    if (map.visualStyle === 'grid') {
+      ctx.strokeStyle = `${mainColor}20`; // low opacity
+      ctx.lineWidth = 1;
+      const offset = 30;
+      const bracketSize = 40;
+      
+      ctx.beginPath();
+      ctx.moveTo(offset, offset + bracketSize);
+      ctx.lineTo(offset, offset);
+      ctx.lineTo(offset + bracketSize, offset);
+      
+      ctx.moveTo(w - offset, offset + bracketSize);
+      ctx.lineTo(w - offset, offset);
+      ctx.lineTo(w - offset - bracketSize, offset);
+      
+      ctx.moveTo(offset, h - offset - bracketSize);
+      ctx.lineTo(offset, h - offset);
+      ctx.lineTo(offset + bracketSize, h - offset);
+      
+      ctx.moveTo(w - offset, h - offset - bracketSize);
+      ctx.lineTo(w - offset, h - offset);
+      ctx.lineTo(w - offset - bracketSize, h - offset);
+      ctx.stroke();
+
+      ctx.fillStyle = `${mainColor}40`; // slightly higher opacity for labels
+      ctx.font = '700 8.5px "JetBrains Mono", monospace';
+      ctx.fillText(labelText, offset, offset - 10);
+      ctx.fillText('NEXUS_TACTICAL_SECTOR', w - offset - 140, offset - 10);
+      ctx.fillText('GEOMETRIC_ALIGN_OK', offset, h - offset + 15);
+    } 
+    else if (map.visualStyle === 'circuits') {
+      ctx.strokeStyle = `${mainColor}20`; // low opacity stroke
+      ctx.lineWidth = 1.25;
+      ctx.beginPath();
+      ctx.moveTo(w * 0.15, 0);
+      ctx.lineTo(w * 0.15, h * 0.3);
+      ctx.lineTo(w * 0.15 + 40, h * 0.3 + 40);
+      ctx.lineTo(w * 0.15 + 40, h);
+      
+      ctx.moveTo(w * 0.85, 0);
+      ctx.lineTo(w * 0.85, h * 0.5);
+      ctx.lineTo(w * 0.85 - 50, h * 0.5 + 50);
+      ctx.lineTo(w * 0.85 - 50, h);
+      ctx.stroke();
+
+      ctx.fillStyle = `${mainColor}40`;
+      ctx.fillRect(w * 0.15 - 2.5, h * 0.3 - 2.5, 5, 5);
+      ctx.fillRect(w * 0.85 - 2.5, h * 0.5 - 2.5, 5, 5);
+
+      ctx.font = '700 8.5px "JetBrains Mono", monospace';
+      ctx.fillText(labelText, w - 170, h - 30);
+    } 
+    else if (map.visualStyle === 'nebula') {
+      this.paintStarfield(ctx, map.particleCount || 60);
+      
+      // Draw beautiful gaseous dust colored by mainColor
+      const grad = ctx.createRadialGradient(w/2, h/2, 50, w/2, h/2, w * 0.6);
+      grad.addColorStop(0, 'transparent');
+      grad.addColorStop(0.5, `${mainColor}12`); // extreme low opacity
+      grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(w/2, h/2, w * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = `${mainColor}30`;
+      ctx.font = '700 8.5px "JetBrains Mono", monospace';
+      ctx.fillText(`ANOMALY: ${labelText}`, 40, 50);
+    } 
+    else if (map.visualStyle === 'tecton_cracks') {
+      // Paint cracks colored by primary neon brand color
+      ctx.strokeStyle = `${mainColor}24`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(0, h * 0.4);
+      ctx.lineTo(w * 0.2, h * 0.35);
+      ctx.lineTo(w * 0.35, h * 0.6);
+      ctx.lineTo(w * 0.6, h * 0.15);
+      ctx.lineTo(w * 0.8, h * 0.45);
+      ctx.lineTo(w, h * 0.3);
+
+      ctx.moveTo(w * 0.4, 0);
+      ctx.lineTo(w * 0.35, h * 0.6);
+      ctx.lineTo(w * 0.45, h);
+      ctx.stroke();
+
+      ctx.fillStyle = `${mainColor}40`;
+      ctx.font = '700 8.5px "JetBrains Mono", monospace';
+      ctx.fillText(labelText, 40, 50);
+    } 
+    else if (map.visualStyle === 'snowflake_nodes') {
+      // Hexagonal frozen network nodes
+      ctx.strokeStyle = `${mainColor}20`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      const centerX = w / 2;
+      const centerY = h / 2;
+      const radius = Math.min(w, h) * 0.25;
+      for (let i = 0; i < 6; i++) {
+        const angle = (i * Math.PI) / 3;
+        const x = centerX + Math.cos(angle) * radius;
+        const y = centerY + Math.sin(angle) * radius;
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(x, y);
+
+        // draw small rings at nodes
+        ctx.arc(x, y, 6, 0, Math.PI * 2);
+      }
+      ctx.stroke();
+
+      ctx.fillStyle = `${mainColor}40`;
+      ctx.font = '700 8.5px "JetBrains Mono", monospace';
+      ctx.fillText(labelText, 40, 50);
+    }
+  }
+
+  private paintNeonCoreDetails(ctx: CanvasRenderingContext2D) {
+    const w = this.engine.width;
+    const h = this.engine.height;
+    
+    ctx.strokeStyle = 'rgba(57, 255, 20, 0.05)';
+    ctx.lineWidth = 1;
+
+    // Corner high-tech bracket wireframes
+    const offset = 30;
+    const size = 40;
+    
+    // Top-Left corner bracket
+    ctx.beginPath();
+    ctx.moveTo(offset, offset + size);
+    ctx.lineTo(offset, offset);
+    ctx.lineTo(offset + size, offset);
+    
+    // Top-Right corner bracket
+    ctx.moveTo(w - offset, offset + size);
+    ctx.lineTo(w - offset, offset);
+    ctx.lineTo(w - offset - size, offset);
+    
+    // Bottom-Left corner bracket
+    ctx.moveTo(offset, h - offset - size);
+    ctx.lineTo(offset, h - offset);
+    ctx.lineTo(offset + size, h - offset);
+    
+    // Bottom-Right corner bracket
+    ctx.moveTo(w - offset, h - offset - size);
+    ctx.lineTo(w - offset, h - offset);
+    ctx.lineTo(w - offset - size, h - offset);
+    ctx.stroke();
+
+    // Technical labeling texts
+    ctx.fillStyle = 'rgba(57, 255, 20, 0.15)';
+    ctx.font = '700 8px "JetBrains Mono", monospace';
+    ctx.fillText('TACTICAL_GRID_LN-01', offset, offset - 10);
+    ctx.fillText('NEXUS_SHIELDS_ONLINE', w - offset - 100, offset - 10);
+    ctx.fillText('SECTOR_SEVEN_CORE', offset, h - offset + 15);
+  }
+
+  private paintQuantumVoidNebula(ctx: CanvasRenderingContext2D) {
+    const w = this.engine.width;
+    const h = this.engine.height;
+
+    // Layer 1: Indigo anomaly center left
+    let grad = ctx.createRadialGradient(w * 0.3, h * 0.4, 0, w * 0.3, h * 0.4, w * 0.5);
+    grad.addColorStop(0, 'rgba(75, 0, 130, 0.08)');
+    grad.addColorStop(0.5, 'rgba(48, 25, 52, 0.03)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Layer 2: Deep magenta center right
+    grad = ctx.createRadialGradient(w * 0.7, h * 0.6, 0, w * 0.7, h * 0.6, w * 0.4);
+    grad.addColorStop(0, 'rgba(186, 85, 211, 0.06)');
+    grad.addColorStop(0.5, 'rgba(128, 0, 128, 0.02)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Delicate matrix anomalies (constellation threads)
+    ctx.strokeStyle = 'rgba(187, 0, 255, 0.04)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    const stars = [
+      { x: w * 0.2, y: h * 0.2 }, { x: w * 0.35, y: h * 0.3 }, 
+      { x: w * 0.25, y: h * 0.5 }, { x: w * 0.5, y: h * 0.45 },
+      { x: w * 0.65, y: h * 0.3 }, { x: w * 0.8, y: h * 0.25 },
+      { x: w * 0.7, y: h * 0.6 }, { x: w * 0.85, y: h * 0.75 },
+    ];
+    for (let i = 0; i < stars.length - 1; i++) {
+      ctx.moveTo(stars[i].x, stars[i].y);
+      ctx.lineTo(stars[i+1].x, stars[i+1].y);
+    }
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(187, 0, 255, 0.12)';
+    ctx.font = '700 8px "JetBrains Mono", monospace';
+    ctx.fillText('QUANTUM_STATES: ENTANGLED_TRUE', 40, 40);
+  }
+
+  private paintEmberMagmaCracks(ctx: CanvasRenderingContext2D) {
+    const w = this.engine.width;
+    const h = this.engine.height;
+
+    // Draw solid volcanic plate structures/crack outlines
+    ctx.strokeStyle = 'rgba(255, 68, 0, 0.06)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    
+    // Horizontal cracking lines representing tectonic plate fissures
+    let y = h - 60;
+    ctx.moveTo(0, y);
+    ctx.lineTo(w * 0.2, y - 20);
+    ctx.lineTo(w * 0.45, y + 10);
+    ctx.lineTo(w * 0.7, y - 30);
+    ctx.lineTo(w, y + 5);
+    
+    // Secondary fracture
+    y = h * 0.3;
+    ctx.moveTo(0, y);
+    ctx.lineTo(w * 0.3, y + 40);
+    ctx.lineTo(w * 0.6, y - 20);
+    ctx.lineTo(w * 0.8, y + 15);
+    ctx.lineTo(w, y - 10);
+    ctx.stroke();
+
+    // Warm heat source zones at the far edges
+    const grad = ctx.createLinearGradient(0, h, 0, h - 120);
+    grad.addColorStop(0, 'rgba(255, 20, 0, 0.04)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, h - 120, w, 120);
+
+    ctx.fillStyle = 'rgba(255, 68, 0, 0.15)';
+    ctx.font = '700 8px "JetBrains Mono", monospace';
+    ctx.fillText('CRUST_THERMODYNAMIC_ALARM', 40, h - 20);
+  }
+
+  private paintFrostbyteCrystals(ctx: CanvasRenderingContext2D) {
+    const w = this.engine.width;
+    const h = this.engine.height;
+
+    // Freezing vignette: cyan glow framing the scene
+    const grad = ctx.createRadialGradient(w/2, h/2, w * 0.4, w/2, h/2, w);
+    grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    grad.addColorStop(0.8, 'rgba(0, 204, 255, 0.02)');
+    grad.addColorStop(1, 'rgba(0, 204, 255, 0.06)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Decorative geometric snowflake nodes in the background
+    ctx.strokeStyle = 'rgba(0, 204, 255, 0.03)';
+    ctx.lineWidth = 1;
+    
+    const drawSnowflakeNode = (cx: number, cy: number, r: number) => {
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const angle = (i * Math.PI) / 3;
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
+        
+        // Minor needles
+        const subX = cx + Math.cos(angle) * (r * 0.6);
+        const subY = cy + Math.sin(angle) * (r * 0.6);
+        ctx.moveTo(subX, subY);
+        ctx.lineTo(subX + Math.cos(angle + 0.5) * (r * 0.3), subY + Math.sin(angle + 0.5) * (r * 0.3));
+        ctx.moveTo(subX, subY);
+        ctx.lineTo(subX + Math.cos(angle - 0.5) * (r * 0.3), subY + Math.sin(angle - 0.5) * (r * 0.3));
+      }
+      ctx.stroke();
+    };
+
+    drawSnowflakeNode(w * 0.15, h * 0.25, 40);
+    drawSnowflakeNode(w * 0.85, h * 0.2, 35);
+    drawSnowflakeNode(w * 0.1, h * 0.75, 45);
+    drawSnowflakeNode(w * 0.8, h * 0.7, 30);
+
+    ctx.fillStyle = 'rgba(0, 204, 255, 0.15)';
+    ctx.font = '700 8px "JetBrains Mono", monospace';
+    ctx.fillText('CRITICAL_THERMAL_SUB_ZERO', 40, 40);
+  }
+
+  private paintVoidAbyssAnomalies(ctx: CanvasRenderingContext2D) {
+    const w = this.engine.width;
+    const h = this.engine.height;
+
+    // Draw central cosmic anomaly singularity
+    const cx = w / 2;
+    const cy = h / 2;
+
+    // Accretion disk warp shadows
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.01)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 260, 50, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.025)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 210, 40, -0.2, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.01)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 150, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+    ctx.font = '700 8px "JetBrains Mono", monospace';
+    ctx.fillText('GRAVITATIONAL_SINGULARITY_S7', cx - 80, cy + 90);
+  }
+
+  private paintGoldenCircuitry(ctx: CanvasRenderingContext2D) {
+    const w = this.engine.width;
+    const h = this.engine.height;
+
+    // Circuit board layout (golden channels)
+    ctx.strokeStyle = 'rgba(255, 204, 0, 0.028)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+
+    // Vertical bus
+    ctx.moveTo(w * 0.15, 0);
+    ctx.lineTo(w * 0.15, h * 0.3);
+    ctx.lineTo(w * 0.15 + 40, h * 0.3 + 40);
+    ctx.lineTo(w * 0.15 + 40, h);
+
+    // Parallel bus
+    ctx.moveTo(w * 0.15 + 15, 0);
+    ctx.lineTo(w * 0.15 + 15, h * 0.29);
+    ctx.lineTo(w * 0.15 + 15 + 40, h * 0.29 + 40);
+    ctx.lineTo(w * 0.15 + 15 + 40, h);
+
+    // Right-side logic block
+    ctx.moveTo(w * 0.85, 0);
+    ctx.lineTo(w * 0.85, h * 0.5);
+    ctx.lineTo(w * 0.85 - 50, h * 0.5 + 50);
+    ctx.lineTo(w * 0.85 - 50, h);
+
+    ctx.moveTo(w * 0.85 - 15, 0);
+    ctx.lineTo(w * 0.85 - 15, h * 0.49);
+    ctx.lineTo(w * 0.85 - 15 - 50, h * 0.49 + 50);
+    ctx.lineTo(w * 0.85 - 15 - 50, h);
+
+    ctx.stroke();
+
+    // Small golden nodes/squares at junctions
+    ctx.fillStyle = 'rgba(255, 204, 0, 0.05)';
+    ctx.fillRect(w * 0.15 - 2, h * 0.3 - 2, 4, 4);
+    ctx.fillRect(w * 0.15 + 15 - 2, h * 0.29 - 2, 4, 4);
+    ctx.fillRect(w * 0.85 - 2, h * 0.5 - 2, 4, 4);
+    ctx.fillRect(w * 0.85 - 15 - 2, h * 0.49 -  2, 4, 4);
+
+    ctx.fillStyle = 'rgba(255, 204, 0, 0.15)';
+    ctx.font = '700 8px "JetBrains Mono", monospace';
+    ctx.fillText('CACHE_DATA_CHIP_ALIGNED', w - 170, h - 30);
   }
 
   private paintGrid(ctx: CanvasRenderingContext2D, size: number, color: string) {

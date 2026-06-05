@@ -1,16 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Trophy, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { t } from '../i18n';
-import type { Achievement } from '../game/AchievementManager';
 
 export function AchievementToast() {
-  const [achievement, setAchievement] = useState<Omit<Achievement, 'unlocked'> | null>(null);
+  const [achievement, setAchievement] = useState<any>(null);
 
   useEffect(() => {
-    const handleAchievement = (e: Event) => {
-      const customEvent = e as CustomEvent<Omit<Achievement, 'unlocked'>>;
-      setAchievement(customEvent.detail);
+    const handleAchievement = (e: any) => {
+      setAchievement(e.detail);
       setTimeout(() => setAchievement(null), 5000);
     };
 
@@ -31,7 +28,7 @@ export function AchievementToast() {
             <Trophy className="w-6 h-6 text-yellow-500" />
           </div>
           <div className="flex-1">
-            <p className="text-[10px] font-mono text-yellow-500 uppercase tracking-widest mb-1">{t('achievementToast.title')}</p>
+            <p className="text-[10px] font-mono text-yellow-500 uppercase tracking-widest mb-1">Achievement Unlocked</p>
             <h4 className="text-white font-bold leading-tight">{achievement.title}</h4>
             <p className="text-zinc-400 text-xs">{achievement.description}</p>
           </div>

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { FileText, X } from 'lucide-react';
-import { t } from '../i18n';
 import { LOGS_DATA } from '../data/lore';
 import { soundManager } from '../game/SoundManager';
 
@@ -50,7 +49,7 @@ export const TerminalLog = ({ unlockedLogs }: TerminalLogProps) => {
               <FileText className="w-4 h-4 text-emerald-500 animate-pulse" />
             </div>
             <div className="flex flex-col">
-              <span className="text-[8px] text-emerald-500 uppercase tracking-widest">{t('terminal.dataRecovered')}</span>
+              <span className="text-[8px] text-emerald-500 uppercase tracking-widest">Data Recovered</span>
               <span className="text-[10px] text-white truncate w-32">{activeLog?.title}</span>
             </div>
             <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full animate-ping"></div>
@@ -68,7 +67,7 @@ export const TerminalLog = ({ unlockedLogs }: TerminalLogProps) => {
                <div className="bg-zinc-800 p-4 border-b-2 border-zinc-700 flex justify-between items-center">
                   <div className="flex items-center space-x-2">
                     <FileText className="w-4 h-4 text-emerald-500" />
-                    <span className="text-[10px] text-emerald-400 uppercase tracking-tighter">{t('terminal.encryptedLog')}</span>
+                    <span className="text-[10px] text-emerald-400 uppercase tracking-tighter">Encrypted Log File</span>
                   </div>
                   <button 
                     onClick={() => {
@@ -83,14 +82,14 @@ export const TerminalLog = ({ unlockedLogs }: TerminalLogProps) => {
                
                <div className="p-8 space-y-6">
                   <div className="space-y-1">
-                     <span className="text-[10px] text-zinc-500 uppercase">{t('terminal.title')}</span>
+                     <span className="text-[10px] text-zinc-500 uppercase">Title</span>
                      <h2 className="text-white text-sm">{activeLog.title}</h2>
                   </div>
 
                   <div className="h-[2px] bg-[linear-gradient(90deg,transparent,#10b981,transparent)]"></div>
 
                   <div className="space-y-2">
-                     <span className="text-[10px] text-zinc-500 uppercase">{t('terminal.fragment')}</span>
+                     <span className="text-[10px] text-zinc-500 uppercase">Fragment</span>
                      <p className="text-emerald-50/80 text-[11px] leading-relaxed italic border-l-4 border-emerald-500/30 pl-4 py-2 bg-emerald-950/20">
                         "{activeLog.content}"
                      </p>
@@ -101,7 +100,7 @@ export const TerminalLog = ({ unlockedLogs }: TerminalLogProps) => {
                         <div className="w-1 h-3 bg-emerald-500"></div>
                         <div className="w-1 h-3 bg-emerald-700"></div>
                      </div>
-                     <span className="text-[6px] text-emerald-600">{t('terminal.source', { source: 'BIO_REACTOR_RELAY_4' })}</span>
+                     <span className="text-[6px] text-emerald-600">SOURCE: BIO_REACTOR_RELAY_4</span>
                   </div>
                </div>
 
@@ -112,7 +111,7 @@ export const TerminalLog = ({ unlockedLogs }: TerminalLogProps) => {
                  }}
                  className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] py-4 text-center cursor-pointer transition-colors uppercase tracking-[0.2em]"
                 >
-                  {t('terminal.closeTerminal')}
+                  Close Terminal
                </div>
             </div>
           </motion.div>

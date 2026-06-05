@@ -144,7 +144,7 @@ class VoiceSynthesizer {
     '???': { rate: 1.2, pitch: 0.2 },
   };
 
-  static speak(line: VoiceLine): Promise<void> {
+  static speak(line: VoiceLine, volume: number = 1.0): Promise<void> {
     return new Promise((resolve) => {
       if (!window.speechSynthesis) {
         resolve();
@@ -159,7 +159,7 @@ class VoiceSynthesizer {
       
       utterance.rate = config.rate;
       utterance.pitch = config.pitch;
-      utterance.volume = 1.0;
+      utterance.volume = volume;
 
       // Apply mood effects
       if (line.mood === 'glitch') {
@@ -319,6 +319,8 @@ export class SoundManager {
   musicVolume: number = 0.6;
   voiceVolume: number = 0.7;
   isMuted: boolean = false;
+  sfxMuted: boolean = false;
+  musicMuted: boolean = false;
 
   noiseBuffer: AudioBuffer | null = null;
 
@@ -341,16 +343,10 @@ export class SoundManager {
   constructor() {
     this.loadSettings();
     this.preloadVoices();
-    this.preloadAudioAssets();
   }
 
   private async preloadVoices() {
     VoiceSynthesizer.preloadVoices();
-  }
-
-  /** Kick off audio file pre-fetches immediately (before AudioContext is ready). */
-  private preloadAudioAssets(): void {
-    void audioAssets.prefetch();
   }
 
   private loadSettings() {
@@ -365,6 +361,10 @@ export class SoundManager {
       if (savedVoice !== null) this.voiceVolume = parseFloat(savedVoice);
       const savedMute = localStorage.getItem('bugsmasher_muted');
       if (savedMute !== null) this.isMuted = savedMute === 'true';
+      const savedSfxMute = localStorage.getItem('bugsmasher_sfx_muted');
+      if (savedSfxMute !== null) this.sfxMuted = savedSfxMute === 'true';
+      const savedMusicMute = localStorage.getItem('bugsmasher_music_muted');
+      if (savedMusicMute !== null) this.musicMuted = savedMusicMute === 'true';
     } catch (e) {
       console.warn("Could not load audio settings", e);
     }
@@ -377,6 +377,8 @@ export class SoundManager {
       localStorage.setItem('bugsmasher_music_volume', this.musicVolume.toString());
       localStorage.setItem('bugsmasher_voice_volume', this.voiceVolume.toString());
       localStorage.setItem('bugsmasher_muted', this.isMuted.toString());
+      localStorage.setItem('bugsmasher_sfx_muted', this.sfxMuted.toString());
+      localStorage.setItem('bugsmasher_music_muted', this.musicMuted.toString());
     } catch (e) {
       console.warn("Could not save audio settings", e);
     }
@@ -412,8 +414,11 @@ export class SoundManager {
     const masterTarget = this.isMuted ? 0 : this.masterVolume;
     this.preMaster.gain.setTargetAtTime(masterTarget, time, 0.05);
     
-    if (this.sfxGain) this.sfxGain.gain.setTargetAtTime(this.sfxVolume, time, 0.05);
-    if (this.musicGain) this.musicGain.gain.setTargetAtTime(this.musicVolume, time, 0.05);
+    const sfxTarget = this.sfxMuted ? 0 : this.sfxVolume;
+    const musicTarget = this.musicMuted ? 0 : this.musicVolume;
+    
+    if (this.sfxGain) this.sfxGain.gain.setTargetAtTime(sfxTarget, time, 0.05);
+    if (this.musicGain) this.musicGain.gain.setTargetAtTime(musicTarget, time, 0.05);
     if (this.voiceGain) this.voiceGain.gain.setTargetAtTime(this.voiceVolume, time, 0.05);
   }
 
@@ -426,6 +431,24 @@ export class SoundManager {
       this.uiClick();
     }
     return this.isMuted;
+  }
+
+  toggleSfxMute() {
+    this.sfxMuted = !this.sfxMuted;
+    this.updateGains();
+    this.saveSettings();
+    if (!this.sfxMuted) {
+      this.init();
+      this.uiClick();
+    }
+    return this.sfxMuted;
+  }
+
+  toggleMusicMute() {
+    this.musicMuted = !this.musicMuted;
+    this.updateGains();
+    this.saveSettings();
+    return this.musicMuted;
   }
 
   init() {
@@ -709,150 +732,141 @@ export class SoundManager {
 
   // ─── SFX Methods ──────────────────────────────────────────────────
 
-  /** Whiff: spatula cuts empty air (missed click). */
-  whiff() {
-    if (!this.enabled || !this.ctx || !this.sfxGain) return;
-    const t = this.ctx.currentTime;
-    try {
-      const src = this.ctx.createBufferSource();
-      const f = this.ctx.createBiquadFilter();
-      const g = this.ctx.createGain();
-      src.buffer = this.noiseBuffer!;
-      f.type = 'bandpass';
-      f.frequency.setValueAtTime(2400, t);
-      f.frequency.exponentialRampToValueAtTime(600, t + 0.18);
-      f.Q.setValueAtTime(2.2, t);
-      g.gain.setValueAtTime(0.0, t);
-      g.gain.linearRampToValueAtTime(0.08, t + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
-      src.connect(f); f.connect(g); g.connect(this.sfxGain);
-      src.start(t); src.stop(t + 0.22);
-      const tok = this.ctx.createOscillator();
-      const tokG = this.ctx.createGain();
-      tok.type = 'triangle';
-      tok.frequency.setValueAtTime(180, t);
-      tok.frequency.exponentialRampToValueAtTime(80, t + 0.05);
-      tokG.gain.setValueAtTime(0.12, t);
-      tokG.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
-      tok.connect(tokG); tokG.connect(this.sfxGain);
-      tok.start(t); tok.stop(t + 0.06);
-    } catch (e) { /* ignore */ }
-  }
-
-  /** Squash: bug gets smushed. THWACK + CRACK + SQUISH + GURGLE + SQUELCH. */
-  squash() {
-    if (!this.enabled || !this.ctx || !this.sfxGain) return;
-    const t = this.ctx.currentTime;
-    try {
-      // THWACK — sub-bass body
-      const th = this.ctx.createOscillator();
-      const thG = this.ctx.createGain();
-      th.type = 'sine';
-      th.frequency.setValueAtTime(95, t);
-      th.frequency.exponentialRampToValueAtTime(35, t + 0.08);
-      thG.gain.setValueAtTime(0.0, t);
-      thG.gain.linearRampToValueAtTime(0.45, t + 0.005);
-      thG.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
-      th.connect(thG); thG.connect(this.sfxGain);
-      th.start(t); th.stop(t + 0.13);
-      // CRACK — sharp transient
-      const cr = this.ctx.createOscillator();
-      const crG = this.ctx.createGain();
-      const crF = this.ctx.createBiquadFilter();
-      cr.type = 'square';
-      cr.frequency.setValueAtTime(2400, t);
-      cr.frequency.exponentialRampToValueAtTime(700, t + 0.025);
-      crF.type = 'bandpass';
-      crF.frequency.setValueAtTime(3000, t);
-      crF.Q.setValueAtTime(4, t);
-      crG.gain.setValueAtTime(0.18, t);
-      crG.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
-      cr.connect(crF); crF.connect(crG); crG.connect(this.sfxGain);
-      cr.start(t); cr.stop(t + 0.05);
-      // SQUISH — filtered noise
-      const s1 = this.ctx.createBufferSource();
-      const f1 = this.ctx.createBiquadFilter();
-      const f2 = this.ctx.createBiquadFilter();
-      const g1 = this.ctx.createGain();
-      s1.buffer = this.noiseBuffer!;
-      f1.type = 'lowpass';
-      f1.frequency.setValueAtTime(3200, t);
-      f1.frequency.exponentialRampToValueAtTime(280, t + 0.22);
-      f1.Q.setValueAtTime(1.4, t);
-      f2.type = 'bandpass';
-      f2.frequency.setValueAtTime(1100, t);
-      f2.Q.setValueAtTime(3, t);
-      g1.gain.setValueAtTime(0.0, t);
-      g1.gain.linearRampToValueAtTime(0.28, t + 0.008);
-      g1.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
-      s1.connect(f1); f1.connect(f2); f2.connect(g1); g1.connect(this.sfxGain);
-      s1.start(t); s1.stop(t + 0.3);
-      // GURGLE — FM modulated
-      const ca = this.ctx.createOscillator();
-      const mo = this.ctx.createOscillator();
-      const moG = this.ctx.createGain();
-      const guG = this.ctx.createGain();
-      ca.type = 'sawtooth';
-      ca.frequency.setValueAtTime(150, t);
-      ca.frequency.exponentialRampToValueAtTime(70, t + 0.18);
-      mo.type = 'sine';
-      mo.frequency.setValueAtTime(38, t);
-      mo.frequency.exponentialRampToValueAtTime(22, t + 0.18);
-      moG.gain.setValueAtTime(45, t);
-      moG.gain.exponentialRampToValueAtTime(2, t + 0.18);
-      guG.gain.setValueAtTime(0.0, t);
-      guG.gain.linearRampToValueAtTime(0.12, t + 0.012);
-      guG.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
-      mo.connect(moG); moG.connect(ca.frequency);
-      ca.connect(guG); guG.connect(this.sfxGain);
-      ca.start(t); mo.start(t); ca.stop(t + 0.24); mo.stop(t + 0.24);
-      // SQUELCH — popping bandpass noise
-      const s2 = this.ctx.createBufferSource();
-      const pF = this.ctx.createBiquadFilter();
-      const pG = this.ctx.createGain();
-      s2.buffer = this.noiseBuffer!;
-      pF.type = 'bandpass';
-      pF.frequency.setValueAtTime(900, t + 0.05);
-      pF.frequency.exponentialRampToValueAtTime(2200, t + 0.13);
-      pF.Q.setValueAtTime(5, t + 0.05);
-      pG.gain.setValueAtTime(0.0, t);
-      pG.gain.linearRampToValueAtTime(0.08, t + 0.06);
-      pG.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
-      s2.connect(pF); pF.connect(pG); pG.connect(this.sfxGain);
-      s2.start(t + 0.05); s2.stop(t + 0.17);
-    } catch (e) { /* ignore */ }
-  }
-
   shoot() {
-    this.whiff();
+    if (this.ctx && this.sfxGain && audioAssets.play('shoot', this.sfxGain, this.sfxVolume * 0.5))
+      return;
+    // Visceral damp "thwack" of a heavy wet smash
+    // High impact decay click
+    this.playImpact(100, 0.12, 0.4, true);
+    // Lower frequency blunt body sound (decays quickly)
+    this.playRichTone({
+      frequencies: [140, 90],
+      types: ['triangle', 'sine'],
+      durations: [0.08, 0.12],
+      volumes: [0.15, 0.08],
+      slideTo: [50, 40],
+      filterFreq: 800,
+      filterType: 'lowpass',
+    });
+    // Tiny wet release noise
+    this.playShapedNoise(0.08, 0.03, 300, 10, 'lowpass');
   }
 
-  splat() {
-    this.squash();
-  }
+  splat(bugType?: string) {
+    if (this.ctx && this.sfxGain) {
+      // Vary playback rate dynamically for extra organic crunchiness
+      let rate = 1.0;
+      if (bugType === 'swarmer' || bugType === 'mini') {
+        rate = 1.35 + Math.random() * 0.2; // faster, higher popping sounds
+      } else if (bugType === 'tank' || bugType === 'beetle') {
+        rate = 0.72 + Math.random() * 0.1; // heavier, chunkier wet impact
+      } else if (bugType === 'boss') {
+        rate = 0.55 + Math.random() * 0.05; // extremely low-pitched structural explosion
+      } else if (bugType === 'healer') {
+        rate = 1.1 + Math.random() * 0.15; // fluid bubble pop
+      } else {
+        rate = 0.9 + Math.random() * 0.25; // normal variation 
+      }
+      
+      if (audioAssets.play('splat', this.sfxGain, this.sfxVolume * 0.6, rate)) {
+        // Organic WAV asset successfully loaded and played. 
+        // No metallic or synth overlays are injected, allowing pristine, juicy sound.
+        return;
+      }
+    }
 
+    // Procedural synthesis fallback (completely rewritten to be purely organic/noise-based if WAV is missing)
+    if (bugType === 'swarmer' || bugType === 'mini') {
+      // Organic wet biological pop using filtered noise & extremely fast low-end thud
+      this.playShapedNoise(0.08, 0.04, 1800, 80, 'bandpass');
+      this.playShapedNoise(0.12, 0.08, 600, 30, 'lowpass');
+      // Bass core body (short sine)
+      this.playRichTone({
+        frequencies: [120],
+        types: ['sine'],
+        durations: [0.06],
+        volumes: [0.12],
+        slideTo: undefined,
+        filterFreq: 300,
+        filterType: 'lowpass'
+      });
+
+    } else if (bugType === 'healer') {
+      // Fluid medicine sac rupture (pulsing gas decompression + heavy wet decay)
+      this.playShapedNoise(0.18, 0.12, 1000, 40, 'bandpass');
+      this.playShapedNoise(0.24, 0.18, 450, 15, 'lowpass');
+      this.playRichTone({
+        frequencies: [90, 150],
+        types: ['sine', 'triangle'],
+        durations: [0.12, 0.08],
+        volumes: [0.15, 0.08],
+        slideTo: undefined,
+        filterFreq: 500,
+        filterType: 'lowpass'
+      });
+
+    } else if (bugType === 'tank' || bugType === 'beetle') {
+      // Mighty wet crunch & chitin shatter
+      this.playImpact(55, 0.25, 0.5, true);
+      this.playShapedNoise(0.25, 0.2, 280, 20, 'lowpass');
+      this.playShapedNoise(0.15, 0.08, 1200, 100, 'bandpass');
+      this.playRichTone({
+        frequencies: [85, 55],
+        types: ['sine', 'triangle'],
+        durations: [0.18, 0.25],
+        volumes: [0.18, 0.1],
+        slideTo: undefined,
+        filterFreq: 400,
+        filterType: 'lowpass'
+      });
+
+    } else if (bugType === 'boss') {
+      // Colossal wet biological collapse / massive organic squelch explosion
+      this.playImpact(45, 0.6, 0.8, true);
+      this.playShapedNoise(0.55, 0.35, 800, 15, 'lowpass');
+      this.playShapedNoise(0.35, 0.2, 1500, 60, 'bandpass');
+      this.playRichTone({
+        frequencies: [70, 50, 90],
+        types: ['sine', 'triangle', 'sine'],
+        durations: [0.4, 0.5, 0.3],
+        volumes: [0.22, 0.15, 0.1],
+        slideTo: undefined,
+        filterFreq: 300,
+        filterType: 'lowpass'
+      });
+
+    } else {
+      // General scout/other bug squishy pop falling back to organic noises
+      this.playShapedNoise(0.12, 0.08, 1500, 50, 'bandpass');
+      this.playShapedNoise(0.22, 0.15, 450, 20, 'lowpass');
+      this.playRichTone({
+        frequencies: [140, 90],
+        types: ['sine', 'triangle'],
+        durations: [0.08, 0.12],
+        volumes: [0.12, 0.06],
+        slideTo: undefined,
+        filterFreq: 600,
+        filterType: 'lowpass'
+      });
+    }
+  }
 
   hitBase() {
-    if (this.ctx && this.sfxGain && audioAssets.play('hit_base', this.sfxGain, this.sfxVolume * 0.7))
-      return;
-    // Heavy structural impact: deep bass + metallic hit + long rumble
-    this.playImpact(80, 0.6, 0.35, true);
-    this.playShapedNoise(0.5, 0.15, 800, 20, 'lowpass');
-    // Metallic ring
+    // Wet heavy splash/crash on the core base structure
+    this.playImpact(60, 0.5, 0.4, true);
+    this.playShapedNoise(0.4, 0.15, 600, 10, 'lowpass');
     this.playRichTone({
-      frequencies: [300, 450],
-      types: ['triangle', 'triangle'],
-      durations: [0.3, 0.5],
-      volumes: [0.04, 0.02],
-      filterFreq: 2000,
-      filterType: 'bandpass',
-      filterQ: 10,
+      frequencies: [120, 220],
+      types: ['sawtooth', 'triangle'],
+      durations: [0.25, 0.35],
+      volumes: [0.12, 0.06],
+      slideTo: [30, 60],
+      filterFreq: 800,
+      filterType: 'lowpass',
     });
   }
 
   powerup(type?: string) {
-    if (this.ctx && this.sfxGain && audioAssets.play('powerup', this.sfxGain, this.sfxVolume * 0.5))
-      return;
     if (type === 'shield') {
       // Sci-fi shield hum
       this.playRichTone({
@@ -986,19 +1000,21 @@ export class SoundManager {
   }
 
   bossHit() {
-    // Heavy thud with armor resonance
-    this.playImpact(100, 0.15, 0.2, true);
+    // Heavy armor-breaking shell crack sound
+    // Initial high-impact snap
+    this.playImpact(120, 0.2, 0.45, true);
+    // Heavy crunch noise
+    this.playShapedNoise(0.15, 0.1, 1500, 50, 'bandpass');
+    // Low blunt pitch
     this.playRichTone({
-      frequencies: [400, 600],
-      types: ['square', 'triangle'],
-      durations: [0.1, 0.15],
-      volumes: [0.1, 0.05],
-      slideTo: [50, 80],
-      filterFreq: 2000,
-      filterType: 'bandpass',
-      filterQ: 5,
+      frequencies: [220, 110],
+      types: ['square', 'sine'],
+      durations: [0.15, 0.25],
+      volumes: [0.12, 0.08],
+      slideTo: [70, 40],
+      filterFreq: 1200,
+      filterType: 'lowpass'
     });
-    this.playShapedNoise(0.1, 0.08, 1000, 50, 'bandpass');
   }
 
   bossDeath() {
@@ -1024,8 +1040,6 @@ export class SoundManager {
   }
 
   bossWarning() {
-    if (this.ctx && this.sfxGain && audioAssets.play('boss_warning', this.sfxGain, this.sfxVolume * 0.7))
-      return;
     // Ominous alarm: pulsing low tone with glitch
     this.playRichTone({
       frequencies: [80, 80],
@@ -1180,9 +1194,19 @@ export class SoundManager {
     }, 360);
   }
 
+  heal() {
+    // Healing synth sound
+    this.playRichTone({
+      frequencies: [600, 900],
+      types: ['sine', 'triangle'],
+      durations: [0.3, 0.45],
+      volumes: [0.07, 0.035],
+      slideTo: [900, 1350],
+      filterFreq: 4500,
+    });
+  }
+
   uiHover() {
-    if (this.ctx && this.sfxGain && audioAssets.play('ui_hover', this.sfxGain, this.sfxVolume * 0.3))
-      return;
     // Subtle click
     this.playRichTone({
       frequencies: [800, 1200],
@@ -1468,7 +1492,8 @@ export class SoundManager {
   async speak(line: VoiceLine): Promise<void> {
     this.isSpeaking = true;
     try {
-      await VoiceSynthesizer.speak(line);
+      const vol = this.isMuted ? 0 : this.voiceVolume * this.masterVolume;
+      await VoiceSynthesizer.speak(line, vol);
     } catch (e) {
       console.warn('Voice synthesis failed:', e);
     }

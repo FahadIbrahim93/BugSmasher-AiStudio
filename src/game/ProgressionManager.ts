@@ -1,6 +1,7 @@
 import { ResourceType, SKILLS } from './ResourceTypes';
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from '../lib/firebaseService';
 
 export interface ProgressionData {
   inventory: Record<ResourceType, number>;
@@ -75,9 +76,11 @@ export class ProgressionManager {
             }
           }, (err) => {
             console.warn("Progression real-time listener offline or blocked:", err);
+            handleFirestoreError(err, OperationType.GET, `users/${user.uid}/private/progression`, false);
           });
         } catch (error) {
           console.warn("Could not synchronize Progression with cloud, playing offline:", error);
+          handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/private/progression`);
         }
       }
     });
@@ -194,11 +197,13 @@ export class ProgressionManager {
     const user = auth.currentUser;
     if (user) {
       this.isSyncing = true;
+      const pathStr = `users/${user.uid}/private/progression`;
       try {
         const docRef = doc(db, 'users', user.uid, 'private', 'progression');
         await setDoc(docRef, this.data);
       } catch (e) {
         console.error("Cloud sync failed", e);
+        handleFirestoreError(e, OperationType.WRITE, pathStr);
       } finally {
         this.isSyncing = false;
       }

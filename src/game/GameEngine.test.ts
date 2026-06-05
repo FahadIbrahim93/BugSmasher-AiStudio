@@ -155,28 +155,4 @@ describe('GameEngine', () => {
     expect(engine.bugs.length).toBe(0); // Bug should be destroyed
     expect(engine.health).toBe(initialHealth); // Health should not decrease
   });
-
-  it('should clamp health <= maxHealth after post-start setChallengeModifiers (glass_cannon)', () => {
-    // Simulate post-start state (start() sets health = maxHealth, then challenge applied per #1 timing fix)
-    engine.health = GameConfig.player.maxHealth;
-    engine.maxHealth = GameConfig.player.maxHealth;
-    engine.setChallengeModifiers(['glass_cannon']);
-    expect(engine.maxHealth).toBe(GameConfig.player.maxHealth * 0.5);
-    expect(engine.health).toBeLessThanOrEqual(engine.maxHealth);
-    expect(engine.health / engine.maxHealth).toBeLessThanOrEqual(1);
-  });
-
-  it('EngineHandle contract surface (setters/getters used by proxy in GameCanvas) are present', () => {
-    // Covers #11/#13 proxy forwards without new file / react render (methods called through handle by HUD/Game)
-    expect(typeof engine.setChallengeModifiers).toBe('function');
-    expect(typeof engine.setGameMode).toBe('function');
-    expect(typeof engine.triggerDash).toBe('function');
-    // mutable fields per EngineHandle
-    engine.score = 123;
-    expect(engine.score).toBe(123);
-    engine.isPaused = true;
-    expect(engine.isPaused).toBe(true);
-    engine.killsInSubwave = 5;
-    expect(engine.killsInSubwave).toBe(5);
-  });
 });

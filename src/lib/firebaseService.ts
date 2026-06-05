@@ -3,6 +3,7 @@ import {
   doc, 
   getDoc, 
   getDocs, 
+  setDoc, 
   updateDoc, 
   query, 
   orderBy, 
@@ -10,18 +11,16 @@ import {
   serverTimestamp,
   increment
 } from 'firebase/firestore';
-import type { Timestamp } from 'firebase/firestore';
-import { db, auth, functions } from './firebase';
+import { db, auth } from './firebase';
 import { ChecksumSystem } from './checksum';
 import type { GameSaveData } from '../game/SaveManager';
-import { httpsCallable } from 'firebase/functions';
 
 export interface LeaderboardEntry {
   userId: string;
   username: string;
   score: number;
   wave: number;
-  updatedAt?: string | Timestamp | Date;
+  updatedAt: any;
 }
 
 export enum OperationType {
@@ -44,19 +43,21 @@ interface FirestoreErrorInfo {
   }
 }
 
-function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null, shouldThrow = true) {
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
       userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email ? '[REDACTED]' : null,
+      email: auth.currentUser?.email,
       emailVerified: auth.currentUser?.emailVerified,
     },
     operationType,
     path
   };
   console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  if (shouldThrow) {
+    throw new Error(JSON.stringify(errInfo));
+  }
 }
 
 export class FirebaseService {
@@ -84,13 +85,13 @@ export class FirebaseService {
     try {
       const { checksum, ...pure } = data;
       const computed = checksum ?? (await ChecksumSystem.generate(pure));
-      // Use server callable for true enforcement (validates checksum, writes via admin).
-      // Direct client writes to saves are now denied by rules.
-      const saveGameCallable = httpsCallable<{ data: Record<string, unknown>; checksum: string }, { success: boolean }>(
-        functions,
-        'saveGame'
-      );
-      await saveGameCallable({ data: pure, checksum: computed });
+      const saveRef = doc(db, 'users', userId, 'private', 'saves');
+      await setDoc(saveRef, {
+        userId,
+        data: pure,
+        checksum: computed,
+        updatedAt: new Date().toISOString(),
+      });
       return true;
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `users/${userId}/private/saves`);
@@ -132,12 +133,13 @@ export class FirebaseService {
         return true;
       }
 
-      // Route write through server-enforced callable (monotonic + admin write). Client check above is best-effort/optimistic.
-      const submitScoreCallable = httpsCallable<{ username?: string; score: number; wave: number }, { success: boolean; skipped?: boolean }>(
-        functions,
-        'submitScore'
-      );
-      await submitScoreCallable({ username, score, wave });
+      await setDoc(leaderboardRef, {
+        userId,
+        username: username || 'Anonymous User',
+        score,
+        wave,
+        updatedAt: serverTimestamp()
+      });
       return true;
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `leaderboard/${userId}`);

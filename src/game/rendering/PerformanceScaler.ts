@@ -1,4 +1,4 @@
-import type { GameEngine } from '../GameEngine';
+import { GameEngine } from '../GameEngine';
 
 /**
  * Quality presets inspired by professional 2026 browser/3D game engines (e.g. adaptive
@@ -41,8 +41,12 @@ export class PerformanceScaler {
 
   constructor(engine: GameEngine) {
     this.engine = engine;
-    // Detect Vercel / cloud-hosted environments (no GPU acceleration)
-    const isCloudHosted = typeof navigator !== 'undefined' && (
+    // Detect Vercel / cloud-hosted environments (no GPU acceleration) - skip in tests
+    const isTest = typeof process !== 'undefined' && (
+      process.env?.VITEST === 'true' || 
+      process.env?.NODE_ENV === 'test'
+    );
+    const isCloudHosted = !isTest && typeof navigator !== 'undefined' && (
       navigator.hardwareConcurrency !== undefined && navigator.hardwareConcurrency <= 4
     );
     this.applyPreset('Balanced');
@@ -50,16 +54,6 @@ export class PerformanceScaler {
     if (isCloudHosted) {
       this.vfxScalar = Math.min(this.vfxScalar, 0.65);
     }
-  }
-
-  /**
-   * Force immediate bare-minimum quality after repeated render faults.
-   * Called by Renderer.recordFault() after 3+ crashes in a 5-second window.
-   */
-  forceLowQuality(): void {
-    this.applyPreset('Headless');
-    this.emergencyDowngradeFps = 10; // prevent auto-recovery for several ticks
-    console.warn('[scaler] forceLowQuality — repeated render faults, dropped to Headless');
   }
 
   /**

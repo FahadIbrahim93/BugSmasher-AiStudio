@@ -1,7 +1,6 @@
 import { en, type TranslationKey } from './en';
 import { es } from './es';
 
-export type { TranslationKey } from './en';
 export type LocaleId = 'en' | 'es';
 
 const STORAGE_KEY = 'bugsmasher_locale';
@@ -28,14 +27,8 @@ export function setLocale(next: LocaleId): void {
   }
 }
 
-export function t(key: TranslationKey, vars?: Record<string, string | number>): string {
-  let value = CATALOG[locale][key] ?? CATALOG.en[key] ?? key;
-  if (vars) {
-    for (const [k, v] of Object.entries(vars)) {
-      value = value.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v));
-    }
-  }
-  return value;
+export function t(key: TranslationKey): string {
+  return CATALOG[locale][key] ?? CATALOG.en[key] ?? key;
 }
 
 export function subscribeLocale(listener: (l: LocaleId) => void): () => void {

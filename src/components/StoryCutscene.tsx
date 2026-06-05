@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Terminal, Database, ShieldAlert, Cpu, Volume2, VolumeX } from 'lucide-react';
-import { t } from '../i18n';
 import { DialogueLine } from '../data/lore';
 import { soundManager } from '../game/SoundManager';
 
@@ -122,7 +121,7 @@ export const StoryCutscene = ({ lines, onComplete }: StoryCutsceneProps) => {
           <div className="flex items-center space-x-2">
             <div className={`w-2 h-2 rounded-full animate-pulse ${currentLine.mood === 'alert' ? 'bg-red-500' : 'bg-emerald-500'}`}></div>
             <span className={`text-[10px] uppercase tracking-widest ${currentLine.mood === 'alert' ? 'text-red-400' : 'text-zinc-400'}`}>
-              {currentLine.mood === 'alert' ? t('story.systemCritical') : t('story.aegisTerminal')}
+              {currentLine.mood === 'alert' ? 'SYSTEM_CRITICAL' : 'Aegis-7 Terminal'}
             </span>
           </div>
           <div className="flex items-center space-x-2">
@@ -137,7 +136,7 @@ export const StoryCutscene = ({ lines, onComplete }: StoryCutsceneProps) => {
                 }
               }}
               className="p-1 hover:bg-white/10 rounded transition-colors"
-              title={voiceEnabled ? t('story.voiceEnabled') : t('story.voiceMuted')}
+              title={voiceEnabled ? 'Voice enabled' : 'Voice muted'}
             >
               {voiceEnabled 
                 ? <Volume2 className="w-3 h-3 text-emerald-400" /> 
@@ -216,7 +215,7 @@ export const StoryCutscene = ({ lines, onComplete }: StoryCutsceneProps) => {
                <div className="w-2 h-2 bg-zinc-700 rounded-full"></div>
             </div>
          </div>
-         <span className="text-[7px] text-zinc-700 tracking-[0.5em] uppercase">{t('story.tacticalComms')}</span>
+         <span className="text-[7px] text-zinc-700 tracking-[0.5em] uppercase">Tactical_Comms_Interface</span>
       </div>
     </motion.div>
   );

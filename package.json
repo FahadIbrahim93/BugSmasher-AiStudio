@@ -9,43 +9,44 @@
     "url": "https://github.com/HopeTheoory/BugSmasher-ApZz.git"
   },
   "scripts": {
-    "dev": "vite --port=3000 --host=0.0.0.0",
-    "build": "vite build",
+    "dev": "tsx server.ts",
+    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
+    "start": "node dist/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "cross-env PLAYWRIGHT_BROWSERS_PATH=0 npx playwright test",
     "ci": "npm run lint && npm run validate:functions && npm test && npm run build",
     "validate:functions": "cd functions && npm ci && npm run build",
     "deploy:hosting": "npm run build && firebase deploy --only hosting",
-    "deploy:rules": "firebase deploy --only firestore:rules",
-    "build:itch": "node scripts/build-itch.mjs"
+    "deploy:rules": "firebase deploy --only firestore:rules"
   },
   "dependencies": {
+    "@google/genai": "^2.7.0",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
+    "express": "^5.2.1",
     "firebase": "^12.13.0",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
-    "posthog-js": "^1.379.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "recharts": "^3.8.1",
     "vite": "^6.2.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.60.0",
+    "@types/express": "^5.0.6",
     "@types/node": "^22.14.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitest/ui": "^4.1.5",
-    "cross-env": "^10.1.0",
+    "esbuild": "^0.28.0",
     "jsdom": "^29.1.1",
-    "playwright": "^1.60.0",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
+    "vite": "^6.2.0",
     "vite-plugin-pwa": "^1.3.0",
     "vitest": "^4.1.5"
   }

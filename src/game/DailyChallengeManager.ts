@@ -435,7 +435,7 @@ export function isSkinUnlocked(skinId: string): boolean {
 
 // ---- INTERNAL REWARD GRANTING ----
 
-function loadCosmetics(): CosmeticsState {
+function loadCosmetics(): any {
   try {
     const raw = localStorage.getItem(STORAGE_COSMETICS);
     if (raw) {

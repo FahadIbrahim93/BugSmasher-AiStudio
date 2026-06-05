@@ -8,6 +8,8 @@ export interface UserStats {
   lastPlayed: string;
   totalRuns: number;
   bestWaveReached: number;
+  averageHitAccuracy?: number;
+  averageTimeToClear?: number;
 }
 
 export const INITIAL_STATS: UserStats = {
@@ -20,6 +22,8 @@ export const INITIAL_STATS: UserStats = {
   lastPlayed: new Date().toISOString(),
   totalRuns: 0,
   bestWaveReached: 0,
+  averageHitAccuracy: 0,
+  averageTimeToClear: 0,
 };
 
 export class StatsManager {

@@ -202,33 +202,32 @@ export class InputSystem {
       if (Math.random() < 0.2) engine.renderer.isGlitching = true;
     }
 
+    // Intercept with PCG System
+    if (engine.pcgSystem && engine.pcgSystem.activeMap) {
+      const hitNode = engine.pcgSystem.checkNodeHit(x, y);
+      if (hitNode) {
+        return; // Intercepted successfully!
+      }
+    }
+
     const cx = engine.width / 2;
     const cy = engine.height / 2;
     const throttled = this.isClickThrottled;
     const lowEnd = engine.renderer?.isLowEnd ?? false;
 
     if (!throttled) {
-      // Full effects for first few clicks in a burst: input ripple + splat
+      // Full tactile smash effects
       engine.particleSystem.spawnInputFeedback(x, y);
       engine.particleSystem.spawnClickPulse(x, y);
-      // Bug juice splat at the click point (small)
-      engine.particleSystem.spawnSplatter(x, y, 'rgba(180, 255, 80, 0.85)');
+      engine.particleSystem.spawnMissParticles(x, y);
     } else {
-      // Throttled: minimal effects — just a click pulse
+      // Throttled: minimal click effect
       engine.particleSystem.spawnClickPulse(x, y);
     }
-    engine.renderer.clickFlash = 1.0;
-    engine.renderer.fireAlpha = 1.0; // Trigger core fire animation
+    engine.renderer.clickFlash = 0.4; // Subtle screen flash for tactile weight
     if (!throttled) {
-      engine.shake(0.06, 3);
+      engine.shake(0.06, 4.5); // Satisfying heavy screen shake
     }
-
-    // Animate base kick
-    engine.baseScale = lowEnd ? 0.9 : 0.82;
-    engine.baseRecoil = lowEnd ? 8 : 14;
-    engine.baseRecoilAngle = Math.atan2(y - cy, x - cx);
-    // Small shockwave at the impact for tactile feedback
-    engine.particleSystem.spawnShockwave(x, y, 'rgba(180, 255, 80, 0.6)', 36);
 
     if (engine.spikeBurstTimer > 0) {
       engine.particleSystem.spawnShockwave(x, y, '#ff3300', 150);

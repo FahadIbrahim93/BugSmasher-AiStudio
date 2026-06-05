@@ -140,4 +140,143 @@ export class UIRenderer {
     ctx.moveTo(bx + barWidth + 10, by - 5); ctx.lineTo(bx + barWidth + 10, by + barHeight + 5);
     ctx.stroke();
   }
+
+  drawWaveTransition(width: number, height: number) {
+    const timer = this.engine.waveTransitionTimer;
+    if (timer <= 0) return;
+
+    const ctx = this.engine.ctx;
+    const duration = this.engine.waveTransitionDuration;
+    const progress = 1.0 - timer / duration; // 0 to 1
+    const currentWave = this.engine.wave;
+    const biome = this.engine.currentBiome;
+
+    // Determine theme colors based on biome
+    let accentColor = '#39ff14'; // Cyber green default
+    let rgbGlow = 'rgba(57, 255, 20, 0.15)';
+    if (biome === 'quantum_void') { 
+      accentColor = '#06b6d5'; 
+      rgbGlow = 'rgba(6, 182, 213, 0.15)'; 
+    } else if (biome === 'ember_depths') { 
+      accentColor = '#ff3300'; 
+      rgbGlow = 'rgba(255, 51, 0, 0.15)'; 
+    } else if (biome === 'frostbyte') { 
+      accentColor = '#00ffff'; 
+      rgbGlow = 'rgba(0, 255, 255, 0.15)'; 
+    } else if (biome === 'void_abyss') { 
+      accentColor = '#a855f7'; 
+      rgbGlow = 'rgba(168, 85, 247, 0.15)'; 
+    } else if (biome === 'golden_cache' || biome === 'golden_spire') { 
+      accentColor = '#fbbf24'; 
+      rgbGlow = 'rgba(251, 191, 36, 0.15)'; 
+    }
+
+    ctx.save();
+
+    // PHASE 1: Overall screen overlay and tracking glitches
+    // Darken background slightly to increase scanline and data refresh contrast
+    ctx.fillStyle = `rgba(0, 0, 0, ${Math.min(0.7, Math.sin(progress * Math.PI) * 0.4)})`;
+    ctx.fillRect(0, 0, width, height);
+
+    // Apply high chromatic aberration offset during transition peaks (middle 60% of transition)
+    if (progress > 0.15 && progress < 0.85) {
+      this.parent.chromaticOffset = Math.max(this.parent.chromaticOffset, Math.sin((progress - 0.15) / 0.7 * Math.PI) * 20);
+    }
+
+    // PHASE 2: Horizontal scanline wipe beam
+    // We want the scanline wipe to sweep from top of screen to bottom
+    // We cover a bit of overshoot (from -60 to height+60)
+    const startY = -60;
+    const endY = height + 60;
+    const sweepY = startY + progress * (endY - startY);
+
+    // Render the glow tail behind the sweeping scanline
+    const gradientHeight = 120;
+    const grad = ctx.createLinearGradient(0, sweepY - gradientHeight, 0, sweepY);
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(0.5, rgbGlow);
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, sweepY - gradientHeight, width, gradientHeight);
+
+    // Render the bright scanning laser line itself
+    ctx.strokeStyle = accentColor;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = accentColor;
+    ctx.shadowBlur = 15;
+    ctx.beginPath();
+    ctx.moveTo(0, sweepY);
+    ctx.lineTo(width, sweepY);
+    ctx.stroke();
+    ctx.shadowBlur = 0; // Reset shadow
+
+    // Emit sparks right from the scanline bar onto the particle system as visual feedback!
+    if (this.currentFps > 30 && Math.random() < 0.6) {
+      const sparkCount = Math.floor(Math.random() * 3) + 1;
+      for (let i = 0; i < sparkCount; i++) {
+        const sparkX = Math.random() * width;
+        this.engine.particleSystem.spawnParticle(sparkX, sweepY, accentColor, 3, 0.4);
+      }
+    }
+
+    // PHASE 3: Retro Data Refresh & Diagnostic Grid Texts
+    ctx.font = '700 11px "JetBrains Mono", monospace';
+    ctx.textAlign = 'left';
+
+    const textX = 32;
+    const textBaseY = 120;
+    const logs = [
+      `SYSTEM STATUS : RE-CALIBRATING [WAVE ${currentWave}]`,
+      `THREAT RATING : ELEVATED x1.${Math.floor(currentWave * 1.5)}`,
+      `BIOME SECTOR  : ${biome.toUpperCase().replace('_', ' ')}`,
+      `MEM_UPLINKS   : ACTIVE [OK]`,
+      `GRID STIMULI  : APEX PROTOCOL SENT`,
+      `DIFFICULTY    : SCALED [+${(currentWave - 1) * 12}%]`
+    ];
+
+    // Staggered log display based on sweep progress
+    const linesToDisplay = Math.min(logs.length, Math.floor(progress * logs.length * 1.4));
+    for (let i = 0; i < linesToDisplay; i++) {
+      const flicker = Math.random() > 0.08 ? 1.0 : 0.4;
+      ctx.fillStyle = `${accentColor}${Math.floor(flicker * 255).toString(16).padStart(2, '0')}`;
+      ctx.fillText(logs[i], textX, textBaseY + i * 20);
+    }
+
+    // Drawing decorative schematic outlines at corners during scan
+    ctx.strokeStyle = `${accentColor}44`;
+    ctx.lineWidth = 1;
+
+    // Top-left bracket
+    ctx.beginPath();
+    ctx.moveTo(20, 60); ctx.lineTo(20, 20); ctx.lineTo(60, 20);
+    ctx.stroke();
+
+    // Bottom-right bracket
+    ctx.beginPath();
+    ctx.moveTo(width - 20, height - 60); ctx.lineTo(width - 20, height - 20); ctx.lineTo(width - 60, height - 20);
+    ctx.stroke();
+
+    // PHASE 4: Main bold center notice (fades in as scanline passes middle, then fades out)
+    const textAlpha = Math.sin(progress * Math.PI);
+    ctx.textAlign = 'center';
+    
+    // Core brand message or notification
+    ctx.save();
+    ctx.translate(width / 2, height / 2 - 20);
+    
+    ctx.font = '900 38px "Space Grotesk", sans-serif';
+    ctx.fillStyle = `rgba(255, 255, 255, ${textAlpha})`;
+    
+    // Slight glitch text offsets
+    const glitchOffset = Math.sin(this.engine.globalTime * 40) * 3 * (progress > 0.4 && progress < 0.6 ? 1 : 0);
+    ctx.fillText(`WAVE ${currentWave} LOCKING...`, glitchOffset, 0);
+    
+    ctx.font = 'bold 12px "JetBrains Mono", monospace';
+    ctx.fillStyle = `${accentColor}${Math.floor(textAlpha * 255).toString(16).padStart(2, '0')}`;
+    ctx.fillText('DIFFICULTY EXPONENT: INCREASING', 0, 32);
+    
+    ctx.restore();
+
+    ctx.restore();
+  }
 }

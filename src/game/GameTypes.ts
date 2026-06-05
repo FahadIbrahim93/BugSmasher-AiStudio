@@ -24,13 +24,6 @@ export interface Bug {
   healEffectTimer?: number;
   lavaTimer?: number;
   webTimer?: number; // New mechanic for spider boss
-  // Sniper fields
-  shootTimer?: number;
-  isCharging?: boolean;
-  // Burrower fields
-  burrowTimer?: number;
-  isBurrowed?: boolean;
-  emergeTimer?: number;
   // Boss fields
   phase?: number;
   abilityTimer?: number;

@@ -37,8 +37,6 @@ export const GameConfig = {
     phase: { color: '#d400ff', baseSpeed: 45, speedPerWave: 6, size: 16, score: 45, baseHp: 2, hpPerWave: 0.15 },
     ember: { color: '#ff5500', baseSpeed: 35, speedPerWave: 4, size: 20, score: 55, baseHp: 4, hpPerWave: 0.4 },
     frost: { color: '#00b3ff', baseSpeed: 80, speedPerWave: 12, size: 14, score: 35, baseHp: 1.5, hpPerWave: 0.05 },
-    sniper: { color: '#ff0066', baseSpeed: 60, speedPerWave: 6, size: 16, score: 75, baseHp: 2, hpPerWave: 0.2 },
-    burrower: { color: '#8B4513', baseSpeed: 25, speedPerWave: 3, size: 22, score: 80, baseHp: 5, hpPerWave: 0.5 },
     healer: { color: '#33ff77', baseSpeed: 40, speedPerWave: 3, size: 22, score: 100, baseHp: 10, hpPerWave: 1.0 },
     boss: { 
       color: '#ff2255', 

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+import { User, onAuthStateChanged, signInWithPopup, signOut, GoogleAuthProvider } from 'firebase/auth';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../lib/firebase';
 
@@ -16,6 +16,8 @@ interface AuthContextType {
   loading: boolean;
   signIn: () => Promise<void>;
   logOut: () => Promise<void>;
+  accessToken: string | null;
+  setAccessToken: (token: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,6 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
@@ -58,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } else {
         setProfile(null);
+        setAccessToken(null);
       }
       setLoading(false);
     });
@@ -68,19 +72,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Listen for profile changes
   useEffect(() => {
     if (!user) return;
-    const unsubscribeProfile = onSnapshot(doc(db, 'users', user.uid), (doc) => {
-      if (doc.exists()) {
-        setProfile(doc.data() as UserProfile);
+    let unsubscribe: (() => void) | null = null;
+    let timeoutId: any = null;
+    let attempt = 0;
+
+    const startListener = () => {
+      try {
+        unsubscribe = onSnapshot(doc(db, 'users', user.uid), (snapshotDoc) => {
+          if (snapshotDoc.exists()) {
+            setProfile(snapshotDoc.data() as UserProfile);
+          }
+        }, (error) => {
+          const isPermissionError = error?.message?.includes("permissions") || error?.code === "permission-denied";
+          
+          if (isPermissionError && attempt < 5) {
+            attempt++;
+            const delay = attempt * 1000;
+            console.warn(`Profile listener permission denied, retrying in ${delay}ms (attempt ${attempt}/5)...`);
+            if (unsubscribe) {
+              unsubscribe();
+            }
+            timeoutId = setTimeout(startListener, delay);
+            return;
+          }
+          
+          console.error("Profile listen error:", error);
+          const errInfo = {
+            error: error instanceof Error ? error.message : String(error),
+            operationType: 'get',
+            path: `users/${user.uid}`,
+            authInfo: {
+              userId: auth.currentUser?.uid,
+              email: auth.currentUser?.email,
+              emailVerified: auth.currentUser?.emailVerified,
+            }
+          };
+          console.error('Firestore Error: ', JSON.stringify(errInfo));
+        });
+      } catch (e) {
+        console.error("Synchronous error starting profile listener:", e);
       }
-    }, (error) => {
-      console.error("Profile listen error:", error);
-    });
-    return () => unsubscribeProfile();
+    };
+
+    startListener();
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [user]);
 
   const signIn = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      if (credential?.accessToken) {
+        setAccessToken(credential.accessToken);
+      }
     } catch (error) {
       console.error("Login failed:", error);
     }
@@ -89,13 +137,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logOut = async () => {
     try {
       await signOut(auth);
+      setAccessToken(null);
     } catch (error) {
       console.error("Logout failed:", error);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signIn, logOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, signIn, logOut, accessToken, setAccessToken }}>
       {children}
     </AuthContext.Provider>
   );

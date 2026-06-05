@@ -1,6 +1,7 @@
 import { LORE_DATA, LOGS_DATA, StoryBeat } from '../data/lore';
 import { auth, db } from '../lib/firebase';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from '../lib/firebaseService';
 
 export class StoryManager {
   private static playedBeats: Set<string> = new Set();
@@ -55,9 +56,11 @@ export class StoryManager {
             }
           }, (err) => {
             console.warn("Story real-time listener offline or blocked:", err);
+            handleFirestoreError(err, OperationType.GET, `users/${user.uid}/private/story`, false);
           });
         } catch (error) {
           console.warn("Could not synchronize Story data with cloud, playing offline:", error);
+          handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/private/story`);
         }
       }
     });
@@ -114,6 +117,7 @@ export class StoryManager {
     const user = auth.currentUser;
     if (user) {
       this.isSyncing = true;
+      const pathStr = `users/${user.uid}/private/story`;
       try {
         const docRef = doc(db, 'users', user.uid, 'private', 'story');
         await setDoc(docRef, { 
@@ -122,6 +126,7 @@ export class StoryManager {
         });
       } catch (e) {
         console.error("Story cloud sync failed", e);
+        handleFirestoreError(e, OperationType.WRITE, pathStr);
       } finally {
         this.isSyncing = false;
       }

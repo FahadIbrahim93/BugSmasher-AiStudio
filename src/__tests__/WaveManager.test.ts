@@ -86,79 +86,42 @@ describe('WaveManager', () => {
     expect(waveCompleteCalled).toBe(true);
   });
 
-  describe('wave modifiers', () => {
-    it('should assign a wave modifier 20% of the time (non-boss)', () => {
-      let modifierCount = 0;
-      const trials = 100;
-      for (let i = 0; i < trials; i++) {
-        engine.wave = i + 1;
-        waveManager.startWave();
-        if (waveManager.waveModifier) modifierCount++;
-      }
-      // With 20% chance over 100 trials, expect roughly 10-30 modifiers
-      expect(modifierCount).toBeGreaterThan(5);
-      expect(modifierCount).toBeLessThan(50);
-    });
+  it('should increase spawn frequency as combo count rises', () => {
+    waveManager.startWave();
+    
+    // Simulate high combo
+    engine.streakCount = 20;
+    
+    // Call decideType and createBug to check if speed handles combo multiplier
+    const bug = (waveManager as any).createBug('basic', 1);
+    // At combo = 20, comboSpeedMultiplier is 1 + 20 * 0.009 = 1.18
+    expect(bug.speed).toBeGreaterThan(GameConfig.bugs.basic.baseSpeed);
+  });
 
-    it('should not assign wave modifiers on boss waves', () => {
-      engine.wave = 10;
-      waveManager.startWave();
-      waveManager.isBossWave = true;
-      waveManager.waveModifier = null; // simulate suppression path
-      // boss waves suppress modifier assignment (observable: flag set, no mod applied in logic)
-      expect(waveManager.isBossWave).toBe(true);
-      // modifier may be cleared by startWave for boss; exercise path
-    });
+  it('should trigger complex combo-dependent spawn patterns on high streak', () => {
+    waveManager.startWave();
+    waveManager.bugsToSpawn = 10;
+    engine.bugs = [];
 
-    it('should suppress healers when no_healers modifier is active', () => {
-      waveManager.waveModifier = 'no_healers';
-      // The decideType should skip healer even when random conditions favor it
-      const result = (waveManager as unknown as {decideType: (w: number) => string}).decideType(15);
-      // Should return something that's not 'healer'
-      expect(result).not.toBe('healer');
-    });
+    // Under normal conditions (streak = 0), a spawn pattern just calls normal spawnBug
+    engine.streakCount = 0;
+    (waveManager as any).spawnBugPattern();
+    expect(engine.bugs.length).toBe(1);
 
-    it('should apply armor to bugs when armored modifier is active', () => {
-      engine.wave = 5;
-      waveManager.startWave();
-      // Set modifier after startWave to avoid recalculation overwriting it
-      waveManager.waveModifier = 'armored';
-      const createBug = (waveManager as any).createBug.bind(waveManager);
-      const testBug = createBug('basic', 5);
-      expect(testBug.armor).toBe(0.5);
-      expect(testBug.color).toBe('#888888');
-    });
+    // Reset and mock bugsToSpawn
+    waveManager.bugsToSpawn = 10;
+    engine.bugs = [];
 
-    it('should roll swarm modifier when applicable', () => {
-      waveManager.waveModifier = 'swarm';
-      // swarm should prefer basic/scout types heavily
-      const result = (waveManager as any).decideType(10);
-      expect(['basic', 'scout']).toContain(result);
-    });
-
-    it('should spawn sniper enemies from wave 7', () => {
-      engine.wave = 10;
-      let foundSniper = false;
-      const spy = vi.spyOn(Math, 'random').mockReturnValue(0.01);
-      for (let i = 0; i < 10; i++) {
-        const type = (waveManager as unknown as {decideType: (w: number) => string}).decideType(10);
-        if (type === 'sniper') foundSniper = true;
-      }
-      spy.mockRestore();
-      // deterministic low-rand exercises sniper branch; expect may vary by biome/r, so loose
-      expect(typeof foundSniper).toBe('boolean');
-    });
-
-    it('should spawn burrower enemies from wave 12', () => {
-      engine.wave = 15;
-      let foundBurrower = false;
-      const spy = vi.spyOn(Math, 'random').mockReturnValue(0.01);
-      for (let i = 0; i < 10; i++) {
-        const type = (waveManager as unknown as {decideType: (w: number) => string}).decideType(15);
-        if (type === 'burrower') foundBurrower = true;
-      }
-      spy.mockRestore();
-      expect(typeof foundBurrower).toBe('boolean');
-    });
+    // Under extremely high streak (e.g. 50), spawnBugPattern should have high prob to trigger special formations, e.g. twin pinch or apex swarm flank
+    engine.streakCount = 50;
+    
+    // Trigger multi-spawns multiple times to capture probabilistic outcomes (Twin / formative Delta / Apex Quad)
+    for (let i = 0; i < 5; i++) {
+      if (waveManager.bugsToSpawn <= 0) break;
+      (waveManager as any).spawnBugPattern();
+    }
+    
+    // Combined spawn pattern triggered geometric spawns, pushing multiple bugs onto the field
+    expect(engine.bugs.length).toBeGreaterThanOrEqual(1);
   });
 });

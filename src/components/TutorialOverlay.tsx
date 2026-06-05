@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import type { EngineHandle } from '../game/EngineHandle';
+import { GameEngine } from '../game/GameEngine';
 import { MousePointer2, Zap, ShieldAlert } from 'lucide-react';
 import { soundManager } from '../game/SoundManager';
-import { t } from '../i18n';
 
-export function TutorialOverlay({ engineRef }: { engineRef: React.RefObject<EngineHandle> }) {
+export function TutorialOverlay({ engineRef }: { engineRef: React.RefObject<GameEngine | null> }) {
   const [step, setStep] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
 
@@ -76,8 +75,8 @@ export function TutorialOverlay({ engineRef }: { engineRef: React.RefObject<Engi
               <MousePointer2 className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest mb-1">{t('tutorial.step1Title')}</p>
-              <p className="text-white font-mono text-sm leading-snug">{t('tutorial.step1Desc')}</p>
+              <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest mb-1">System Directive</p>
+              <p className="text-white font-mono text-sm leading-snug">Tap or click hostile anomalies to eliminate them.</p>
             </div>
           </motion.div>
         )}
@@ -94,8 +93,8 @@ export function TutorialOverlay({ engineRef }: { engineRef: React.RefObject<Engi
               <Zap className="w-5 h-5 text-cyan-400" />
             </div>
             <div>
-              <p className="text-cyan-500 font-mono text-xs uppercase tracking-widest mb-1">{t('tutorial.step2Title')}</p>
-              <p className="text-white font-mono text-sm leading-snug">{t('tutorial.step2Desc')}</p>
+              <p className="text-cyan-500 font-mono text-xs uppercase tracking-widest mb-1">Payload Dropped</p>
+              <p className="text-white font-mono text-sm leading-snug">Collect data cores by hovering or clicking them.</p>
             </div>
           </motion.div>
         )}
@@ -113,15 +112,15 @@ export function TutorialOverlay({ engineRef }: { engineRef: React.RefObject<Engi
                 <ShieldAlert className="w-5 h-5 text-pink-500" />
               </div>
               <div>
-                <p className="text-pink-500 font-mono text-xs uppercase tracking-widest mb-1">{t('tutorial.step3Title')}</p>
-                <p className="text-white font-mono text-sm leading-snug">{t('tutorial.step3Desc')}</p>
+                <p className="text-pink-500 font-mono text-xs uppercase tracking-widest mb-1">Armory Access</p>
+                <p className="text-white font-mono text-sm leading-snug">Survive the wave to access and install upgrades.</p>
               </div>
             </div>
             <button 
               onClick={dismiss}
               className="w-full sm:w-auto px-6 py-3 bg-white text-black font-bold font-mono text-xs rounded-full uppercase tracking-widest hover:bg-zinc-200 transition-colors flex-shrink-0"
             >
-              {t('tutorial.acknowledge')}
+              Acknowledge
             </button>
           </motion.div>
         )}

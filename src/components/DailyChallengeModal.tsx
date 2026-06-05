@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   getTodaysChallenge,
   getStreakInfo,
@@ -8,10 +8,6 @@ import {
   type ChallengeModifierId,
 } from '../game/DailyChallengeManager';
 import { soundManager } from '../game/SoundManager';
-import { motion, AnimatePresence } from 'motion/react';
-import { t, getLocale } from '../i18n';
-import type { TranslationKey } from '../i18n/en';
-import { analytics } from '../lib/analytics';
 import {
   Zap,
   Flame,
@@ -28,10 +24,7 @@ import {
   X,
   Play,
   Clock,
-  Info,
-  TrendingUp,
-  TrendingDown,
-  AlertTriangle,
+  ChevronRight,
 } from 'lucide-react';
 
 interface DailyChallengeModalProps {
@@ -52,265 +45,6 @@ const MODIFIER_ICONS: Record<ChallengeModifierId, React.ReactNode> = {
   frostbite: <Snowflake className="w-4 h-4" />,
 };
 
-interface ModifierEffect {
-  label: string;
-  value: string;
-  type: 'buff' | 'nerf' | 'neutral';
-}
-
-interface ModifierDetails {
-  difficulty: 1 | 2 | 3; // 1=easy, 2=medium, 3=hard
-  effects: ModifierEffect[];
-}
-
-const MODIFIER_DETAILS: Record<ChallengeModifierId, ModifierDetails> = {
-  fast_bugs: {
-    difficulty: 2,
-    effects: [
-      { label: 'Bug Speed', value: '+40%', type: 'nerf' },
-    ],
-  },
-  tank_wave: {
-    difficulty: 2,
-    effects: [
-      { label: 'Tank Spawn Rate', value: '3x', type: 'nerf' },
-    ],
-  },
-  glass_cannon: {
-    difficulty: 3,
-    effects: [
-      { label: 'Player Damage', value: '2x', type: 'buff' },
-      { label: 'Core Health', value: '-50%', type: 'nerf' },
-    ],
-  },
-  darkness: {
-    difficulty: 2,
-    effects: [
-      { label: 'Visibility Radius', value: '-50%', type: 'nerf' },
-    ],
-  },
-  speed_demon: {
-    difficulty: 3,
-    effects: [
-      { label: 'Bug Speed per Kill', value: '+2%', type: 'nerf' },
-      { label: 'Max Speed Bonus', value: '+80%', type: 'nerf' },
-    ],
-  },
-  scrap_hunger: {
-    difficulty: 1,
-    effects: [
-      { label: 'Resource Drop Rate', value: '-60%', type: 'nerf' },
-      { label: 'Resource Value', value: '3x', type: 'buff' },
-    ],
-  },
-  healer_horde: {
-    difficulty: 2,
-    effects: [
-      { label: 'Healer Spawn Rate', value: '4x', type: 'nerf' },
-    ],
-  },
-  boss_rush: {
-    difficulty: 3,
-    effects: [
-      { label: 'Boss Wave Interval', value: 'Every 5 waves', type: 'nerf' },
-    ],
-  },
-  no_shield: {
-    difficulty: 1,
-    effects: [
-      { label: 'Shield Powerups', value: 'Disabled', type: 'nerf' },
-    ],
-  },
-  frostbite: {
-    difficulty: 2,
-    effects: [
-      { label: 'Near-Core Speed', value: '-80%', type: 'buff' },
-      { label: 'Speed Ramp', value: 'Grows over time', type: 'neutral' },
-    ],
-  },
-};
-
-const DIFFICULTY_LABELS: Record<1 | 2 | 3, TranslationKey> = {
-  1: 'challenge.difficultyEasy',
-  2: 'challenge.difficultyMedium',
-  3: 'challenge.difficultyHard',
-};
-
-const DIFFICULTY_COLORS: Record<1 | 2 | 3, string> = {
-  1: 'bg-emerald-500',
-  2: 'bg-yellow-500',
-  3: 'bg-red-500',
-};
-
-function ModifierCard({
-  modId,
-  isTooltipOpen,
-  onHover,
-}: {
-  modId: ChallengeModifierId;
-  isTooltipOpen: boolean;
-  onHover: (id: ChallengeModifierId | null) => void;
-}) {
-  const mod = CHALLENGE_MODIFIERS[modId];
-  const details = MODIFIER_DETAILS[modId];
-  const diffLabel: TranslationKey = DIFFICULTY_LABELS[details.difficulty];
-  const diffColor = DIFFICULTY_COLORS[details.difficulty];
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (closeTimer.current) clearTimeout(closeTimer.current);
-    };
-  }, []);
-
-  const open = () => {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-    onHover(modId);
-  };
-  const closeDelayed = () => {
-    closeTimer.current = setTimeout(() => onHover(null), 150);
-  };
-  const closeImmediate = () => {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-    onHover(null);
-  };
-  const toggle = () => onHover(isTooltipOpen ? null : modId);
-
-  return (
-    <div
-      className="relative"
-      onMouseEnter={open}
-      onMouseLeave={closeDelayed}
-      onFocus={open}
-      onBlur={closeDelayed}
-    >
-      {/* Modifier card */}
-      <button
-        type="button"
-        onClick={toggle}
-        onKeyDown={(e) => { if (e.key === 'Escape') closeImmediate(); }}
-        className={`w-full text-left bg-white/5 border rounded-xl px-4 py-3 flex items-start space-x-3 transition-all duration-200 ${
-          isTooltipOpen
-            ? 'border-cyan-500/40 bg-cyan-500/10 shadow-[0_0_15px_rgba(6,182,212,0.15)]'
-            : 'border-white/10 hover:bg-white/[0.07] hover:border-white/20'
-        }`}
-        aria-expanded={isTooltipOpen}
-        aria-describedby={isTooltipOpen ? `modifier-tooltip-${modId}` : undefined}
-      >
-        <div className="mt-0.5 w-8 h-8 bg-red-500/10 rounded-lg flex items-center justify-center text-red-400 shrink-0 border border-red-500/10">
-          {MODIFIER_ICONS[modId]}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center space-x-2">
-            <p className="text-sm font-bold text-white">{t(`challenge.mod.${modId}.name` as TranslationKey)}</p>
-            {/* Difficulty badge */}
-            <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold uppercase tracking-wider bg-white/5 text-zinc-500 border border-white/5">
-              <span className={`w-1.5 h-1.5 rounded-full ${diffColor}`} />
-              <span>{t(diffLabel)}</span>
-            </span>
-          </div>
-          <p className="text-xs text-zinc-400 mt-0.5">{t(`challenge.mod.${modId}.description` as TranslationKey)}</p>
-        </div>
-        {/* Info indicator */}
-        <div className={`shrink-0 transition-all duration-200 ${isTooltipOpen ? 'text-cyan-400' : 'text-zinc-600'}`}>
-          <Info className="w-3.5 h-3.5" />
-        </div>
-      </button>
-
-      {/* Tooltip panel */}
-      <AnimatePresence>
-        {isTooltipOpen && (
-          <motion.div
-            id={`modifier-tooltip-${modId}`}
-            role="tooltip"
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.15 }}
-            className="absolute left-0 right-0 top-full mt-2 z-50"
-            onMouseEnter={open}
-            onMouseLeave={closeDelayed}
-          >
-            <div className="bg-zinc-900 border border-cyan-500/20 rounded-xl overflow-hidden shadow-2xl shadow-cyan-500/10">
-              {/* Effects list */}
-              <div className="px-4 pt-3 pb-2">
-                <p className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest mb-2 flex items-center">
-                  <TrendingUp className="w-3 h-3 mr-1.5" />
-                  {t('challenge.modifierEffects')}
-                </p>
-                <div className="space-y-1.5">
-                  {details.effects.map((effect, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between bg-white/5 rounded-lg px-3 py-2"
-                    >
-                      <span className="text-[10px] font-mono text-zinc-400">{effect.label}</span>
-                      <span
-                        className={`text-[10px] font-mono font-bold flex items-center space-x-1 ${
-                          effect.type === 'buff'
-                            ? 'text-emerald-400'
-                            : effect.type === 'nerf'
-                              ? 'text-red-400'
-                              : 'text-cyan-400'
-                        }`}
-                      >
-                        {effect.type === 'buff' && <TrendingUp className="w-2.5 h-2.5" />}
-                        {effect.type === 'nerf' && <TrendingDown className="w-2.5 h-2.5" />}
-                        {effect.type === 'neutral' && <AlertTriangle className="w-2.5 h-2.5" />}
-                        <span>{effect.value}</span>
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Difficulty bar */}
-              <div className="px-4 pb-1">
-                <div className="flex items-center space-x-2 mb-1.5">
-                  <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest">
-                    {t('challenge.difficulty')}
-                  </span>
-                  <span className={`text-[9px] font-mono font-bold uppercase ${
-                    details.difficulty === 3 ? 'text-red-400' : details.difficulty === 2 ? 'text-yellow-400' : 'text-emerald-400'
-                  }`}>
-                    {t(diffLabel)}
-                  </span>
-                </div>
-                <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden flex">
-                  {[1, 2, 3].map((level) => (
-                    <div
-                      key={level}
-                      className={`flex-1 mx-[1px] first:ml-0 last:mr-0 rounded-full transition-all duration-500 ${
-                        level <= details.difficulty
-                          ? details.difficulty === 3
-                            ? 'bg-red-500'
-                            : details.difficulty === 2
-                              ? 'bg-yellow-500'
-                              : 'bg-emerald-500'
-                          : 'bg-white/5'
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Flavor text */}
-              <div className="px-4 pt-2 pb-3">
-                <div className="bg-white/[0.02] rounded-lg px-3 py-2 border border-white/5">
-                  <p className="text-[10px] text-zinc-600 font-mono italic leading-relaxed">
-                    {mod.flavor}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
 function getCountdown(): string {
   const now = new Date();
   const tomorrow = new Date(now);
@@ -328,7 +62,6 @@ export function DailyChallengeModal({ onStart, onClose }: DailyChallengeModalPro
   const streak = getStreakInfo();
   const [timeLeft, setTimeLeft] = useState(getCountdown());
   const [starting, setStarting] = useState(false);
-  const [tooltipModifier, setTooltipModifier] = useState<ChallengeModifierId | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -341,7 +74,6 @@ export function DailyChallengeModal({ onStart, onClose }: DailyChallengeModalPro
     soundManager.init();
     soundManager.uiClick();
     setStarting(true);
-    analytics.track('daily_challenge_start');
     // Small delay for audio + visual feedback
     setTimeout(() => onStart(), 300);
   }, [onStart]);
@@ -363,10 +95,10 @@ export function DailyChallengeModal({ onStart, onClose }: DailyChallengeModalPro
             </div>
             <div>
               <h2 className="text-lg font-black text-white font-display tracking-tight">
-                {t('challenge.title')}
+                Daily Directive
               </h2>
               <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest">
-                {new Date().toLocaleDateString(getLocale() === 'es' ? 'es-ES' : 'en-US', {
+                {new Date().toLocaleDateString('en-US', {
                   weekday: 'long',
                   year: 'numeric',
                   month: 'long',
@@ -396,16 +128,16 @@ export function DailyChallengeModal({ onStart, onClose }: DailyChallengeModalPro
                 </div>
                 <div>
                   <span className="text-sm font-bold text-yellow-400">
-                    {t('challenge.streak', { days: streak.currentStreak })}
+                    {streak.currentStreak}-day streak
                   </span>
                   <p className="text-[10px] text-zinc-500 font-mono">
-                    {t('challenge.streakBest', { days: streak.highestStreak })}
+                    Best: {streak.highestStreak} days
                   </p>
                 </div>
               </div>
               {streak.currentStreak >= 3 && (
                 <span className="text-[10px] text-yellow-500/60 font-mono uppercase tracking-widest border border-yellow-500/20 rounded-lg px-2 py-1">
-                  {t('challenge.streakActive')}
+                  Streak Active
                 </span>
               )}
             </div>
@@ -413,38 +145,50 @@ export function DailyChallengeModal({ onStart, onClose }: DailyChallengeModalPro
 
           {/* Win Condition */}
           <div>
-            <p data-testid="challenge-primary-objective" className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-2 flex items-center">
+            <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-2 flex items-center">
               <Trophy className="w-3 h-3 mr-1.5" />
-              {t('challenge.primaryObjective')}
+              Primary Objective
             </p>
             <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3">
-              <p className="text-sm font-bold text-white">{t(`challenge.win.${challenge.winCondition.type}` as TranslationKey, { value: challenge.winCondition.value })}</p>
+              <p className="text-sm font-bold text-white">{challenge.winCondition.label}</p>
             </div>
           </div>
 
           {/* Modifiers */}
           <div>
-            <p data-testid="challenge-system-modifiers" className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-2 flex items-center">
+            <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-2 flex items-center">
               <Flame className="w-3 h-3 mr-1.5" />
-              {t('challenge.systemModifiers')}
+              System Modifiers
             </p>
             <div className="space-y-2">
-              {challenge.modifiers.map((modId) => (
-                <ModifierCard
-                  key={modId}
-                  modId={modId}
-                  isTooltipOpen={tooltipModifier === modId}
-                  onHover={setTooltipModifier}
-                />
-              ))}
+              {challenge.modifiers.map((modId) => {
+                const mod = CHALLENGE_MODIFIERS[modId];
+                return (
+                  <div
+                    key={modId}
+                    className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 flex items-start space-x-3 group hover:bg-white/[0.07] transition-colors"
+                  >
+                    <div className="mt-0.5 w-8 h-8 bg-red-500/10 rounded-lg flex items-center justify-center text-red-400 shrink-0 border border-red-500/10">
+                      {MODIFIER_ICONS[modId]}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-white">{mod.name}</p>
+                      <p className="text-xs text-zinc-400 mt-0.5">{mod.description}</p>
+                      <p className="text-[10px] text-zinc-600 font-mono mt-1 italic">
+                        {mod.flavor}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
           {/* Rewards */}
           <div>
-            <p data-testid="challenge-mission-rewards" className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-2 flex items-center">
+            <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-2 flex items-center">
               <Gift className="w-3 h-3 mr-1.5" />
-              {t('challenge.missionRewards')}
+              Mission Rewards
             </p>
             <div className="grid grid-cols-2 gap-2">
               {challenge.rewards.map((reward, i) => (
@@ -480,7 +224,7 @@ export function DailyChallengeModal({ onStart, onClose }: DailyChallengeModalPro
               <div className="mt-2 bg-gradient-to-r from-yellow-500/5 to-orange-500/5 border border-yellow-500/10 rounded-xl px-3 py-2 flex items-center space-x-2.5">
                 <Trophy className="w-4 h-4 text-yellow-500 shrink-0" />
                 <p className="text-[10px] text-yellow-400 font-mono">
-                  {t('challenge.streakBonus', { name: challenge.streakReward.name })}
+                  Streak bonus (3+ days): <span className="font-bold">{challenge.streakReward.name}</span>
                 </p>
               </div>
             )}

@@ -6,9 +6,9 @@ Thank you for contributing. This project uses strict architecture rules so human
 
 ## Before You Start
 
-1. Read [SINGLE_SOURCE_OF_TRUTH.md](./docs/SINGLE_SOURCE_OF_TRUTH.md) — unified architecture, audit standards, and roadmap  
-2. Pick a task from TASKBOARD section in SSOT  
-3. Review current quality ratings (8.2/10 composite)
+1. Read [AGENTS.md](./AGENTS.md) — architecture and coding standards  
+2. Read [TASKBOARD.md](./TASKBOARD.md) — pick an open task by ID  
+3. Read [AUDIT_REPORT.md](./AUDIT_REPORT.md) — understand current quality bar (7.4/10)
 
 ---
 
@@ -37,12 +37,12 @@ npm run build
 
 ## Pull Request Guidelines
 
-- One task per PR (reference task ID from SSOT in description, e.g. `P6-D`)  
+- One task per PR (reference TASKBOARD ID in description, e.g. `P2-01`)  
 - Include tests for new game systems  
 - No `any` in `src/game/` — use `GameTypes.ts`  
 - No `(window as any)` for game state — use `GameEngineStatusBus`  
 - Do not add logic directly to `GameEngine.ts` — extract systems  
-- Update `SINGLE_SOURCE_OF_TRUTH.md` backlog when complete  
+- Update `TASKBOARD.md` checkbox when complete  
 
 ### PR title format
 
@@ -73,10 +73,10 @@ Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `ci`
 
 If you are an AI coder:
 
-1. Read `SINGLE_SOURCE_OF_TRUTH.md` to understand architecture and current gaps  
-2. Pick a task from the Master Backlog Checklist in SSOT  
+1. Claim a task in `TASKBOARD.md` by noting it in `SESSION.md`  
+2. Follow acceptance criteria in the task row exactly  
 3. Run full test suite before marking `[x]`  
-4. Update dimension ratings in SSOT only when dimensions materially change  
+4. Update `AUDIT_REPORT.md` ratings only when dimensions materially change  
 
 ---
 
@@ -85,7 +85,7 @@ If you are an AI coder:
 - Delta-time (`dt`) only — no `setTimeout` / `setInterval` for gameplay  
 - Renderer changes go in `src/game/rendering/`, not a growing monolith  
 - Accessibility settings via `AccessibilitySettings.ts`  
-- Firebase changes must update `firestore.rules` and document in SSOT security section  
+- Firebase changes must update `firestore.rules` and `security_spec.md`  
 
 ---
 

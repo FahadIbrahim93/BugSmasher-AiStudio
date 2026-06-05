@@ -1,7 +1,6 @@
 import { GameEngine } from '../GameEngine';
 import { Bug, Powerup, Hazard, ResourcePickup } from '../GameTypes';
 import { Splatter, Particle, Shockwave, Laser, MuzzleFlash } from '../ParticleSystem';
-import type { SplatterDrop } from '../ParticleSystem';
 import { assetManager } from '../AssetManager';
 import { GameConfig } from '../GameConfig';
 import { getActiveCoreThemeConfig } from '../CosmeticsManager';
@@ -136,19 +135,38 @@ export class ParticleRenderer {
         ctx.translate((Math.random() - 0.5) * 5, 0);
     }
 
+    // Visceral asymmetric organic cell splat shape with radial spikes
     ctx.beginPath();
-    ctx.arc(0, 0, Math.max(0, s.size), 0, Math.PI * 2);
+    const steps = 12;
+    for (let i = 0; i < steps; i++) {
+      const angle = (i / steps) * Math.PI * 2;
+      const noise = 0.7 + 0.5 * Math.sin(angle * 5 + s.rotation * 3) + 0.25 * Math.cos(angle * 11);
+      const dist = s.size * noise;
+      const px = Math.cos(angle) * dist;
+      const py = Math.sin(angle) * dist;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
     ctx.fill();
     
-    s.drops.forEach((drop: SplatterDrop, index: number) => {
+    s.drops.forEach((drop: any, index: number) => {
       ctx.beginPath();
-      // Every 3rd drop is a square for that digital glitch look
+      // Every 3rd drop is a square for that brutalist digital glitch look
       if (index % 3 === 0) {
         ctx.rect(drop.x - drop.size, drop.y - drop.size, drop.size * 2, drop.size * 2);
+        ctx.fill();
       } else {
-        ctx.arc(drop.x, drop.y, Math.max(0, drop.size), 0, Math.PI * 2);
+        // Draw an elongated teardrop stretching away from the center (0,0)
+        const angle = Math.atan2(drop.y, drop.x);
+        ctx.save();
+        ctx.translate(drop.x, drop.y);
+        ctx.rotate(angle);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, drop.size * 2.1, drop.size * 0.9, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
       }
-      ctx.fill();
     });
     
     ctx.restore();
@@ -188,6 +206,28 @@ export class ParticleRenderer {
       ctx.beginPath();
       ctx.arc(0, 0, Math.max(0, p.size * (2 - alpha)), 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
+      return;
+    }
+
+    if (p.type === 'debris') {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = p.color;
+      ctx.strokeStyle = '#050505'; // Sharp outline for a hand-drawn look
+      ctx.lineWidth = 1.2;
+      
+      // Asymmetric jagged triangular/quad shell fragment
+      ctx.beginPath();
+      ctx.moveTo(-p.size * 0.5, -p.size * 0.8);
+      ctx.lineTo(p.size * 0.9, -p.size * 0.3);
+      ctx.lineTo(p.size * 0.5, p.size * 0.8);
+      ctx.lineTo(-p.size * 0.8, p.size * 0.4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
       ctx.restore();
       return;
     }

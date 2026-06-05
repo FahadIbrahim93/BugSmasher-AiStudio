@@ -3,7 +3,6 @@ import { Shield, Zap, Crosshair, Heart, Hammer, Info } from 'lucide-react';
 import { motion, Variants, AnimatePresence } from 'motion/react';
 import { soundManager } from '../game/SoundManager';
 import { GameConfig } from '../game/GameConfig';
-import { t } from '../i18n';
 
 interface UpgradeMenuProps {
   score: number;
@@ -110,14 +109,14 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
       >
          <motion.div variants={itemVariants} className="mb-8">
            <h2 className="text-2xl sm:text-3xl font-black text-white font-display mb-2 uppercase tracking-widest">
-             {t('upgrade.title', { wave: wave - 1 })}
+             WAVE {wave - 1} SECURED
            </h2>
            <div className="h-px w-16 bg-white/20 mx-auto mb-2" />
-           <p className="text-zinc-500 font-mono tracking-widest text-[10px] uppercase">{t('upgrade.subtitle')}</p>
+           <p className="text-zinc-500 font-mono tracking-widest text-[10px] uppercase">Connection established. Select upgrades...</p>
          </motion.div>
          
          <motion.div variants={itemVariants} className="inline-flex items-center space-x-3 bg-black/40 backdrop-blur-md border-[0.5px] border-white/10 px-6 py-2 rounded-full mb-8">
-           <span className="text-zinc-500 font-medium uppercase text-[10px] tracking-[0.2em]">{t('upgrade.credits')}</span>
+           <span className="text-zinc-500 font-medium uppercase text-[10px] tracking-[0.2em]">Credits</span>
            <span className="text-xl font-medium font-mono text-white tracking-widest">
              {score.toString().padStart(6, '0')}
            </span>
@@ -150,9 +149,9 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
             <AnimatePresence>
               {hoveredUpgrade === 'health' && (
                 <UpgradeTooltip 
-                  title={t('upgrade.tooltipHealthTitle')} 
-                  description={t('upgrade.tooltipHealthDesc')}
-                  benefits={[t('upgrade.tooltipHealthBenefits1'), t('upgrade.tooltipHealthBenefits2'), t('upgrade.tooltipHealthBenefits3')]}
+                  title="Structural Integrity" 
+                  description="Reinforce the core's hull and emergency repair systems. Vital for surviving high-density swarms that breach the outer perimeter."
+                  benefits={["+50 Core HP", "Emergency Self-Repair", "Impact Absorption"]}
                 />
               )}
             </AnimatePresence>
@@ -164,7 +163,7 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
               />
             )}
             <div className="absolute top-4 right-4 text-zinc-500 text-[10px] font-medium px-1.5 py-0.5 rounded font-mono border border-white/10 group-hover:border-white/30 transition-colors">
-              {t('upgrade.lv', { level: healthLevel })}
+              Lv {healthLevel}
             </div>
             <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-500 group-hover:border-white/30 relative">
               {score >= healthCost && (
@@ -176,26 +175,26 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
               )}
               <Heart className="w-6 h-6 text-zinc-300 group-hover:text-white transition-colors" />
             </div>
-            <h3 className="font-bold text-lg font-display text-white mb-2 tracking-wide uppercase">{t('upgrade.healthLabel')}</h3>
+            <h3 className="font-bold text-lg font-display text-white mb-2 tracking-wide uppercase">Base Health</h3>
             <p className="text-xs text-zinc-500 mb-2 text-center leading-relaxed font-mono">
-              {t('upgrade.healthDesc', { amount: GameConfig.upgrades.health.healAmount })}
+              Increase structural integrity by <span className="text-white font-bold">{GameConfig.upgrades.health.healAmount}</span> units.
             </p>
             <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[10px] text-emerald-400/80 font-mono mb-4 text-center">
-              {t('upgrade.healthFlavor')}
+              PREVENTS TERMINATION FROM CRITICAL BREACHES.
             </div>
             <div className="flex-grow" />
             <button 
               onClick={() => handleBuy('health', healthCost)}
               onMouseEnter={handleHover}
               aria-disabled={score < healthCost}
-              aria-label={`${t('upgrade.buyEnable')} ${healthCost} ${t('upgrade.credits')}`}
+              aria-label={`Buy Core Structure upgrade for ${healthCost} credits`}
               className={`w-full py-4 rounded-full font-bold text-xs uppercase tracking-widest transition-all duration-300 flex items-center justify-center space-x-3 relative overflow-hidden ${
                 score >= healthCost 
                   ? 'bg-white text-black hover:bg-zinc-200 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.2)]' 
                   : 'bg-transparent border-[0.5px] border-white/10 text-zinc-600 cursor-not-allowed'
               }`}
             >
-              <span>{score >= healthCost ? t('upgrade.buyEnable') : t('upgrade.buyDisable')}</span>
+              <span>{score >= healthCost ? 'Initialize' : 'Insufficient'}</span>
               <span className={`font-mono ${score >= healthCost ? 'text-zinc-500' : 'text-zinc-700'}`}>[{healthCost}]</span>
               {score >= healthCost && (
                  <motion.div 
@@ -233,9 +232,9 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
             <AnimatePresence>
               {hoveredUpgrade === 'radius' && (
                 <UpgradeTooltip 
-                  title={t('upgrade.tooltipRadiusTitle')} 
-                  description={t('upgrade.tooltipRadiusDesc')}
-                  benefits={[t('upgrade.tooltipRadiusBenefits1'), t('upgrade.tooltipRadiusBenefits2'), t('upgrade.tooltipRadiusBenefits3')]}
+                  title="Wave Resonance" 
+                  description="Optimize the kinetic frequency of manual clicks to generate larger suppression fields. Perfect for clearing clusters of low-health enemies."
+                  benefits={["+25% Effective Area", "Chain Reaction Chance", "Kinetic Dampening"]}
                 />
               )}
             </AnimatePresence>
@@ -247,7 +246,7 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
               />
             )}
             <div className="absolute top-4 right-4 text-zinc-500 text-[10px] font-medium px-1.5 py-0.5 rounded font-mono border border-white/10 group-hover:border-white/30 transition-colors">
-              {t('upgrade.lv', { level: radiusLevel })}
+              Lv {radiusLevel}
             </div>
             <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-500 group-hover:border-white/30 relative">
               {score >= radiusCost && (
@@ -259,26 +258,26 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
               )}
               <Crosshair className="w-6 h-6 text-zinc-300 group-hover:text-blue-400 transition-colors" />
             </div>
-            <h3 className="font-bold text-lg font-display text-white mb-2 tracking-wide uppercase">{t('upgrade.radiusLabel')}</h3>
+            <h3 className="font-bold text-lg font-display text-white mb-2 tracking-wide uppercase">Click Radius</h3>
             <p className="text-xs text-zinc-500 mb-2 text-center leading-relaxed font-mono">
-              {t('upgrade.radiusDesc', { amount: (GameConfig.upgrades.radius.radiusMultiplier - 1) * 100 })}
+              Expand suppression wave coverage by <span className="text-white font-bold">{(GameConfig.upgrades.radius.radiusMultiplier - 1) * 100}%</span>.
             </p>
             <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[10px] text-blue-400/80 font-mono mb-4 text-center">
-              {t('upgrade.radiusFlavor')}
+              CLEARS MULTIPLE THREATS IN A SINGLE INITIALIZATION.
             </div>
             <div className="flex-grow" />
             <button 
               onClick={() => handleBuy('radius', radiusCost)}
               onMouseEnter={handleHover}
               aria-disabled={score < radiusCost}
-              aria-label={`${t('upgrade.buyEnable')} ${radiusCost} ${t('upgrade.credits')}`}
+              aria-label={`Buy Blast Radius upgrade for ${radiusCost} credits`}
               className={`w-full py-4 rounded-full font-bold text-xs uppercase tracking-widest transition-all duration-300 flex items-center justify-center space-x-3 relative overflow-hidden ${
                 score >= radiusCost 
                   ? 'bg-blue-600 text-white hover:bg-blue-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(37,99,235,0.4)]' 
                   : 'bg-transparent border-[0.5px] border-white/10 text-zinc-600 cursor-not-allowed'
               }`}
             >
-              <span>{score >= radiusCost ? t('upgrade.buyEnable') : t('upgrade.buyDisable')}</span>
+              <span>{score >= radiusCost ? 'Initialize' : 'Insufficient'}</span>
               <span className={`font-mono ${score >= radiusCost ? 'text-blue-200' : 'text-zinc-700'}`}>[{radiusCost}]</span>
               {score >= radiusCost && (
                  <motion.div 
@@ -316,9 +315,9 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
             <AnimatePresence>
               {hoveredUpgrade === 'turret' && (
                 <UpgradeTooltip 
-                  title={t('upgrade.tooltipTurretTitle')} 
-                  description={t('upgrade.tooltipTurretDesc')}
-                  benefits={[t('upgrade.tooltipTurretBenefits1'), t('upgrade.tooltipTurretBenefits2'), t('upgrade.tooltipTurretBenefits3')]}
+                  title="Automated Acquisition" 
+                  description="Upgrade the sentry's processing core to decrease the latency between shots. Essential for hands-free defense on later waves."
+                  benefits={["-0.2s Reload Delay", "Target Prediction", "Enhanced Sensors"]}
                 />
               )}
             </AnimatePresence>
@@ -330,7 +329,7 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
               />
             )}
             <div className="absolute top-4 right-4 text-zinc-500 text-[10px] font-medium px-1.5 py-0.5 rounded font-mono border border-white/10 group-hover:border-white/30 transition-colors">
-              {t('upgrade.lv', { level: turretLevel })}
+              Lv {turretLevel}
             </div>
             <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-500 group-hover:border-white/30 relative">
               {score >= turretCost && (
@@ -342,26 +341,26 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
               )}
               <Zap className="w-6 h-6 text-zinc-300 group-hover:text-orange-400 transition-colors" />
             </div>
-            <h3 className="font-bold text-lg font-display text-white mb-2 tracking-wide uppercase">{t('upgrade.turretLabel')}</h3>
+            <h3 className="font-bold text-lg font-display text-white mb-2 tracking-wide uppercase">Auto-Turret Firing Rate</h3>
             <p className="text-xs text-zinc-500 mb-2 text-center leading-relaxed font-mono">
-              {t('upgrade.turretDesc', { amount: GameConfig.upgrades.turret.fireRateReduction })}
+              Decrease automated target acquisition latency by <span className="text-white font-bold">{GameConfig.upgrades.turret.fireRateReduction}s</span>.
             </p>
             <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-[10px] text-orange-400/80 font-mono mb-4 text-center">
-              {t('upgrade.turretFlavor')}
+              INCREASES AUTOMATED DEFENSE REACTION TIMES.
             </div>
             <div className="flex-grow" />
             <button 
               onClick={() => handleBuy('turret', turretCost)}
               onMouseEnter={handleHover}
               aria-disabled={score < turretCost}
-              aria-label={`${t('upgrade.buyEnable')} ${turretCost} ${t('upgrade.credits')}`}
+              aria-label={`Buy Auto-Sentry upgrade for ${turretCost} credits`}
               className={`w-full py-4 rounded-full font-bold text-xs uppercase tracking-widest transition-all duration-300 flex items-center justify-center space-x-3 relative overflow-hidden ${
                 score >= turretCost 
                   ? 'bg-orange-600 text-white hover:bg-orange-500 hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(249,115,22,0.4)]' 
                   : 'bg-transparent border-[0.5px] border-white/10 text-zinc-600 cursor-not-allowed'
               }`}
             >
-             <span>{score >= turretCost ? t('upgrade.buyEnable') : t('upgrade.buyDisable')}</span>
+             <span>{score >= turretCost ? 'Initialize' : 'Insufficient'}</span>
              <span className={`font-mono ${score >= turretCost ? 'text-orange-200' : 'text-zinc-700'}`}>[{turretCost}]</span>
               {score >= turretCost && (
                  <motion.div 
@@ -381,7 +380,7 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
             className="group relative px-12 py-5 bg-white/5 border border-white/20 text-blue-400 font-bold text-sm hover:bg-blue-600 hover:text-white rounded-full hover:scale-105 active:scale-95 transition-all tracking-widest uppercase flex items-center space-x-3"
           >
             <Hammer className="w-5 h-5" />
-            <span>{t('upgrade.progressionHub')}</span>
+            <span>Technical Progression Hub</span>
           </button>
 
           <button 
@@ -390,7 +389,7 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
             aria-label={`Start Wave ${wave}`}
             className="group relative px-12 py-5 bg-transparent border-[0.5px] border-white/30 text-white font-bold text-sm hover:bg-white hover:text-black rounded-full hover:scale-105 active:scale-95 transition-all tracking-widest uppercase overflow-hidden"
           >
-            <span className="relative z-10">{t('upgrade.nextWave', { wave })}</span>
+            <span className="relative z-10">Proceed to Wave {wave}</span>
           </button>
         </motion.div>
       </motion.div>

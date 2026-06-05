@@ -8,7 +8,6 @@ import {
   doc, 
   getDocFromServer 
 } from 'firebase/firestore';
-import { getFunctions } from 'firebase/functions';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
@@ -20,16 +19,21 @@ try {
     localCache: persistentLocalCache({
       tabManager: persistentMultipleTabManager()
     })
-  }, firebaseConfig.firestoreDatabaseId);
+  }, (firebaseConfig as any).firestoreDatabaseId);
 } catch (e) {
   console.warn('Failed to initialize Firestore with persistent multi-tab cache, falling back to default:', e);
-  db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+  db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId);
 }
 
 export { db };
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
-export const functions = getFunctions(app);
+googleProvider.addScope('https://www.googleapis.com/auth/drive.file');
+googleProvider.addScope('https://www.googleapis.com/auth/gmail.send');
+googleProvider.addScope('https://www.googleapis.com/auth/documents');
+googleProvider.addScope('https://www.googleapis.com/auth/tasks');
+googleProvider.addScope('https://www.googleapis.com/auth/spreadsheets');
+googleProvider.addScope('https://www.googleapis.com/auth/calendar.events');
 
 // Test Connection
 async function testConnection() {

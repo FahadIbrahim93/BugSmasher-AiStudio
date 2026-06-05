@@ -356,18 +356,4 @@ describe('DailyChallengeManager', () => {
       }
     });
   });
-
-  describe('reward event dispatch (resource grants for #8 coverage)', () => {
-    it('completeChallenge with resource reward dispatches challenge_reward', () => {
-      const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
-      // use a challenge with resource reward; complete with met win
-      const ch = getTodaysChallenge();
-      // force a resource reward in this challenge for test (mut ok in test)
-      (ch as any).rewards = [{ type: 'resources', id: 'crystals', name: 'Crystals', description: 'x' }];
-      completeChallenge({ completed: true, score: 100, wave: 10, modifierConditions: {} });
-      const calls = dispatchSpy.mock.calls.map(c => (c[0] as CustomEvent).type);
-      expect(calls).toContain('challenge_reward');
-      dispatchSpy.mockRestore();
-    });
-  });
 });

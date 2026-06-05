@@ -18,6 +18,7 @@ export default function App() {
   const [challengeModifiers, setChallengeModifiers] = useState<ChallengeModifierId[] | undefined>(undefined);
   const [gameMode, setGameMode] = useState<GameModeId>('standard');
   const [friendChallenge, setFriendChallenge] = useState<{ score: number; wave: number } | null>(null);
+  const [customBiome, setCustomBiome] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -40,9 +41,10 @@ export default function App() {
           <>
             <MainMenu
               friendChallenge={friendChallenge}
-              onStart={(challengeMods?: ChallengeModifierId[], mode?: GameModeId) => {
+              onStart={(challengeMods?: ChallengeModifierId[], mode?: GameModeId, biome?: string) => {
                 setChallengeModifiers(challengeMods);
                 setGameMode(mode ?? 'standard');
+                setCustomBiome(biome);
                 setGameState('playing');
               }}
               onSettings={() => setIsSettingsOpen(true)}
@@ -68,10 +70,12 @@ export default function App() {
             <Game 
               onMainMenu={() => {
                 setChallengeModifiers(undefined);
+                setCustomBiome(undefined);
                 setGameState('menu');
               }} 
               challengeModifiers={challengeModifiers}
               gameMode={gameMode}
+              startBiome={customBiome}
             />
           </Suspense>
         )}

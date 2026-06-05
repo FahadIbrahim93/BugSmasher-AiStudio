@@ -1,5 +1,4 @@
 import { useEffect, useState, useRef } from 'react';
-import { t } from '../i18n';
 import { getActiveSkin } from '../game/DailyChallengeManager';
 import { GameEngineStatusBus, type GameEngineStatus } from '../game/GameEngineStatusBus';
 
@@ -375,136 +374,32 @@ export function CustomCursor() {
         </svg>
       )}
 
-      {/* Primary gameplay cursor: hand-crafted SVG spatula.
-          The viewBox is 100x100. The blade tip is at (12, 88)
-          and the handle is at (88, 12). When idle, the wrap is
-          rotated -40° so the handle sits top-left and the blade
-          tip extends down-right — the natural swatting pose.
-          On click, the wrap gets a 60° extra rotation + scale-Y
-          squash, creating a 3D "whack" illusion. */}
-      <div
-        className={`spatula-wrap biome-${biome} ${isClicking ? 'clicking' : ''} ${isHoveringInteractive ? 'hovering' : ''} ${isCritical ? 'critical' : ''} ${activeSkin ? `cursor-skin-${activeSkin}` : ''}`}
+      {/* Primary gameplay / UI cursor ring (subjected to spring translations, stretches, & crits) */}
+      <div 
+        className={cursorRingClass}
         style={{
           ...customProperties,
           ...critCustomProperties,
-          transform: `translate3d(${ringTransform.dx}px, ${ringTransform.dy}px, 0) scale(${ringTransform.scaleX * critScale}, ${ringTransform.scaleY * critScale})`,
+          transform: `translate3d(${ringTransform.dx}px, ${ringTransform.dy}px, 0) rotate(${ringTransform.angle}rad) scale(${ringTransform.scaleX * critScale}, ${ringTransform.scaleY * critScale}) rotate(${-ringTransform.angle}rad)`
         }}
       >
-        <svg
-          width="96"
-          height="96"
-          viewBox="0 0 100 100"
-          xmlns="http://www.w3.org/2000/svg"
-          style={{ overflow: 'visible', display: 'block' }}
-        >
-          <defs>
-            <linearGradient id="sc-handle" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#a06a32" />
-              <stop offset="0.5" stopColor="#6b3e1c" />
-              <stop offset="1" stopColor="#3a1f0a" />
-            </linearGradient>
-            <linearGradient id="sc-handle-highlight" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="rgba(255,220,170,0.55)" />
-              <stop offset="0.5" stopColor="rgba(255,220,170,0)" />
-              <stop offset="1" stopColor="rgba(0,0,0,0.35)" />
-            </linearGradient>
-            <linearGradient id="sc-blade" x1="0.3" y1="0" x2="0.7" y2="1">
-              <stop offset="0" stopColor="var(--blade-base, #e8f8ff)" />
-              <stop offset="0.5" stopColor="var(--blade-mid, #9fcfe8)" />
-              <stop offset="1" stopColor="var(--blade-tip, #5d8fa6)" />
-            </linearGradient>
-            <linearGradient id="sc-blade-shine" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="rgba(255,255,255,0.55)" />
-              <stop offset="0.3" stopColor="rgba(255,255,255,0.05)" />
-              <stop offset="1" stopColor="rgba(0,0,0,0.15)" />
-            </linearGradient>
-          </defs>
+        {/* Rapid Fire overlay center icon */}
+        {rapidFireActive && (
+          <div className="absolute inset-0 flex items-center justify-center text-[#ffcc00] animate-pulse">
+            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current drop-shadow-[0_0_3px_#ffcc00]">
+              <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+        )}
 
-          {/* HANDLE (wood) — rotated rounded rectangle from top-right toward center */}
-          <g transform="rotate(-45 78 22)">
-            <rect
-              x="60"
-              y="14"
-              width="42"
-              height="16"
-              rx="6"
-              fill="url(#sc-handle)"
-              stroke="rgba(0,0,0,0.45)"
-              strokeWidth="1"
-            />
-            <rect
-              x="60"
-              y="14"
-              width="42"
-              height="16"
-              rx="6"
-              fill="url(#sc-handle-highlight)"
-              pointerEvents="none"
-            />
-            {/* Hanging hole */}
-            <circle cx="95" cy="22" r="3" fill="rgba(0,0,0,0.7)" />
-            <circle cx="95" cy="22" r="2.2" fill="rgba(40,20,10,0.85)" />
-          </g>
-
-          {/* FERRULE (metal collar where handle meets blade) */}
-          <g transform="rotate(-45 50 50)">
-            <rect
-              x="40"
-              y="44"
-              width="20"
-              height="12"
-              rx="2"
-              fill="url(#sc-handle-highlight)"
-              stroke="rgba(0,0,0,0.5)"
-              strokeWidth="1"
-              opacity="0.9"
-            />
-          </g>
-
-          {/* BLADE (metal) — long flat paddle extending down-left */}
-          <g>
-            {/* Blade body — rounded rectangle with metal gradient */}
-            <path
-              d="M 38 38
-                 L 22 78
-                 Q 19 88 28 90
-                 L 56 90
-                 Q 64 88 60 78
-                 L 52 38
-                 Q 50 32 45 32
-                 Q 40 32 38 38 Z"
-              fill="url(#sc-blade)"
-              stroke="rgba(0,0,0,0.55)"
-              strokeWidth="1.2"
-            />
-            {/* Subtle highlight stripe along blade length */}
-            <path
-              d="M 44 38
-                 L 30 78
-                 Q 28 84 33 86
-                 L 38 86
-                 Q 40 84 42 78
-                 L 52 38 Z"
-              fill="url(#sc-blade-shine)"
-              opacity="0.65"
-              pointerEvents="none"
-            />
-            {/* Bug juice drip near the tip */}
-            <ellipse
-              cx="29"
-              cy="92"
-              rx="3.5"
-              ry="2"
-              fill="rgba(180, 255, 80, 0.8)"
-              stroke="rgba(80, 140, 30, 0.8)"
-              strokeWidth="0.4"
-            />
-            <path
-              d="M 26 92 Q 25 96 28 96 Q 31 96 30 92 Z"
-              fill="rgba(140, 220, 60, 0.75)"
-            />
-          </g>
-        </svg>
+        {/* Spike Burst overlay center icon */}
+        {spikeBurstActive && (
+          <div className="absolute inset-0 flex items-center justify-center text-[#ff3300] animate-spin" style={{ animationDuration: '4s' }}>
+            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current drop-shadow-[0_0_3px_#ff3300]">
+              <path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4-3.9-3.8 5.4-.8z" />
+            </svg>
+          </div>
+        )}
       </div>
 
       {/* Dash-Charge Radial Cooldown Progress Track (only visible when recharging) */}
@@ -603,7 +498,7 @@ export function CustomCursor() {
             transform: `translate3d(calc(-50% + ${ringTransform.dx}px), ${ringTransform.dy}px, 0)`
           }}
         >
-          {t('misc.overheated')}
+          OVERHEATED
         </div>
       )}
     </div>

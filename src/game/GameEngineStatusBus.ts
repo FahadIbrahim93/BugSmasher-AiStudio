@@ -15,13 +15,6 @@ export interface GameEngineStatus {
   dashCooldown: number;
   rapidFireTimer: number;
   spikeBurstTimer: number;
-  // Powerup timers for ActivePowerups (and cross-HUD) without polling
-  shieldTimer: number;
-  multiplierTimer: number;
-  slowMoTimer: number;
-  overdriveTimer: number;
-  // Wave modifier display
-  waveModifier: string | null;
 }
 
 export type GameEngineStatusListener = (status: GameEngineStatus | null) => void;

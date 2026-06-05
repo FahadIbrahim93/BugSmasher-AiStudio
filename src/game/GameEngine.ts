@@ -12,6 +12,8 @@ import { CollisionSystem } from './CollisionSystem';
 import { BossSystem } from './BossSystem';
 import { PowerupSystem } from './PowerupSystem';
 import { HazardSystem } from './HazardSystem';
+import { PCGSystem } from './PCGSystem';
+import { CustomMapManager } from './CustomMapManager';
 import { computeModifierState, type ChallengeModifierId, type ChallengeModifierState } from './DailyChallengeManager';
 import { GameEngineStatusBus } from './GameEngineStatusBus';
 import {
@@ -42,6 +44,7 @@ export class GameEngine {
   bossSystem: BossSystem;
   powerupSystem: PowerupSystem;
   hazardSystem: HazardSystem;
+  pcgSystem: PCGSystem;
 
   powerups: Powerup[] = [];
   resources: ResourcePickup[] = [];
@@ -116,6 +119,8 @@ export class GameEngine {
   baseRecoilAngle: number = 0;
 
   glitchTimer: number = 0;
+  waveTransitionTimer: number = 0;
+  readonly waveTransitionDuration: number = 1.5;
   upgradeFlash: number = 0;
   impactFrame: number = 0;
 
@@ -177,6 +182,11 @@ export class GameEngine {
     this.bossSystem = new BossSystem(this);
     this.powerupSystem = new PowerupSystem(this);
     this.hazardSystem = new HazardSystem(this);
+    this.pcgSystem = new PCGSystem(this);
+    const activeCustom = CustomMapManager.getActiveConfiguration() as any;
+    if (activeCustom && activeCustom.obstacles && activeCustom.seed) {
+      this.pcgSystem.activeMap = activeCustom;
+    }
     this.applyAccessibility();
     this.unsubscribeAccessibility = subscribeAccessibility((settings) => {
       this.accessibility = settings;
@@ -275,7 +285,6 @@ export class GameEngine {
     this.syncSkills();
     this.applyAccessibility();
     this.health = this.maxHealth;
-    this.health = Math.min(this.health, this.maxHealth); // defensive for late modifiers (e.g. challenge post-start)
     this.wave = 1;
     this.resetEntities();
 
@@ -311,6 +320,7 @@ export class GameEngine {
 
   startWave() {
     this.waveManager.startWave();
+    this.waveTransitionTimer = this.waveTransitionDuration;
   }
 
   stop() {
@@ -340,10 +350,6 @@ export class GameEngine {
     this.hitStopTimer = duration;
   }
 
-  get waveModifier(): string | null {
-    return this.waveManager?.waveModifier || null;
-  }
-
   get threatShakeIntensity(): number {
     const bugCount = this.bugs.length;
     return Math.min(3.5, bugCount * 0.12);
@@ -367,11 +373,6 @@ export class GameEngine {
       dashCooldown: this.dashCooldown,
       rapidFireTimer: this.rapidFireTimer,
       spikeBurstTimer: this.spikeBurstTimer,
-      shieldTimer: this.shieldTimer,
-      multiplierTimer: this.multiplierTimer,
-      slowMoTimer: this.slowMoTimer,
-      overdriveTimer: this.overdriveTimer,
-      waveModifier: this.waveManager?.waveModifier || null,
     };
     GameEngineStatusBus.publish(status);
     GameEngineStatusBus.syncLegacyWindowGlobal(status);
@@ -439,6 +440,9 @@ export class GameEngine {
     this.particleSystem.update(dt);
     this.powerupSystem.updatePowerups(dt);
     this.powerupSystem.updateResources(dt);
+    if (this.pcgSystem) {
+      this.pcgSystem.update(dt);
+    }
 
     // Adaptive Music State Sync (every 500ms)
     this.musicUpdateTimer += dt;
@@ -573,7 +577,22 @@ export class GameEngine {
     const mult = this.multiplierTimer > 0 ? 2 : 1;
     this.score += bug.scoreValue * mult;
 
-    soundManager.splat();
+    // Dispatch smashed event for large bugs (size >= 20 or specific large types)
+    if (bug.size >= 20 || bug.type === 'boss' || bug.type === 'tank' || bug.type === 'healer' || bug.type === 'ember') {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('nexus_bug_smashed', {
+          detail: {
+            type: bug.type,
+            color: bug.color,
+            size: bug.size,
+            scoreValue: bug.scoreValue * mult,
+            streak: this.streakCount
+          }
+        }));
+      }
+    }
+
+    soundManager.splat(bug.type);
 
     this.triggerHitStop(0.04);
 
@@ -585,7 +604,7 @@ export class GameEngine {
     if (this.renderer.currentFps > 30) {
       this.particleSystem.spawnSplatter(bug.x, bug.y, bug.color);
     }
-    this.particleSystem.spawnExplosion(bug.x, bug.y, bug.color);
+    this.particleSystem.spawnExplosion(bug.x, bug.y, bug.color, bug.type);
 
     this.spawnResource(bug.x, bug.y, bug.type);
 
@@ -670,6 +689,7 @@ export class GameEngine {
       healthLevel: this.healthLevel,
       radiusLevel: this.radiusLevel,
       timestamp: Date.now(),
+      biome: this.currentBiome,
     };
   }
 
@@ -682,6 +702,9 @@ export class GameEngine {
     this.autoTurretLevel = data.autoTurretLevel || 0;
     this.healthLevel = data.healthLevel || 0;
     this.radiusLevel = data.radiusLevel || 0;
+    if (data.biome) {
+      this.currentBiome = data.biome;
+    }
 
     this.resetEntities();
     this.waveManager.waveActive = false;
@@ -698,7 +721,6 @@ export class GameEngine {
     if (this.challengeModifiers) {
       this.maxHealth *= this.challengeModifiers.maxHealthMultiplier;
       this.damageMultiplier *= this.challengeModifiers.playerDamageMultiplier;
-      this.health = Math.min(this.health, this.maxHealth);
     }
   }
 
@@ -707,7 +729,6 @@ export class GameEngine {
     this.isChallengeMode = true;
     this.challengeModifiers = computeModifierState(modifiers);
     this.syncSkills(); // Apply glass_cannon health/damage multipliers immediately
-    this.health = Math.min(this.health, this.maxHealth);
   }
 
   useConsumable(id: string): boolean {
@@ -765,6 +786,9 @@ export class GameEngine {
     if (this.glitchTimer > 0) {
       this.glitchTimer -= dt;
       if (this.glitchTimer <= 0) this.renderer.isGlitching = false;
+    }
+    if (this.waveTransitionTimer > 0) {
+      this.waveTransitionTimer = Math.max(0, this.waveTransitionTimer - dt);
     }
   }
 
@@ -878,120 +902,6 @@ export class GameEngine {
     if (this.currentBiome === 'golden_spire') {
       bug.hp = Math.min(bug.maxHp, Math.max(0, bug.hp + dt * 0.5));
     }
-    // Sniper: charge and fire at distance
-    if (bug.type === 'sniper') {
-      const sniperRange = 250;
-      const distToCore = Math.sqrt(distSq);
-
-      if (distToCore > sniperRange) {
-        // Outside range — move toward core normally, no charging
-        bug.isCharging = false;
-        bug.shootTimer = 0;
-      } else {
-        // In range — stop and charge
-        bug.speed = 0; // Stop moving while aiming
-        bug.shootTimer = (bug.shootTimer || 0) + dt * timeScale;
-
-        if (bug.shootTimer > 1.5) {
-          // First 1s = charging telegraph, then fire at 1.5s
-          bug.isCharging = true;
-        }
-
-        if (bug.shootTimer > 2.0) {
-          // FIRE! Deal damage to core
-          bug.shootTimer = 0;
-          bug.isCharging = false;
-
-          // Visual indicator
-          this.particleSystem.spawnLaser(bug.x, bug.y, this.coreX, this.coreY, '#ff0066', 3);
-          this.shake(0.15, 8);
-          soundManager.bossHit();
-
-          if (this.shieldTimer <= 0) {
-            const sniperDamage = Math.max(3, 5 + this.wave * 0.5);
-            this.health -= sniperDamage;
-            this.renderer.impactFlash = 1.0;
-            this.impactFrame = 0.3;
-          }
-
-          // Brief cooldown before moving again
-          bug.speed = 0;
-          bug.shootTimer = -0.5; // Pause before resuming movement
-        }
-      }
-
-      // Resume speed after firing cooldown
-      if (bug.shootTimer && bug.shootTimer < 0) {
-        // Do nothing, timer is counting up from negative
-      } else if (distToCore > sniperRange) {
-        // Move at full speed when outside range
-        const conf = GameConfig.bugs.sniper;
-        bug.speed = conf.baseSpeed + this.wave * conf.speedPerWave;
-      }
-    }
-
-    // Burrower: cycle between burrowed and emerged
-    if (bug.type === 'burrower') {
-      const distToCore = Math.sqrt(distSq);
-
-      if (bug.isBurrowed === undefined) {
-        bug.isBurrowed = true;
-        bug.burrowTimer = Math.random() * 3 + 4; // 4-7s burrowed
-        bug.emergeTimer = 3.0; // 3s emerged
-      }
-
-      if (bug.isBurrowed) {
-        // Move toward core while burrowed
-        bug.burrowTimer = (bug.burrowTimer || 0) - dt * timeScale;
-
-        if (bug.burrowTimer! <= 0) {
-          // Emerge near the core
-          bug.isBurrowed = false;
-          bug.emergeTimer = 3.0;
-          bug.speed = 0;
-
-          // Teleport closer to core
-          const emergeAngle = Math.atan2(this.coreY - bug.y, this.coreX - bug.x);
-          bug.x = this.coreX - Math.cos(emergeAngle) * 80;
-          bug.y = this.coreY - Math.sin(emergeAngle) * 80;
-
-          this.particleSystem.spawnShockwave(bug.x, bug.y, bug.color, 60);
-        }
-      } else {
-        // Emerged — vulnerable, stationary, attacks
-        bug.emergeTimer = (bug.emergeTimer || 0) - dt * timeScale;
-        bug.shootTimer = (bug.shootTimer || 0) + dt * timeScale;
-
-        // Attack periodically
-        if (bug.shootTimer! > 1.5) {
-          bug.shootTimer = 0;
-          const burrowerDamage = Math.max(2, 4 + this.wave * 0.3);
-          if (this.shieldTimer <= 0) {
-            this.health -= burrowerDamage;
-            this.renderer.impactFlash = 1.0;
-          }
-          this.triggerHitStop(0.06);
-          this.shake(0.1, 5);
-          this.particleSystem.spawnShockwave(bug.x, bug.y, bug.color, 40);
-        }
-
-        if (bug.emergeTimer! <= 0) {
-          // Burrow back underground
-          bug.isBurrowed = true;
-          bug.burrowTimer = Math.random() * 3 + 3; // 3-6s
-          this.particleSystem.spawnShockwave(bug.x, bug.y, bug.color, 30);
-
-          const conf = GameConfig.bugs.burrower;
-          bug.speed = conf.baseSpeed + this.wave * conf.speedPerWave;
-        }
-      }
-    }
-
-    // Toxic regen wave modifier: bugs regenerate health
-    if (this.waveManager.waveModifier === 'toxic_regen' && bug.type !== 'boss' && !bug.isBurrowed) {
-      bug.hp = Math.min(bug.maxHp, bug.hp + dt * 0.3);
-    }
-
     if (bug.type === 'healer') {
       bug.healCooldown = (bug.healCooldown || 0) + dt * timeScale;
       if (bug.healCooldown > 3.0) {

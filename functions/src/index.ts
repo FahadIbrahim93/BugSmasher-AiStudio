@@ -26,92 +26,29 @@ function generateChecksum(data: Record<string, unknown>): string {
 }
 
 /**
- * Callable for server-enforced save: validates checksum (prevents bad/tampered writes),
- * then performs the write from trusted admin context.
- * Client must call this (via FirebaseService) instead of direct setDoc.
- * This replaces the ineffective post-facto onWrite pattern.
+ * Validates save checksum before write (P1-07).
  */
-export const saveGame = functions.https.onCall(async (data: unknown, context: functions.https.CallableContext) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'Authentication required to save game data.');
-  }
-  const uid = context.auth.uid;
+export const validateSaveOnWrite = functions.firestore
+  .document('users/{userId}/private/saves')
+  .onWrite(async (change, context) => {
+    const after = change.after.exists ? change.after.data() : null;
+    if (!after?.data) return null;
 
-  const payload = (data as Record<string, unknown> | undefined)?.data as Record<string, unknown> | undefined;
-  const checksum = (data as Record<string, unknown> | undefined)?.checksum as string | undefined;
-
-  if (!payload || typeof checksum !== 'string' || checksum.length !== 64) {
-    throw new functions.https.HttpsError('invalid-argument', 'Save must include data payload and 64-char checksum');
-  }
-
-  const expected = generateChecksum(payload);
-  if (expected !== checksum) {
-    throw new functions.https.HttpsError(
-      'permission-denied',
-      'Save checksum mismatch — tampered data rejected'
-    );
-  }
-
-  // Minimal server-side payload validation (Dirty Dozen basics; after checksum)
-  if (typeof payload.score !== 'number' || payload.score < 0 ||
-      typeof payload.wave !== 'number' || payload.wave < 0) {
-    throw new functions.https.HttpsError('invalid-argument', 'Invalid score/wave values');
-  }
-  if (payload.userId && payload.userId !== uid) {
-    throw new functions.https.HttpsError('permission-denied', 'userId mismatch');
-  }
-  if (JSON.stringify(payload).length > 1024 * 1024) {
-    throw new functions.https.HttpsError('invalid-argument', 'Payload too large');
-  }
-
-  // Write from server (bypasses client rules; checksum already validated)
-  const saveRef = admin.firestore().doc(`users/${uid}/private/saves`);
-  await saveRef.set({
-    userId: uid,
-    data: payload,
-    checksum,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-  });
-
-  return { success: true };
-});
-
-/**
- * Callable for server-enforced leaderboard submit (monotonic high score only).
- * Replaces direct client setDoc for writes. Client optimistic check remains best-effort UI.
- * Enforces auth, positive values, and score >= existing (no downgrades).
- */
-export const submitScore = functions.https.onCall(async (data: unknown, context: functions.https.CallableContext) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'Authentication required to submit score.');
-  }
-  const uid = context.auth.uid;
-
-  const payload = data as { username?: string; score?: number; wave?: number } | undefined;
-  const username = payload?.username || 'Anonymous User';
-  const score = payload?.score;
-  const wave = payload?.wave;
-
-  if (typeof score !== 'number' || score < 0 || typeof wave !== 'number' || wave < 0) {
-    throw new functions.https.HttpsError('invalid-argument', 'Score and wave must be non-negative numbers');
-  }
-
-  const leaderboardRef = admin.firestore().doc(`leaderboard/${uid}`);
-  const existingSnap = await leaderboardRef.get();
-  if (existingSnap.exists) {
-    const existingScore = existingSnap.data()?.score;
-    if (typeof existingScore === 'number' && existingScore >= score) {
-      return { success: true, skipped: true }; // monotonic: do not allow lower/equal overwrite
+    const payload = after.data as Record<string, unknown>;
+    const checksum = after.checksum as string | undefined;
+    if (!checksum) {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Save must include server-verifiable checksum'
+      );
     }
-  }
 
-  await leaderboardRef.set({
-    userId: uid,
-    username,
-    score,
-    wave,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    const expected = generateChecksum(payload);
+    if (expected !== checksum) {
+      throw new functions.https.HttpsError(
+        'permission-denied',
+        'Save checksum mismatch — tampered data rejected'
+      );
+    }
+    return null;
   });
-
-  return { success: true };
-});

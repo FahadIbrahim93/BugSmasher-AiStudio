@@ -1,13 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Gem, Palette, Star, Crown, KeyRound, Sparkles, Bug, Shield, Wrench, ChevronRight } from 'lucide-react';
-import { t } from '../i18n';
 import { motion, AnimatePresence } from 'motion/react';
 import { soundManager } from '../game/SoundManager';
-import {
-  purchaseSupporterTier,
-  TIER_PRICES,
-  type PurchaseTier,
-} from '../lib/monetization';
 import {
   CORE_THEMES,
   PURCHASABLE_SKINS,
@@ -47,25 +41,12 @@ export function Armory({ onClose }: ArmoryProps) {
   const [keyInput, setKeyInput] = useState('');
   const [keyResult, setKeyResult] = useState<{ success: boolean; tier?: string } | null>(null);
   const [showDevTools, setShowDevTools] = useState(false);
-  const [purchasingTier, setPurchasingTier] = useState<PurchaseTier | null>(null);
-  const [purchaseResult, setPurchaseResult] = useState<{ success: boolean; tier?: PurchaseTier } | null>(null);
   const [hoveredSkinId, setHoveredSkinId] = useState<string | null>(null);
   const [hoveredThemeId, setHoveredThemeId] = useState<string | null>(null);
 
   const supporterStatus = isSupporter();
   const supporterTier = getSupporterTier();
   const devUnlocked = isDevUnlocked();
-  const isDemo = import.meta.env.VITE_ENABLE_DEMO_PURCHASE === 'true';
-
-  // Listen for supporter_pack_granted event to refresh UI after purchase
-  useEffect(() => {
-    const handleGranted = () => {
-      setUnlockedSkins(getUnlockedSkins());
-      setUnlockedThemes(getUnlockedCoreThemes());
-    };
-    window.addEventListener('supporter_pack_granted', handleGranted);
-    return () => window.removeEventListener('supporter_pack_granted', handleGranted);
-  }, []);
 
   // Dev toggle: Ctrl+Shift+D to show dev tools
   useEffect(() => {
@@ -115,24 +96,6 @@ export function Armory({ onClose }: ArmoryProps) {
     soundManager.armoryEquip();
   };
 
-  const handlePurchaseTier = async (tier: PurchaseTier) => {
-    if (purchasingTier) return;
-    setPurchasingTier(tier);
-    setPurchaseResult(null);
-    soundManager.uiClick();
-    const success = await purchaseSupporterTier(tier);
-    setPurchasingTier(null);
-    if (success) {
-      setPurchaseResult({ success: true, tier });
-      setUnlockedSkins(getUnlockedSkins());
-      setUnlockedThemes(getUnlockedCoreThemes());
-      soundManager.armoryUnlockTier();
-    } else {
-      setPurchaseResult({ success: false });
-      soundManager.uiError();
-    }
-  };
-
   const handleRedeemKey = () => {
     const result = unlockSupporterPack(keyInput.trim());
     if (result) {
@@ -170,9 +133,9 @@ export function Armory({ onClose }: ArmoryProps) {
   ];
 
   const tierLabel: Record<string, string> = {
-    basic: t('armory.supporterTierBasic'),
-    premium: t('armory.supporterTierPremium'),
-    ultimate: t('armory.supporterTierUltimate'),
+    basic: 'Supporter',
+    premium: 'Premium',
+    ultimate: 'Ultimate',
   };
 
   const tierBadgeColor: Record<string, string> = {
@@ -189,12 +152,12 @@ export function Armory({ onClose }: ArmoryProps) {
           <div>
             <h2 className="text-3xl font-black tracking-tighter uppercase flex items-center space-x-3">
               <Gem className="text-purple-500 w-8 h-8" />
-              <span>{t('armory.title')}</span>
+              <span>Armory</span>
             </h2>
             <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest mt-1">
               {supporterStatus
-                ? t('armory.supporterAccess', { tier: (tierLabel[supporterTier || 'basic'] ?? '').toUpperCase() })
-                : t('armory.unauthorized')}
+                ? `Supporter Access // Tier: ${tierLabel[supporterTier || 'basic']?.toUpperCase()}`
+                : 'Unauthorized // Restricted Section'}
             </p>
           </div>
           <button 
@@ -211,13 +174,13 @@ export function Armory({ onClose }: ArmoryProps) {
             active={activeTab === 'vault'}
             onClick={() => { soundManager.armoryTabSwitch(); setActiveTab('vault'); }}
             icon={<Palette className="w-4 h-4" />}
-            label={t('armory.tabVault')}
+            label="Vault"
           />
           <TabButton
             active={activeTab === 'supporter'}
             onClick={() => { soundManager.armoryTabSwitch(); setActiveTab('supporter'); }}
             icon={<Star className="w-4 h-4" />}
-            label={t('armory.tabSupporter')}
+            label="Supporter"
           />
         </div>
 
@@ -237,7 +200,7 @@ export function Armory({ onClose }: ArmoryProps) {
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-black uppercase tracking-tighter flex items-center space-x-2">
                       <Shield className="w-5 h-5 text-cyan-400" />
-                      <span>{t('armory.sectionCoreThemes')}</span>
+                      <span>Core Themes</span>
                     </h3>
                     {activeThemeId && (
                       <button
@@ -245,7 +208,7 @@ export function Armory({ onClose }: ArmoryProps) {
                         onMouseEnter={() => soundManager.uiHover()}
                         className="text-[10px] font-mono text-zinc-500 hover:text-white uppercase tracking-wider transition-colors"
                       >
-                        {t('armory.resetToDefault')}
+                        Reset to Default
                       </button>
                     )}
                   </div>
@@ -301,9 +264,9 @@ export function Armory({ onClose }: ArmoryProps) {
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-black uppercase tracking-tighter flex items-center space-x-2">
                       <Palette className="w-5 h-5 text-purple-400" />
-                      <span>{t('armory.sectionCursorSkins')}</span>
+                      <span>Cursor Skins</span>
                     </h3>
-                    <p className="text-[10px] font-mono text-zinc-600">{t('armory.skinCount', { unlocked: unlockedSkins.length, total: allSkins.length })}</p>
+                    <p className="text-[10px] font-mono text-zinc-600">{unlockedSkins.length}/{allSkins.length} unlocked</p>
                     {testDriveSkinId && (
                       <button
                         onClick={handleStopTestDrive}
@@ -311,7 +274,7 @@ export function Armory({ onClose }: ArmoryProps) {
                         className="text-[10px] font-mono text-emerald-400 hover:text-emerald-300 uppercase tracking-wider transition-colors flex items-center space-x-1.5"
                       >
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        <span>{t('armory.stopTestDrive')}</span>
+                        <span>Stop Test Drive</span>
                       </button>
                     )}
                   </div>
@@ -362,7 +325,7 @@ export function Armory({ onClose }: ArmoryProps) {
                               onMouseEnter={() => soundManager.uiHover()}
                               className="w-full mt-2 py-1.5 px-2 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/20 hover:border-emerald-500/40 text-emerald-400 text-[9px] font-black uppercase tracking-widest transition-all"
                             >
-                              {t('armory.testDrive')}
+                              ▶ Test Drive
                             </button>
                           )}
                           {hoveredSkinId === skin.id && unlocked && (
@@ -390,12 +353,12 @@ export function Armory({ onClose }: ArmoryProps) {
                     <Crown className={`w-10 h-10 ${supporterStatus ? 'text-purple-400' : 'text-zinc-600'}`} />
                     <div>
                       <h3 className="text-2xl font-black tracking-tighter">
-                        {supporterStatus ? t('armory.supporterAccessGranted') : t('armory.supporterPack')}
+                        {supporterStatus ? 'Supporter Access Granted' : 'Supporter Pack'}
                       </h3>
                       <p className="text-sm text-zinc-500 font-mono mt-1">
                         {supporterStatus
-                          ? t('armory.supporterThankYou', { tier: (tierLabel[supporterTier || 'basic'] ?? '').toUpperCase() })
-                          : t('armory.supporterDescription')}
+                          ? `Tier: ${tierLabel[supporterTier || 'basic']?.toUpperCase()} — Thank you for your support!`
+                          : 'Unlock exclusive cosmetics and support development.'}
                       </p>
                     </div>
                   </div>
@@ -404,31 +367,29 @@ export function Armory({ onClose }: ArmoryProps) {
                     <div className="flex flex-wrap gap-3 mb-6">
                       <div className="px-4 py-2 bg-purple-500/10 rounded-xl border border-purple-500/20 flex items-center space-x-2">
                         <Crown className="w-4 h-4 text-purple-400" />
-                        <span className="text-xs font-mono font-bold text-purple-400 uppercase tracking-wider">{t('armory.verified')}</span>
+                        <span className="text-xs font-mono font-bold text-purple-400 uppercase tracking-wider">Verified</span>
                       </div>
                       <div className="px-4 py-2 bg-cyan-500/10 rounded-xl border border-cyan-500/20 flex items-center space-x-2">
                         <Sparkles className="w-4 h-4 text-cyan-400" />
-                        <span className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider">{t('armory.cosmeticsCount', { count: unlockedSkins.length })}</span>
+                        <span className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider">{unlockedSkins.length} Cosmetics</span>
                       </div>
                     </div>
                   )}
 
-                  {/* Tier cards with purchase buttons */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                  {/* Tier cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                     {[
-                      { key: 'basic' as PurchaseTier, name: t('armory.supporterTierBasic'), icon: '★', color: 'purple', items: t('armory.tierItemsBasic') },
-                      { key: 'premium' as PurchaseTier, name: t('armory.supporterTierPremium'), icon: '★★', color: 'orange', items: t('armory.tierItemsPremium') },
-                      { key: 'ultimate' as PurchaseTier, name: t('armory.supporterTierUltimate'), icon: '★★★', color: 'cyan', items: t('armory.tierItemsUltimate') },
+                      { key: 'basic', name: 'Supporter', icon: '★', color: 'purple', price: 'Key Code', items: '2 skins + 1 theme' },
+                      { key: 'premium', name: 'Premium', icon: '★★', color: 'orange', price: 'Key Code', items: '4 skins + 2 themes' },
+                      { key: 'ultimate', name: 'Ultimate', icon: '★★★', color: 'cyan', price: 'Key Code', items: '6 skins + 3 themes + Chromatic Surge' },
                     ].map(tier => {
                       const isUnlocked = supporterStatus && (
                         (tier.key === 'basic') ||
                         (tier.key === 'premium' && (supporterTier === 'premium' || supporterTier === 'ultimate')) ||
                         (tier.key === 'ultimate' && supporterTier === 'ultimate')
                       );
-                      const price = TIER_PRICES[tier.key];
-                      const isProcessing = purchasingTier === tier.key;
                       return (
-                        <div key={tier.key} className={`p-6 rounded-2xl border flex flex-col ${
+                        <div key={tier.key} className={`p-6 rounded-2xl border ${
                           isUnlocked
                             ? `border-${tier.color}-500/30 bg-${tier.color}-500/5`
                             : 'border-white/5 bg-white/[0.02]'
@@ -437,65 +398,28 @@ export function Armory({ onClose }: ArmoryProps) {
                             {tier.icon}
                           </p>
                           <p className="font-bold text-sm mb-1">{tier.name}</p>
-                          <p className="text-[10px] font-mono text-zinc-500 mb-3 flex-1">{tier.items}</p>
-                          {isUnlocked ? (
-                            <span className="inline-block text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider bg-emerald-500/20 text-emerald-400 text-center">
-                              {t('armory.purchaseDisabled')}
-                            </span>
-                          ) : (
-                            <button
-                              onClick={() => handlePurchaseTier(tier.key)}
-                              disabled={isProcessing}
-                              onMouseEnter={() => soundManager.uiHover()}
-                              className={`w-full py-2.5 px-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 ${
-                                isProcessing
-                                  ? 'bg-zinc-700 text-zinc-500 cursor-wait'
-                                  : tier.key === 'basic'
-                                    ? 'bg-purple-600 hover:bg-purple-500 text-white'
-                                    : tier.key === 'premium'
-                                      ? 'bg-orange-600 hover:bg-orange-500 text-white'
-                                      : 'bg-cyan-600 hover:bg-cyan-500 text-white'
-                              }`}
-                            >
-                              {isProcessing
-                                ? t('armory.purchasing')
-                                : t('armory.purchaseTier', { tier: tier.name, price: price.label })}
-                            </button>
-                          )}
+                          <p className="text-[10px] font-mono text-zinc-500 mb-3">{tier.items}</p>
+                          <span className={`text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider ${
+                            isUnlocked ? 'bg-emerald-500/20 text-emerald-400' : 'text-zinc-600'
+                          }`}>
+                            {isUnlocked ? 'Unlocked' : 'Locked'}
+                          </span>
                         </div>
                       );
                     })}
                   </div>
 
-                  {/* Demo mode notice + purchase feedback */}
-                  {isDemo && !supporterStatus && (
-                    <p className="text-[10px] font-mono text-amber-500/70 text-center mb-6">
-                      {t('armory.demoModeNotice')}
-                    </p>
-                  )}
-                  {purchaseResult && (
-                    <div className={`mb-6 px-4 py-3 rounded-xl text-xs font-mono text-center ${
-                      purchaseResult.success
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                        : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                    }`}>
-                      {purchaseResult.success
-                        ? t('armory.purchaseSuccess', { tier: (tierLabel[purchaseResult.tier!] ?? purchaseResult.tier!).toUpperCase() })
-                        : t('armory.purchaseError')}
-                    </div>
-                  )}
-
                   {/* Key Entry */}
                   {!supporterStatus && (
                     <div className="space-y-4">
-                      <p className="text-xs font-mono text-zinc-500 uppercase tracking-widest">{t('armory.redeemKey')}</p>
+                      <p className="text-xs font-mono text-zinc-500 uppercase tracking-widest">Redeem Supporter Key</p>
                       <div className="flex space-x-3">
                         <input
                           type="text"
                           value={keyInput}
                           onChange={(e) => setKeyInput(e.target.value)}
                           onKeyDown={(e) => { if (e.key === 'Enter') handleRedeemKey(); }}
-                          placeholder={t('armory.enterKeyCode')}
+                          placeholder="Enter key code..."
                           className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm font-mono text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 transition-colors uppercase tracking-widest"
                         />
                         <button
@@ -504,11 +428,11 @@ export function Armory({ onClose }: ArmoryProps) {
                           className="px-6 py-3 bg-purple-600 hover:bg-purple-500 disabled:bg-zinc-800 disabled:text-zinc-600 rounded-xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 flex items-center space-x-2"
                         >
                           <KeyRound className="w-4 h-4" />
-                          <span>{t('armory.redeem')}</span>
+                          <span>Redeem</span>
                         </button>
                       </div>
                       <p className="text-[10px] font-mono text-zinc-600">
-                        {t('armory.availableKeys', { keys: 'NEXUS_SUPPORTER, NEXUS_PREMIUM, NEXUS_ULTIMATE' })}
+                        Available keys: NEXUS_SUPPORTER, NEXUS_PREMIUM, NEXUS_ULTIMATE
                       </p>
                       {keyResult && (
                         <div className={`px-4 py-3 rounded-xl text-xs font-mono ${
@@ -517,8 +441,8 @@ export function Armory({ onClose }: ArmoryProps) {
                             : 'bg-red-500/10 text-red-400 border border-red-500/20'
                         }`}>
                           {keyResult.success
-                            ? t('armory.keySuccess', { tier: keyResult.tier!.charAt(0).toUpperCase() + keyResult.tier!.slice(1) })
-                            : t('armory.keyError')}
+                            ? `✓ ${keyResult.tier!.charAt(0).toUpperCase() + keyResult.tier!.slice(1)} pack unlocked! All cosmetics granted.`
+                            : '✗ Invalid key code. Check and try again.'}
                         </div>
                       )}
                     </div>
@@ -528,15 +452,15 @@ export function Armory({ onClose }: ArmoryProps) {
                 {/* Dev Tools (hidden, Ctrl+Shift+D) */}
                 {showDevTools && (
                   <div className="p-6 rounded-2xl border border-yellow-500/30 bg-yellow-500/5">
-                    <p className="text-xs font-mono text-yellow-400 uppercase tracking-widest font-black mb-4">{t('armory.devTools')}</p>
+                    <p className="text-xs font-mono text-yellow-400 uppercase tracking-widest font-black mb-4">Dev Tools</p>
                     <button
                       onClick={handleDevUnlock}
                       className="px-6 py-3 bg-yellow-600 hover:bg-yellow-500 rounded-xl font-black text-xs uppercase tracking-widest transition-all"
                     >
-                      {t('armory.devUnlockAll')}
+                      Unlock All Cosmetics
                     </button>
                     <p className="text-[10px] font-mono text-zinc-500 mt-3">
-                      {t('armory.devStatus', { status: devUnlocked ? t('armory.devActive') : t('armory.devInactive') })}                      
+                      Dev unlock is {devUnlocked ? 'ACTIVE' : 'inactive'}. Press Ctrl+Shift+D to toggle this panel.
                     </p>
                   </div>
                 )}
@@ -795,7 +719,7 @@ function SkinTooltip({ skinId, skinName, skinDesc, tier }: { skinId: string; ski
 }
 
 function tierLabelMap(tier: SupporterTier): string {
-  const map: Record<string, string> = { basic: t('armory.supporterTierBasic'), premium: t('armory.supporterTierPremium'), ultimate: t('armory.supporterTierUltimate') };
+  const map: Record<string, string> = { basic: 'Supporter', premium: 'Premium', ultimate: 'Ultimate' };
   return map[tier || ''] || '';
 }
 
@@ -843,7 +767,8 @@ function LockIcon({ small }: { small?: boolean }) {
 function LiveBadge() {
   return (
     <div className="absolute top-2 right-2 flex items-center space-x-1 bg-emerald-500/20 border border-emerald-500/40 rounded-full px-2 py-0.5">
-      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />                      <span className="text-[7px] font-black text-emerald-400 uppercase tracking-widest">{t('armory.live')}</span>
+      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+      <span className="text-[7px] font-black text-emerald-400 uppercase tracking-widest">Live</span>
     </div>
   );
 }

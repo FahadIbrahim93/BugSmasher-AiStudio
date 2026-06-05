@@ -1,7 +1,6 @@
 import { Trophy, X } from 'lucide-react';
 import { ACHIEVEMENTS_DATA, AchievementManager } from '../game/AchievementManager';
 import { soundManager } from '../game/SoundManager';
-import { t } from '../i18n';
 
 export function AchievementGallery({ onClose }: { onClose: () => void }) {
   const unlocked = AchievementManager.getUnlockedCount();
@@ -20,9 +19,9 @@ export function AchievementGallery({ onClose }: { onClose: () => void }) {
         <div className="flex items-center gap-3 mb-8">
           <Trophy className="w-8 h-8 text-yellow-500" />
           <div>
-            <h2 className="text-2xl font-black uppercase tracking-widest">{t('achievement.title')}</h2>
+            <h2 className="text-2xl font-black uppercase tracking-widest">Achievement Gallery</h2>
             <p className="text-xs font-mono text-zinc-500">
-              {t('achievement.count', { unlocked, total })}
+              {unlocked} / {total} unlocked
             </p>
           </div>
         </div>
@@ -45,7 +44,7 @@ export function AchievementGallery({ onClose }: { onClose: () => void }) {
                 <p className="text-xs text-zinc-400 font-mono">{a.description}</p>
                 {isUnlocked && (
                   <span className="inline-block mt-2 text-[9px] font-mono text-emerald-400 uppercase">
-                    {t('achievement.unlocked')}
+                    Unlocked
                   </span>
                 )}
               </div>

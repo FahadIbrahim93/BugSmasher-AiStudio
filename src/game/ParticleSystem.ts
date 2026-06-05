@@ -116,325 +116,290 @@ export class ParticleSystem {
   // Public flag so renderer can skip passes when nothing to draw
   hasActiveEffects: boolean = false;
 
-  // Error recovery: logged fault detection for spawn failures
-  private spawnFaultCount: number = 0;
-
-  private logSpawnFault(): void {
-    this.spawnFaultCount++;
-    if (this.spawnFaultCount <= 3) {
-      console.warn('[particles] spawn fault', this.spawnFaultCount);
-    }
-  }
-
   spawnMuzzleFlash(x: number, y: number, size: number = 40) {
-    try {
-      const f = this.muzzleFlashes[this.muzzleFlashIdx];
-      f.active = true;
-      f.x = x;
-      f.y = y;
-      f.life = 0.05;
-      f.maxLife = 0.05;
-      f.size = size;
-      this.muzzleFlashIdx = (this.muzzleFlashIdx + 1) % MAX_MUZZLE_FLASHES;
-    } catch {
-      this.logSpawnFault();
-    }
+    const f = this.muzzleFlashes[this.muzzleFlashIdx];
+    f.active = true;
+    f.x = x;
+    f.y = y;
+    f.life = 0.05;
+    f.maxLife = 0.05;
+    f.size = size;
+    this.muzzleFlashIdx = (this.muzzleFlashIdx + 1) % MAX_MUZZLE_FLASHES;
   }
 
   spawnShockwave(x: number, y: number, color: string, maxRadius: number) {
-    try {
-      const sw = this.shockwaves[this.shockwaveIdx];
-      sw.active = true;
-      sw.x = x;
-      sw.y = y;
-      sw.radius = 10;
-      sw.speed = maxRadius * 3;
-      sw.color = color;
-      sw.life = 0.3;
-      sw.maxLife = 0.3;
-      this.shockwaveIdx = (this.shockwaveIdx + 1) % MAX_SHOCKWAVES;
-    } catch {
-      this.logSpawnFault();
-    }
+    const sw = this.shockwaves[this.shockwaveIdx];
+    sw.active = true;
+    sw.x = x;
+    sw.y = y;
+    sw.radius = 10;
+    sw.speed = maxRadius * 3;
+    sw.color = color;
+    sw.life = 0.3;
+    sw.maxLife = 0.3;
+    this.shockwaveIdx = (this.shockwaveIdx + 1) % MAX_SHOCKWAVES;
   }
   
   spawnSplatter(x: number, y: number, color: string) {
-    try {
-      const s = this.splatters[this.splatterIdx];
-      s.active = true;
-      s.x = x;
-      s.y = y;
-      s.rotation = Math.random() * Math.PI * 2;
-      s.size = Math.random() * 15 + 10;
-      s.color = color;
-      s.life = 5;
-      s.maxLife = 5;
-      
-      for (let i = 0; i < MAX_DROPS_PER_SPLATTER; i++) {
-        const drop = s.drops[i];
-        const angle = Math.random() * Math.PI * 2;
-        const dist = Math.random() * 50 + 5;
-        drop.active = true;
-        drop.x = Math.cos(angle) * dist;
-        drop.y = Math.sin(angle) * dist;
-        drop.size = Math.random() * 8 + 2;
-      }
-      
-      this.splatterIdx = (this.splatterIdx + 1) % MAX_SPLATTERS;
-    } catch {
-      this.logSpawnFault();
+    const s = this.splatters[this.splatterIdx];
+    s.active = true;
+    s.x = x;
+    s.y = y;
+    s.rotation = Math.random() * Math.PI * 2;
+    s.size = Math.random() * 15 + 10;
+    s.color = color;
+    s.life = 5;
+    s.maxLife = 5;
+    
+    for (let i = 0; i < MAX_DROPS_PER_SPLATTER; i++) {
+      const drop = s.drops[i];
+      const angle = Math.random() * Math.PI * 2;
+      const dist = Math.random() * 50 + 5;
+      drop.active = true;
+      drop.x = Math.cos(angle) * dist;
+      drop.y = Math.sin(angle) * dist;
+      drop.size = Math.random() * 8 + 2;
     }
+    
+    this.splatterIdx = (this.splatterIdx + 1) % MAX_SPLATTERS;
   }
   
   spawnGibs(x: number, y: number, color: string, count: number = 15) {
-    try {
-      const isLowQuality = this.engine && (this.engine.isMobile || !this.engine.highFidelityVFX);
-      let finalCount = isLowQuality ? Math.max(1, Math.round(count * 0.4)) : count;
-      finalCount = Math.max(1, Math.round(finalCount * this.vfxCountMultiplier));
-      for (let i = 0; i < finalCount; i++) {
-        const p = this.particles[this.particleIdx];
-        const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 300 + 100;
-        
-        p.active = true;
-        p.x = x;
-        p.y = y;
-        p.vx = Math.cos(angle) * speed;
-        p.vy = Math.sin(angle) * speed;
-        p.size = Math.random() * 8 + 3;
-        p.color = color;
-        p.rotation = Math.random() * Math.PI * 2;
-        p.life = 0.5 + Math.random() * 0.5;
-        p.maxLife = 1;
-        
-        this.particleIdx = (this.particleIdx + 1) % MAX_PARTICLES;
-      }
-    } catch {
-      this.logSpawnFault();
-    }
-  }
-  
-  spawnMissParticles(x: number, y: number) {
-    try {
-      this.spawnClickPulse(x, y);
-      const isLowQuality = this.engine && (this.engine.isMobile || !this.engine.highFidelityVFX);
-      let finalCount = isLowQuality ? 3 : 8;
-      finalCount = Math.max(1, Math.round(finalCount * this.vfxCountMultiplier));
-      for (let i = 0; i < finalCount; i++) {
-        const p = this.particles[this.particleIdx];
-        const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 80 + 30;
-        
-        p.active = true;
-        p.x = x;
-        p.y = y;
-        p.vx = Math.cos(angle) * speed;
-        p.vy = Math.sin(angle) * speed;
-        p.size = Math.random() * 4 + 1;
-        p.color = '#00ffff';
-        p.rotation = Math.random() * Math.PI * 2;
-        p.life = 0.2 + Math.random() * 0.2;
-        p.maxLife = 0.4;
-        
-        this.particleIdx = (this.particleIdx + 1) % MAX_PARTICLES;
-      }
-    } catch {
-      this.logSpawnFault();
-    }
-  }
-
-  spawnExplosion(x: number, y: number, color: string) {
-    try {
-      const isLowQuality = this.engine && (this.engine.isMobile || !this.engine.highFidelityVFX);
-      this.spawnSparkExplosion(x, y, '#ffffff');
-      this.spawnSparkExplosion(x, y, color);
-      this.spawnSmoke(x, y, 'rgba(50, 50, 50, 0.4)');
-      this.spawnShockwave(x, y, '#ffffff', isLowQuality ? 50 : 80);
-      if (!isLowQuality) {
-        this.spawnShockwave(x, y, color, 120);
-      }
-      this.spawnGibs(x, y, color, isLowQuality ? 2 : 4);
-
-      let extraCount = isLowQuality ? 3 : 8;
-      extraCount = Math.max(1, Math.round(extraCount * this.vfxCountMultiplier));
-      for (let i = 0; i < extraCount; i++) {
-        const p = this.particles[this.particleIdx];
-        const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 500 + 200;
-        
-        p.active = true;
-        p.x = x;
-        p.y = y;
-        p.vx = Math.cos(angle) * speed;
-        p.vy = Math.sin(angle) * speed;
-        p.size = Math.random() * 2 + 1;
-        p.color = Math.random() > 0.5 ? '#ffffff' : color;
-        p.rotation = Math.random() * Math.PI * 2;
-        p.life = 0.3 + Math.random() * 0.4;
-        p.maxLife = 0.7;
-        
-        this.particleIdx = (this.particleIdx + 1) % MAX_PARTICLES;
-      }
-
-      for (let i = 0; i < 2; i++) {
-        const p = this.particles[this.particleIdx];
-        const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 50 + 20;
-        
-        p.active = true;
-        p.x = x + (Math.random() - 0.5) * 20;
-        p.y = y + (Math.random() - 0.5) * 20;
-        p.vx = Math.cos(angle) * speed;
-        p.vy = Math.sin(angle) * speed;
-        p.size = Math.random() * 12 + 6;
-        p.color = 'rgba(150, 150, 150, 0.4)';
-        p.rotation = Math.random() * Math.PI * 2;
-        p.life = 0.8 + Math.random() * 0.8;
-        p.maxLife = 1.6;
-        
-        this.particleIdx = (this.particleIdx + 1) % MAX_PARTICLES;
-      }
-    } catch {
-      this.logSpawnFault();
-    }
-  }
-
-  spawnClickPulse(x: number, y: number) {
-    try {
-      const sw = this.shockwaves[this.shockwaveIdx];
-      sw.active = true;
-      sw.x = x;
-      sw.y = y;
-      sw.radius = 1;
-      sw.speed = 150;
-      sw.color = '#ffffff';
-      sw.life = 0.15;
-      sw.maxLife = 0.15;
-      this.shockwaveIdx = (this.shockwaveIdx + 1) % MAX_SHOCKWAVES;
-    } catch {
-      this.logSpawnFault();
-    }
-  }
-
-  spawnInputFeedback(x: number, y: number) {
-    try {
-      const sw = this.shockwaves[this.shockwaveIdx];
-      sw.active = true;
-      sw.x = x;
-      sw.y = y;
-      sw.radius = 5;
-      sw.speed = 300;
-      sw.color = '#ffffff';
-      sw.life = 0.2;
-      sw.maxLife = 0.2;
-      this.shockwaveIdx = (this.shockwaveIdx + 1) % MAX_SHOCKWAVES;
-    } catch {
-      this.logSpawnFault();
-    }
-  }
-
-  spawnLaser(x1: number, y1: number, x2: number, y2: number, color: string, width: number = 2) {
-    try {
-      const l = this.lasers[this.laserIdx];
-      l.active = true;
-      l.x1 = x1;
-      l.y1 = y1;
-      l.x2 = x2;
-      l.y2 = y2;
-      l.life = 0.12;
-      l.maxLife = 0.12;
-      l.color = color;
-      l.width = width;
-      this.laserIdx = (this.laserIdx + 1) % MAX_LASERS;
-      
-      // Reduced trail particles — was 10, now scales with width + multiplier
-      const count = Math.max(1, Math.round(4 * width * this.vfxCountMultiplier));
-      for (let i = 0; i < count; i++) {
-        this.spawnParticle(x2, y2, color, Math.random() * 2 + 1, 0.12 + Math.random() * 0.08);
-      }
-    } catch {
-      this.logSpawnFault();
-    }
-  }
-
-  spawnSparkExplosion(x: number, y: number, color: string) {
-    try {
-      const isLowQuality = this.engine && (this.engine.isMobile || !this.engine.highFidelityVFX);
-      let count = isLowQuality ? 4 : 12;
-      count = Math.max(1, Math.round(count * this.vfxCountMultiplier));
-      for (let i = 0; i < count; i++) {
-          const p = this.particles[this.particleIdx];
-          const angle = Math.random() * Math.PI * 2;
-          const speed = Math.random() * 600 + 200;
-          
-          p.active = true;
-          p.type = 'spark';
-          p.x = x;
-          p.y = y;
-          p.vx = Math.cos(angle) * speed;
-          p.vy = Math.sin(angle) * speed;
-          p.size = Math.random() * 12 + 4;
-          p.color = color;
-          p.rotation = angle;
-          p.life = 0.25 + Math.random() * 0.15;
-          p.maxLife = p.life;
-          
-          this.particleIdx = (this.particleIdx + 1) % MAX_PARTICLES;
-      }
-    } catch {
-      this.logSpawnFault();
-    }
-  }
-
-  spawnSmoke(x: number, y: number, color: string = 'rgba(100, 100, 100, 0.5)') {
-    try {
-      const isLowQuality = this.engine && (this.engine.isMobile || !this.engine.highFidelityVFX);
-      let count = isLowQuality ? 2 : 5;
-      count = Math.max(1, Math.round(count * this.vfxCountMultiplier));
-      for (let i = 0; i < count; i++) {
-          const p = this.particles[this.particleIdx];
-          const angle = Math.random() * Math.PI * 2;
-          const speed = Math.random() * 40 + 20;
-          
-          p.active = true;
-          p.type = 'smoke';
-          p.x = x + (Math.random() - 0.5) * 20;
-          p.y = y + (Math.random() - 0.5) * 20;
-          p.vx = Math.cos(angle) * speed;
-          p.vy = Math.sin(angle) * speed;
-          p.size = Math.random() * 30 + 20;
-          p.color = color;
-          p.rotation = Math.random() * Math.PI * 2;
-          p.life = 1.0 + Math.random() * 1.0;
-          p.maxLife = p.life;
-          
-          this.particleIdx = (this.particleIdx + 1) % MAX_PARTICLES;
-      }
-    } catch {
-      this.logSpawnFault();
-    }
-  }
-
-  spawnParticle(x: number, y: number, color: string, size: number = 5, life: number = 0.5) {
-    try {
+    const isLowQuality = this.engine && (this.engine.isMobile || !this.engine.highFidelityVFX);
+    let finalCount = isLowQuality ? Math.max(1, Math.round(count * 0.4)) : count;
+    finalCount = Math.max(1, Math.round(finalCount * this.vfxCountMultiplier));
+    for (let i = 0; i < finalCount; i++) {
       const p = this.particles[this.particleIdx];
       const angle = Math.random() * Math.PI * 2;
-      const speed = Math.random() * 200 + 50;
+      const speed = Math.random() * 260 + 90;
       
       p.active = true;
+      p.type = 'debris'; // Solid jagged shell fragment
       p.x = x;
       p.y = y;
       p.vx = Math.cos(angle) * speed;
       p.vy = Math.sin(angle) * speed;
-      p.size = size;
+      p.size = Math.random() * 7 + 3;
       p.color = color;
       p.rotation = Math.random() * Math.PI * 2;
-      p.life = life;
-      p.maxLife = life;
+      p.life = 0.4 + Math.random() * 0.4;
+      p.maxLife = p.life;
       
       this.particleIdx = (this.particleIdx + 1) % MAX_PARTICLES;
-    } catch {
-      this.logSpawnFault();
     }
+  }
+  
+  spawnMissParticles(x: number, y: number) {
+    this.spawnClickPulse(x, y);
+    const isLowQuality = this.engine && (this.engine.isMobile || !this.engine.highFidelityVFX);
+    let finalCount = isLowQuality ? 3 : 8;
+    finalCount = Math.max(1, Math.round(finalCount * this.vfxCountMultiplier));
+    for (let i = 0; i < finalCount; i++) {
+      const p = this.particles[this.particleIdx];
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 80 + 30;
+      
+      p.active = true;
+      p.type = 'spark';
+      p.x = x;
+      p.y = y;
+      p.vx = Math.cos(angle) * speed;
+      p.vy = Math.sin(angle) * speed;
+      p.size = Math.random() * 4 + 1;
+      p.color = '#00ffff';
+      p.rotation = Math.random() * Math.PI * 2;
+      p.life = 0.2 + Math.random() * 0.2;
+      p.maxLife = 0.4;
+      
+      this.particleIdx = (this.particleIdx + 1) % MAX_PARTICLES;
+    }
+  }
+
+  spawnExplosion(x: number, y: number, color: string, bugType?: string) {
+    const isLowQuality = this.engine && (this.engine.isMobile || !this.engine.highFidelityVFX);
+    
+    // 1. Sleek shockwave ring matching the bug's biological color
+    this.spawnShockwave(x, y, color, isLowQuality ? 45 : 75);
+    // Secondary bright white flash blow-out shockwave
+    this.spawnShockwave(x, y, '#ffffff', isLowQuality ? 20 : 35);
+    
+    // 2. Visceral sharp chitin/shell debris chunks (rendered as jagged polygons)
+    const shellDebrisCount = bugType === 'tank' || bugType === 'beetle' ? (isLowQuality ? 6 : 12) : (isLowQuality ? 3 : 6);
+    this.spawnGibs(x, y, color, shellDebrisCount);
+    
+    // 3. Gooey organic fluid droplets flying outwards with momentum
+    let gooCount = bugType === 'swarmer' || bugType === 'mini' ? (isLowQuality ? 4 : 8) : (isLowQuality ? 6 : 13);
+    if (bugType === 'healer') gooCount *= 1.6; // Healer's medicine sac has large volume explosion
+    gooCount = Math.max(1, Math.round(gooCount * this.vfxCountMultiplier));
+    
+    for (let i = 0; i < gooCount; i++) {
+      const p = this.particles[this.particleIdx];
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 200 + 70;
+      
+      p.active = true;
+      p.type = 'circle'; // gooey blobs
+      p.x = x;
+      p.y = y;
+      p.vx = Math.cos(angle) * speed;
+      p.vy = Math.sin(angle) * speed;
+      p.size = Math.random() * 6 + 2;
+      p.color = color;
+      p.rotation = Math.random() * Math.PI * 2;
+      p.life = 0.35 + Math.random() * 0.35;
+      p.maxLife = p.life;
+      
+      this.particleIdx = (this.particleIdx + 1) % MAX_PARTICLES;
+    }
+    
+    // 4. Biological gasses/particles (cloud of bio-vapor)
+    const cloudColor = bugType === 'healer' ? 'rgba(0, 255, 120, 0.22)' 
+                     : bugType === 'swarmer' || bugType === 'mini' ? 'rgba(128, 0, 128, 0.18)'
+                     : 'rgba(50, 50, 50, 0.35)';
+    this.spawnSmoke(x, y, cloudColor);
+    
+    // 5. Heavy secondary blowouts for big armor cores
+    if (bugType === 'boss' || bugType === 'tank' || bugType === 'beetle') {
+      this.spawnShockwave(x, y, '#ffffff', isLowQuality ? 70 : 130);
+      this.spawnSmoke(x, y, 'rgba(80, 25, 25, 0.4)');
+      this.spawnGibs(x, y, color, isLowQuality ? 7 : 14);
+    }
+  }
+
+  spawnClickPulse(x: number, y: number) {
+    const sw = this.shockwaves[this.shockwaveIdx];
+    sw.active = true;
+    sw.x = x;
+    sw.y = y;
+    sw.radius = 1;
+    sw.speed = 150;
+    sw.color = '#ffffff';
+    sw.life = 0.15;
+    sw.maxLife = 0.15;
+    this.shockwaveIdx = (this.shockwaveIdx + 1) % MAX_SHOCKWAVES;
+  }
+
+  spawnInputFeedback(x: number, y: number) {
+    // Single shockwave instead of 3 — still gives visual feedback without triple overhead
+    const sw = this.shockwaves[this.shockwaveIdx];
+    sw.active = true;
+    sw.x = x;
+    sw.y = y;
+    sw.radius = 5;
+    sw.speed = 300;
+    sw.color = '#ffffff';
+    sw.life = 0.2;
+    sw.maxLife = 0.2;
+    this.shockwaveIdx = (this.shockwaveIdx + 1) % MAX_SHOCKWAVES;
+  }
+
+  spawnLaser(x1: number, y1: number, x2: number, y2: number, color: string, width: number = 2) {
+    const l = this.lasers[this.laserIdx];
+    l.active = true;
+    l.x1 = x1;
+    l.y1 = y1;
+    l.x2 = x2;
+    l.y2 = y2;
+    l.life = 0.12;
+    l.maxLife = 0.12;
+    l.color = color;
+    l.width = width;
+    this.laserIdx = (this.laserIdx + 1) % MAX_LASERS;
+    
+    // Visceral, highly satisfying laser impact sparks and debris (restoring original juice in the best way)
+    const isLowQuality = this.engine && (this.engine.isMobile || !this.engine.highFidelityVFX);
+    const baseCount = isLowQuality ? 6 : 14;
+    const finalCount = Math.max(3, Math.round(baseCount * this.vfxCountMultiplier));
+    
+    for (let i = 0; i < finalCount; i++) {
+      // Alternate between high-velocity glowing spiky sparks and smaller circle debris particles
+      const isSpark = i % 2 === 0;
+      const p = this.particles[this.particleIdx];
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * (isSpark ? 380 : 200) + 90;
+      
+      p.active = true;
+      p.type = isSpark ? 'spark' : 'circle';
+      p.x = x2;
+      p.y = y2;
+      p.vx = Math.sin(angle) * speed;
+      p.vy = Math.cos(angle) * speed;
+      p.size = isSpark ? (Math.random() * 8 + 3) : (Math.random() * 4 + 1.5);
+      p.color = color;
+      p.rotation = isSpark ? angle : Math.random() * Math.PI * 2;
+      p.life = isSpark ? (0.15 + Math.random() * 0.18) : (0.2 + Math.random() * 0.25);
+      p.maxLife = p.life;
+      
+      this.particleIdx = (this.particleIdx + 1) % MAX_PARTICLES;
+    }
+  }
+
+  spawnSparkExplosion(x: number, y: number, color: string) {
+    const isLowQuality = this.engine && (this.engine.isMobile || !this.engine.highFidelityVFX);
+    let count = isLowQuality ? 4 : 12;
+    count = Math.max(1, Math.round(count * this.vfxCountMultiplier));
+    for (let i = 0; i < count; i++) {
+        const p = this.particles[this.particleIdx];
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 600 + 200;
+        
+        p.active = true;
+        p.type = 'spark';
+        p.x = x;
+        p.y = y;
+        p.vx = Math.cos(angle) * speed;
+        p.vy = Math.sin(angle) * speed;
+        p.size = Math.random() * 12 + 4;
+        p.color = color;
+        p.rotation = angle;
+        p.life = 0.25 + Math.random() * 0.15;
+        p.maxLife = p.life;
+        
+        this.particleIdx = (this.particleIdx + 1) % MAX_PARTICLES;
+    }
+  }
+
+  spawnSmoke(x: number, y: number, color: string = 'rgba(100, 100, 100, 0.5)') {
+    const isLowQuality = this.engine && (this.engine.isMobile || !this.engine.highFidelityVFX);
+    let count = isLowQuality ? 2 : 5;
+    count = Math.max(1, Math.round(count * this.vfxCountMultiplier));
+    for (let i = 0; i < count; i++) {
+        const p = this.particles[this.particleIdx];
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 40 + 20;
+        
+        p.active = true;
+        p.type = 'smoke';
+        p.x = x + (Math.random() - 0.5) * 20;
+        p.y = y + (Math.random() - 0.5) * 20;
+        p.vx = Math.cos(angle) * speed;
+        p.vy = Math.sin(angle) * speed;
+        p.size = Math.random() * 30 + 20;
+        p.color = color;
+        p.rotation = Math.random() * Math.PI * 2;
+        p.life = 1.0 + Math.random() * 1.0;
+        p.maxLife = p.life;
+        
+        this.particleIdx = (this.particleIdx + 1) % MAX_PARTICLES;
+    }
+  }
+
+  spawnParticle(x: number, y: number, color: string, size: number = 5, life: number = 0.5) {
+    const p = this.particles[this.particleIdx];
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 200 + 50;
+    
+    p.active = true;
+    p.x = x;
+    p.y = y;
+    p.vx = Math.cos(angle) * speed;
+    p.vy = Math.sin(angle) * speed;
+    p.size = size;
+    p.color = color;
+    p.rotation = Math.random() * Math.PI * 2;
+    p.life = life;
+    p.maxLife = life;
+    
+    this.particleIdx = (this.particleIdx + 1) % MAX_PARTICLES;
   }
 }

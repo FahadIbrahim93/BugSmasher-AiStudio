@@ -484,28 +484,6 @@ export class BugRenderer {
       case 'healer':
         ctx.arc(0, 0, r * 0.75, 0, Math.PI * 2);
         break;
-      case 'sniper':
-        // Diamond with crosshair
-        ctx.moveTo(0, -r);
-        ctx.lineTo(r * 0.7, 0);
-        ctx.lineTo(0, r);
-        ctx.lineTo(-r * 0.7, 0);
-        ctx.closePath();
-        ctx.moveTo(0, -r * 0.5);
-        ctx.lineTo(0, r * 0.5);
-        ctx.moveTo(-r * 0.35, 0);
-        ctx.lineTo(r * 0.35, 0);
-        break;
-      case 'burrower':
-        // Hexagon with dot
-        for (let i = 0; i < 6; i++) {
-          const a = (i / 6) * Math.PI * 2 - Math.PI / 2;
-          ctx[i === 0 ? 'moveTo' : 'lineTo'](Math.cos(a) * r, Math.sin(a) * r);
-        }
-        ctx.closePath();
-        ctx.moveTo(0, -r * 0.3);
-        ctx.arc(0, 0, r * 0.3, 0, Math.PI * 2);
-        break;
       case 'boss':
         ctx.moveTo(0, -r);
         ctx.lineTo(r, 0);
@@ -575,10 +553,8 @@ export class BugRenderer {
       this.drawPhaseBody(bug);
     } else if (bug.type === 'ember') {
       this.drawEmberBody(bug);
-    } else if (bug.type === 'sniper') {
-      this.drawSniperBody(bug);
-    } else if (bug.type === 'burrower') {
-      this.drawBurrowerBody(bug);
+    } else if (bug.type === 'frost') {
+      this.drawFrostBody(bug);
     } else {
       this.drawBeetleBody(bug, legSwing);
     }
@@ -644,107 +620,184 @@ export class BugRenderer {
   private drawScoutBody(bug: Bug, legSwing: number) {
     const ctx = this.engine.ctx;
     const t = this.engine.globalTime;
-    const wingVibe = Math.sin(t * 40) * 10;
-    
-    // Wings (Translucent layered)
+    const wingVibe = Math.sin(t * 80) * 15; // Extremely rapid flutter
+
+    // 1. Transparent Wings
     ctx.save();
-    ctx.globalAlpha = 0.4;
-    for (let i = 0; i < 2; i++) {
-        const offset = i * 5;
-        ctx.fillStyle = bug.color;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.bezierCurveTo(-20, -10 + wingVibe, -40, 10 + offset, -10, 20);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.bezierCurveTo(20, -10 + wingVibe, 40, 10 + offset, 10, 20);
-        ctx.fill();
-    }
+    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = 'rgba(240, 240, 255, 0.6)';
+    ctx.strokeStyle = bug.color;
+    ctx.lineWidth = 1;
+
+    // Left wings
+    ctx.beginPath();
+    ctx.ellipse(-12, -8, 22, 10, -Math.PI/6 + wingVibe/80, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(-15, 2, 16, 7, -Math.PI/4 + wingVibe/100, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    // Right wings
+    ctx.beginPath();
+    ctx.ellipse(12, -8, 22, 10, Math.PI/6 - wingVibe/80, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(15, 2, 16, 7, Math.PI/4 - wingVibe/100, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
     ctx.restore();
 
-    // High-tech body
+    // 2. Organic Segmented Body
+    // Abdomen (gummy egg-shaped back)
+    const animScale = 1.0 + Math.sin(t * 10) * 0.05;
     ctx.fillStyle = bug.color;
     ctx.beginPath();
-    ctx.moveTo(0, -30);
-    ctx.lineTo(12, 5);
-    ctx.lineTo(0, 15);
-    ctx.lineTo(-12, 5);
-    ctx.closePath();
+    ctx.ellipse(0, 14 * animScale, 10, 18 * animScale, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Stripe detailing across abdomen
+    ctx.strokeStyle = '#050505';
+    ctx.lineWidth = 1.5;
+    for (let i = -1; i <= 2; i++) {
+      const sy = 14 + i * 5;
+      ctx.beginPath();
+      ctx.arc(0, sy, 9, Math.PI * 0.15, Math.PI * 0.85);
+      ctx.stroke();
+    }
+
+    // Thorax (midpart)
+    ctx.fillStyle = bug.color;
+    ctx.beginPath();
+    ctx.ellipse(0, -5, 8, 8, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Glowing thruster
-    const thrusterGlow = Math.abs(Math.sin(t * 20)) * 0.5 + 0.5;
-    ctx.fillStyle = `rgba(255, 255, 255, ${thrusterGlow})`;
-    ctx.beginPath(); ctx.arc(0, 15, 4, 0, Math.PI * 2); ctx.fill();
+    // Head
+    ctx.beginPath();
+    ctx.arc(0, -18, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Red bug eyes
+    ctx.fillStyle = '#ff3333';
+    ctx.beginPath();
+    ctx.arc(-4, -19, 2, 0, Math.PI * 2);
+    ctx.arc(4, -19, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Antennae
+    ctx.strokeStyle = bug.color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-3, -22);
+    ctx.quadraticCurveTo(-8, -32, -12, -35);
+    ctx.moveTo(3, -22);
+    ctx.quadraticCurveTo(8, -32, 12, -35);
+    ctx.stroke();
   }
 
   private drawTankBody(bug: Bug, legSwing: number) {
     const ctx = this.engine.ctx;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2.5;
     ctx.strokeStyle = bug.color;
 
-    // Heavy segmented legs
+    // Heavy segmented scuttling legs
     for (let i = 0; i < 3; i++) {
-        const y = -15 + i * 20;
-        const swing = (i % 2 === 0 ? legSwing : -legSwing) * 0.5;
-        this.drawLegSegment(-25, y, -1, swing, 20, 15);
-        this.drawLegSegment(25, y, 1, -swing, 20, 15);
+        const y = -12 + i * 16;
+        const swing = (i % 2 === 0 ? legSwing : -legSwing) * 0.6;
+        this.drawLegSegment(-18, y, -1, swing, 18, 12);
+        this.drawLegSegment(18, y, 1, -swing, 18, 12);
     }
 
-    // Armor Plates
+    // Heavy armor beetle shell plates
     ctx.fillStyle = bug.color;
     for (let i = 0; i < 4; i++) {
-        const y = -30 + i * 18;
-        const width = 25 - Math.abs(i - 1.5) * 4;
+        const y = -28 + i * 16;
+        const width = 22 - Math.abs(i - 1.5) * 3;
         ctx.beginPath();
-        ctx.roundRect(-width, y, width * 2, 15, 4);
+        ctx.ellipse(0, y, width, 12, 0, 0, Math.PI * 2);
         ctx.fill();
+        ctx.stroke();
         
-        // Highlight on each plate
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-        ctx.fillRect(-width + 2, y + 2, width * 2 - 4, 3);
+        // Highlight on carapace plates
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+        ctx.beginPath();
+        ctx.ellipse(0, y - 4, width * 0.8, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
         ctx.fillStyle = bug.color;
     }
 
-    // Side Turrets/Shields
-    this.drawSidePlates(bug);
+    // Massive organic Mandibles at the head
+    ctx.strokeStyle = bug.color;
+    ctx.lineWidth = 3.5;
+    const mandibleOpen = Math.sin(this.engine.globalTime * 8) * 0.15 + 0.15;
+    
+    ctx.save();
+    ctx.translate(0, -32);
+    // Left mandible curving inwards
+    ctx.beginPath();
+    ctx.arc(-6, 0, 15, Math.PI * 1.1 + mandibleOpen, Math.PI * 1.7 + mandibleOpen);
+    ctx.stroke();
+    // Right mandible
+    ctx.beginPath();
+    ctx.arc(6, 0, 15, Math.PI * 1.9 - mandibleOpen, Math.PI * 1.3 - mandibleOpen, true);
+    ctx.stroke();
+    ctx.restore();
   }
 
   private drawHealerBody(bug: Bug) {
     const ctx = this.engine.ctx;
     const t = this.engine.globalTime;
 
-    // Healing Aura
-    const auraAlpha = 0.15 + Math.sin(t * 5) * 0.05;
+    // Glimmering Healing Aura
+    const auraAlpha = 0.2 + Math.sin(t * 8) * 0.08;
     ctx.beginPath();
-    ctx.arc(0, 0, 50, 0, Math.PI * 2);
+    ctx.arc(0, 0, 60, 0, Math.PI * 2);
     ctx.fillStyle = `rgba(0, 255, 150, ${auraAlpha})`;
     ctx.fill();
 
-    // Mechanical Chassis
+    // 1. Fluttering wings
+    const swing = Math.sin(t * 30) * 12;
+    ctx.save();
+    ctx.globalAlpha = 0.7;
+    ctx.fillStyle = 'rgba(210, 255, 240, 0.55)';
+    ctx.strokeStyle = '#00ffcc';
+    ctx.lineWidth = 1;
+
+    ctx.beginPath();
+    ctx.ellipse(-14, -6, 25, 12, -Math.PI/6 + swing/100, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(14, -6, 25, 12, Math.PI/6 - swing/100, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
+
+    // 2. Pulsing bio-luminescent abdomen (the medicine sac)
+    const glowScale = 1.0 + Math.sin(t * 12) * 0.12;
     ctx.fillStyle = bug.color;
     ctx.beginPath();
-    ctx.roundRect(-8, -28, 16, 56, 8); // Vertical
-    ctx.roundRect(-28, -8, 56, 16, 8); // Horizontal
+    ctx.ellipse(0, 16, 11 * glowScale, 18 * glowScale, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Central Core
-    ctx.fillStyle = '#fff';
+    // Active glow light center
+    ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(0, 0, 8, 0, Math.PI * 2);
+    ctx.ellipse(0, 16, 6 * glowScale, 10 * glowScale, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Floating panels
-    for (let i = 0; i < 4; i++) {
-        const angle = t + (i * Math.PI / 2);
-        const dist = 35 + Math.sin(t * 4 + i) * 5;
-        ctx.save();
-        ctx.rotate(angle);
-        ctx.fillStyle = bug.color;
-        ctx.fillRect(dist, -5, 10, 10);
-        ctx.restore();
-    }
+    // Thorax
+    ctx.fillStyle = bug.color;
+    ctx.beginPath();
+    ctx.ellipse(0, -6, 8, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Head
+    ctx.beginPath();
+    ctx.arc(0, -18, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Glowing green bug eyes
+    ctx.fillStyle = '#00ffcc';
+    ctx.beginPath();
+    ctx.arc(-3, -19, 1.8, 0, Math.PI * 2);
+    ctx.arc(3, -19, 1.8, 0, Math.PI * 2);
+    ctx.fill();
 
     if (bug.isHealing) {
       this.drawHealingPulses(bug);
@@ -777,54 +830,80 @@ export class BugRenderer {
   private drawSwarmerBody(bug: Bug) {
     const ctx = this.engine.ctx;
     const t = this.engine.globalTime;
-    const spines = bug.type === 'mini' ? 4 : 8;
-    
-    ctx.fillStyle = bug.color;
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 1;
 
-    ctx.beginPath();
-    for (let i = 0; i < spines * 2; i++) {
-        const isSpike = i % 2 === 0;
-        const r = isSpike ? 28 : 14;
-        const angle = (i / (spines * 2)) * Math.PI * 2 + (t * 4);
-        const method = i === 0 ? 'moveTo' : 'lineTo';
-        ctx[method](Math.cos(angle) * r, Math.sin(angle) * r);
+    // Organic little spider/ant body
+    ctx.fillStyle = bug.color;
+    ctx.strokeStyle = '#050505';
+    ctx.lineWidth = 1.5;
+
+    // 1. Leg motion
+    const legsCount = 4; // 4 pairs of legs
+    const legVibe = Math.sin(t * 22) * 8;
+    for (let i = 0; i < legsCount; i++) {
+        const y = -8 + i * 8;
+        const swing = (i % 2 === 0 ? legVibe : -legVibe);
+        
+        ctx.beginPath();
+        ctx.moveTo(-10, y);
+        ctx.quadraticCurveTo(-18, y - 5 + swing, -28, y - 2 + swing);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(10, y);
+        ctx.quadraticCurveTo(18, y - 5 - swing, 28, y - 2 - swing);
+        ctx.stroke();
     }
-    ctx.closePath();
+
+    // 2. Abdomen segment (egg shaped)
+    ctx.beginPath();
+    ctx.ellipse(0, 10, 8, 12, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
-    // Inner core
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fill();
+    // 3. Thorax & Head
+    ctx.beginPath();
+    ctx.arc(0, -5, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(0, -14, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
   }
 
   private drawPhaseBody(bug: Bug) {
     const ctx = this.engine.ctx;
     const t = this.engine.globalTime;
-    const alpha = 0.5 + Math.sin(t * 12) * 0.4;
+    const alpha = 0.45 + Math.sin(t * 12) * 0.25;
     
+    ctx.save();
     ctx.globalAlpha = alpha;
     ctx.fillStyle = bug.color;
-    
-    // Shifting geometric shards
-    for (let i = 0; i < 3; i++) {
-        ctx.save();
-        ctx.rotate(t * 2 + i);
-        ctx.beginPath();
-        ctx.moveTo(0, -25);
-        ctx.lineTo(15, 15);
-        ctx.lineTo(-15, 15);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
-    }
-    
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(0, 0, 30, 0, Math.PI * 2); ctx.stroke();
-    ctx.globalAlpha = 1.0;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.lineWidth = 1.5;
+
+    // Head-Thorax-Abdomen Ghost contours
+    ctx.beginPath();
+    ctx.ellipse(0, 12, 11, 15, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    ctx.beginPath();
+    ctx.ellipse(0, -4, 9, 8, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(0, -16, 7, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    // Subtle shifting ghost shield ring
+    ctx.strokeStyle = bug.color;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(0, 0, 24 + Math.sin(t * 8) * 4, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.restore();
   }
 
   private drawEmberBody(bug: Bug) {
@@ -885,205 +964,6 @@ export class BugRenderer {
     ctx.fill();
   }
 
-
-  drawSniperBody(bug: Bug) {
-    const ctx = this.engine.ctx;
-    const t = this.engine.globalTime;
-    const isCharging = !!bug.isCharging;
-
-    // Elongated sniper body — lean and aerodynamic
-    ctx.fillStyle = bug.color;
-
-    // Tail/abdomen
-    ctx.beginPath();
-    ctx.ellipse(0, 10, 12, 18, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Thorax
-    ctx.beginPath();
-    ctx.ellipse(0, -5, 10, 12, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Head
-    ctx.beginPath();
-    ctx.arc(0, -20, 9, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Sniper barrel (long aiming appendage)
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
-    const aimAngle = Math.atan2(this.engine.coreY - bug.y, this.engine.coreX - bug.x);
-    ctx.save();
-    ctx.rotate(aimAngle);
-    ctx.beginPath();
-    ctx.moveTo(5, -22);
-    ctx.lineTo(5, -42);
-    ctx.lineTo(-5, -42);
-    ctx.lineTo(-5, -22);
-    ctx.closePath();
-    ctx.stroke();
-
-    // Barrel tip glow when charging
-    if (isCharging) {
-      const glowPulse = Math.abs(Math.sin(t * 20)) * 0.8 + 0.2;
-      ctx.fillStyle = `rgba(255, 50, 50, ${glowPulse})`;
-      ctx.beginPath();
-      ctx.arc(0, -42, 4 + glowPulse * 3, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Charge beam indicator
-      ctx.strokeStyle = `rgba(255, 0, 0, ${glowPulse * 0.3})`;
-      ctx.setLineDash([4, 6]);
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(0, -42);
-      ctx.lineTo(0, -120);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-    ctx.restore();
-
-    // Long spindly legs
-    ctx.strokeStyle = bug.color;
-    ctx.lineWidth = 1.5;
-    for (let i = 0; i < 3; i++) {
-      const y = -5 + i * 10;
-      const swing = Math.sin(bug.walkCycle + i) * 10;
-      ctx.beginPath();
-      ctx.moveTo(-8, y);
-      ctx.lineTo(-20, y + 10 + swing);
-      ctx.lineTo(-15, y + 20 + swing);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(8, y);
-      ctx.lineTo(20, y + 10 - swing);
-      ctx.lineTo(15, y + 20 - swing);
-      ctx.stroke();
-    }
-  }
-
-  drawBurrowerBody(bug: Bug) {
-    const ctx = this.engine.ctx;
-    const t = this.engine.globalTime;
-    const isBurrowed = !!bug.isBurrowed;
-
-    if (isBurrowed) {
-      // Subtle ground disturbance — only a faint mound/crack visible
-      ctx.globalAlpha = 0.3;
-      ctx.fillStyle = '#8B6914';
-      ctx.strokeStyle = '#aa8833';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.ellipse(0, 5, 20, 10, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-
-      // Moving dirt particles
-      const dirtPhase = Math.sin(t * 10 + bug.offsetTime) * 0.5 + 0.5;
-      ctx.fillStyle = `rgba(139, 105, 20, ${dirtPhase * 0.5})`;
-      for (let i = 0; i < 3; i++) {
-        const dx = Math.sin(t * 8 + i * 2) * 15;
-        const dy = Math.cos(t * 7 + i * 3) * 5;
-        ctx.beginPath();
-        ctx.arc(dx, dy + 8, 2 + dirtPhase, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // Directional indicator (faint arrow toward core)
-      const aimAngle = Math.atan2(this.engine.coreY - bug.y, this.engine.coreX - bug.x);
-      ctx.strokeStyle = 'rgba(200, 150, 50, 0.2)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(0, 5);
-      ctx.lineTo(Math.cos(aimAngle) * 15, Math.sin(aimAngle) * 15 + 5);
-      ctx.stroke();
-
-      ctx.globalAlpha = 1.0;
-    } else {
-      // Emerged — insectoid digging form with mandibles
-      ctx.fillStyle = bug.color;
-
-      // Thick armored abdomen
-      ctx.beginPath();
-      ctx.ellipse(0, 12, 18, 14, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Thorax
-      ctx.beginPath();
-      ctx.ellipse(0, -2, 14, 10, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Head with digging mandibles
-      ctx.beginPath();
-      ctx.arc(0, -16, 10, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Large digging mandibles (open/close animation)
-      const mandAngle = Math.sin(t * 15) * 0.3 + 0.5;
-      ctx.strokeStyle = bug.color;
-      ctx.lineWidth = 3;
-      ctx.save();
-      ctx.rotate(-mandAngle);
-      ctx.beginPath();
-      ctx.moveTo(0, -20);
-      ctx.lineTo(-18, -30);
-      ctx.stroke();
-      ctx.restore();
-      ctx.save();
-      ctx.rotate(mandAngle);
-      ctx.beginPath();
-      ctx.moveTo(0, -20);
-      ctx.lineTo(18, -30);
-      ctx.stroke();
-      ctx.restore();
-
-      // Armored digging claws (front legs)
-      ctx.lineWidth = 2;
-      for (let side of [-1, 1]) {
-        ctx.beginPath();
-        ctx.moveTo(side * 10, -5);
-        ctx.lineTo(side * 25, -15);
-        ctx.lineTo(side * 30, -5);
-        ctx.stroke();
-      }
-
-      // Back legs
-      ctx.lineWidth = 1.5;
-      for (let i = 0; i < 2; i++) {
-        const y = 5 + i * 10;
-        const swing = Math.sin(bug.walkCycle + i * 2) * 8;
-        ctx.beginPath();
-        ctx.moveTo(-10, y);
-        ctx.lineTo(-22, y + 8 + swing);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(10, y);
-        ctx.lineTo(22, y + 8 - swing);
-        ctx.stroke();
-      }
-
-      // Angry glowing eyes
-      ctx.fillStyle = '#ff3300';
-      ctx.beginPath();
-      ctx.arc(-4, -20, 2.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(4, -20, 2.5, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Emerge timer indicator (pulsing ring)
-      if (bug.emergeTimer && bug.emergeTimer > 0) {
-        const emergePulse = Math.sin(t * 8) * 0.3 + 0.7;
-        ctx.strokeStyle = `rgba(255, 100, 0, ${emergePulse})`;
-        ctx.lineWidth = 2;
-        ctx.setLineDash([3, 5]);
-        ctx.beginPath();
-        ctx.arc(0, 0, 30, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-    }
-  }
 
   drawSidePlates(bug: Bug) {
     const ctx = this.engine.ctx;

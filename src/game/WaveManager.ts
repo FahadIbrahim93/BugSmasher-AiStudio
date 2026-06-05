@@ -20,10 +20,6 @@ export class WaveManager {
   difficultySpeedMultiplier: number = 1;
   difficultyHpMultiplier: number = 1;
 
-  // Wave modifiers
-  waveModifier: string | null = null;
-  waveModifierTimer: number = 0;
-
   constructor(engine: GameEngine) {
     this.engine = engine;
   }
@@ -49,15 +45,6 @@ export class WaveManager {
         this.bugsToSpawn = GameConfig.waves.baseBugs + this.engine.wave * GameConfig.waves.bugsPerWave + perfBonus;
     }
     
-    // Roll wave modifier (20% chance, not on boss waves)
-    if (!this.isBossWave && Math.random() < 0.2) {
-      const modifiers = ['no_healers', 'armored', 'swarm', 'toxic_regen'];
-      this.waveModifier = modifiers[Math.floor(Math.random() * modifiers.length)];
-      this.waveModifierTimer = 0;
-    } else {
-      this.waveModifier = null;
-    }
-
     this.spawnTimer = 0;
     this.intensity = 1;
     this.intensityTimer = 0;
@@ -71,9 +58,13 @@ export class WaveManager {
   }
 
   private updateBiome() {
+    const oldBiome = this.engine.currentBiome;
+    if (oldBiome === 'custom_map') {
+      // Keep custom map selection active throughout the session
+      return;
+    }
     const wave = this.engine.wave;
     const prestige = this.engine.prestigeLevel;
-    const oldBiome = this.engine.currentBiome;
     
     if (prestige >= 3 && wave >= 30) this.engine.currentBiome = 'golden_spire';
     else if (wave >= 40) this.engine.currentBiome = 'void_abyss';
@@ -135,20 +126,21 @@ export class WaveManager {
           }
       }
 
-    // Apply intensity and surge multipliers
-    spawnRate /= (this.intensity * (this.surgeActive ? (1 + this.engine.performanceFactor) : 1));
+      // Dynamic spawn speed amplification: scaling up to 2.5x speed based on player's current combo count
+      const comboSpawnRateFactor = 1 + Math.min(1.5, (this.engine.streakCount * 0.035) * (1 + this.engine.wave * 0.02));
+      spawnRate /= (this.intensity * (this.surgeActive ? (1 + this.engine.performanceFactor) : 1) * comboSpawnRateFactor);
     
-    if (this.spawnTimer > spawnRate) {
-      this.spawnTimer = 0;
-      // Group sizes scale with performance
-      const baseGroup = this.surgeActive ? 2 : 1;
-      // Don't add extra group from performance - this compounds the feedback loop
-      const groupSize = baseGroup;
-      
-      for (let i = 0; i < groupSize; i++) {
-        if (this.bugsToSpawn > 0) this.spawnBug();
+      if (this.spawnTimer > spawnRate) {
+        this.spawnTimer = 0;
+        // Group sizes scale with performance and surges
+        const baseGroup = this.surgeActive ? 2 : 1;
+        
+        for (let i = 0; i < baseGroup; i++) {
+          if (this.bugsToSpawn > 0) {
+            this.spawnBugPattern();
+          }
+        }
       }
-    }
     } else if (this.engine.bugs.length === 0) {
       this.waveActive = false;
       this.engine.wave++;
@@ -189,11 +181,134 @@ export class WaveManager {
     this.engine.bugs.push(this.createBug(this.decideType(this.engine.wave), this.engine.wave));
   }
 
+  /**
+   * Coordinated spawning configurations that scale with combo count.
+   * Leverages geometric clusters, flank operations, and pinch arrays.
+   */
+  private spawnBugPattern() {
+    if (this.bugsToSpawn <= 0) return;
+    const combo = this.engine.streakCount;
+    const r = Math.random();
+
+    // Decide if we should execute a special spatial spawn pattern based on combo levels
+    if (combo >= 40 && r < 0.40) {
+      // Apex Swarm flank assault: 4 bugs spawning simultaneously from all four sides of the screen
+      const count = Math.min(4, this.bugsToSpawn);
+      if (count <= 0) return;
+
+      const bugType = this.decideType(this.engine.wave);
+      const width = this.engine.width;
+      const height = this.engine.height;
+      const margin = 100;
+      
+      const positions = [
+        { x: width / 2, y: -margin }, // Top
+        { x: width + margin, y: height / 2 }, // Right
+        { x: width / 2, y: height + margin }, // Bottom
+        { x: -margin, y: height / 2 } // Left
+      ];
+
+      for (let i = 0; i < count; i++) {
+        if (this.bugsToSpawn <= 0) break;
+        this.bugsToSpawn--;
+        const pos = positions[i];
+        this.engine.bugs.push(this.createBug(bugType, this.engine.wave, pos.x, pos.y));
+      }
+      
+      // Dramatic visual pulse to accompany full flank raid
+      this.engine.particleSystem.spawnShockwave(width / 2, height / 2, '#06b6d5', 50);
+
+    } else if (combo >= 25 && r < 0.35) {
+      // Delta-Formation / Triangle wedge: 3 bugs in precise spatial alignment
+      const count = Math.min(3, this.bugsToSpawn);
+      if (count <= 0) return;
+
+      const bugType = this.decideType(this.engine.wave);
+      const edge = Math.floor(Math.random() * 4);
+      const width = this.engine.width;
+      const height = this.engine.height;
+      const margin = 100;
+
+      let bx = 0, by = 0;
+      let ox = 0, oy = 0;
+      
+      if (edge === 0) { // Top
+        bx = Math.random() * (width - 200) + 100;
+        by = -margin;
+        ox = 70; oy = -30;
+      } else if (edge === 1) { // Right
+        bx = width + margin;
+        by = Math.random() * (height - 200) + 100;
+        ox = 30; oy = 70;
+      } else if (edge === 2) { // Bottom
+        bx = Math.random() * (width - 200) + 100;
+        by = height + margin;
+        ox = 70; oy = 30;
+      } else { // Left
+        bx = -margin;
+        by = Math.random() * (height - 200) + 100;
+        ox = -30; oy = 70;
+      }
+
+      const offsets = [
+        { dx: 0, dy: 0 },
+        { dx: -ox, dy: -oy },
+        { dx: ox, dy: oy }
+      ];
+
+      for (let i = 0; i < count; i++) {
+        if (this.bugsToSpawn <= 0) break;
+        this.bugsToSpawn--;
+        this.engine.bugs.push(this.createBug(bugType, this.engine.wave, bx + offsets[i].dx, by + offsets[i].dy));
+      }
+
+    } else if (combo >= 10 && r < 0.30) {
+      // Twin Pinch: 2 bugs attacking from completely opposing screen boundaries
+      const count = Math.min(2, this.bugsToSpawn);
+      if (count <= 0) return;
+
+      const bugType1 = this.decideType(this.engine.wave);
+      const bugType2 = this.decideType(this.engine.wave);
+      const width = this.engine.width;
+      const height = this.engine.height;
+      const margin = 100;
+
+      const isHorizontal = Math.random() > 0.5;
+      if (isHorizontal) {
+        const ly = Math.random() * (height - 120) + 60;
+        const ry = Math.random() * (height - 120) + 60;
+        
+        if (this.bugsToSpawn > 0) {
+          this.bugsToSpawn--;
+          this.engine.bugs.push(this.createBug(bugType1, this.engine.wave, -margin, ly));
+        }
+        if (this.bugsToSpawn > 0) {
+          this.bugsToSpawn--;
+          this.engine.bugs.push(this.createBug(bugType2, this.engine.wave, width + margin, ry));
+        }
+      } else {
+        const tx = Math.random() * (width - 120) + 60;
+        const bx = Math.random() * (width - 120) + 60;
+        
+        if (this.bugsToSpawn > 0) {
+          this.bugsToSpawn--;
+          this.engine.bugs.push(this.createBug(bugType1, this.engine.wave, tx, -margin));
+        }
+        if (this.bugsToSpawn > 0) {
+          this.bugsToSpawn--;
+          this.engine.bugs.push(this.createBug(bugType2, this.engine.wave, bx, height + margin));
+        }
+      }
+
+    } else {
+      // Standard spawn behavior for calm combo periods
+      this.spawnBug();
+    }
+  }
+
   public spawnSpecificMinion(x: number, y: number) {
       const type = Math.random() > 0.5 ? 'mini' : 'scout';
-      const bug = this.createBug(type, this.engine.wave);
-      bug.x = x;
-      bug.y = y;
+      const bug = this.createBug(type, this.engine.wave, x, y);
       this.engine.bugs.push(bug);
       this.engine.particleSystem.spawnShockwave(x, y, '#ff0000', 40);
   }
@@ -201,75 +316,99 @@ export class WaveManager {
   private decideType(wave: number): string {
     const biome = this.engine.currentBiome;
     const r = Math.random();
+    const combo = this.engine.streakCount;
     
-    if (wave < 3) return 'basic';
-    
+    // Skill-based boost: high combos push effective wave complexity higher
+    const comboWaveBoost = Math.floor(combo / 5);
+    const effectiveWave = wave + comboWaveBoost;
+
     // Biome specific weighting
-    if (biome === 'quantum_void' && r < 0.3) return 'phase';
-    if (biome === 'ember_depths' && r < 0.4) return 'tank';
-    if (biome === 'ember_depths' && r < 0.2) return 'ember';
-    if (biome === 'frostbyte' && r < 0.4) return 'scout';
-    if (biome === 'frostbyte' && r < 0.2) return 'frost';
-    if (biome === 'void_abyss' && r < 0.4) return 'ghost';
-    if (biome === 'void_abyss' && r < 0.2) return 'phase';
-    
-    // Special units chance
-    const healerWeight = this.engine.challengeModifiers?.healerSpawnMultiplier || 1;
-    if (wave > 8 && r < 0.05 * healerWeight && this.waveModifier !== 'no_healers') return 'healer';
-
-    // Wave modifier: swarm replaces most types with double basic
-    if (this.waveModifier === 'swarm') {
-      return Math.random() < 0.7 ? 'basic' : 'scout';
+    if (biome === 'quantum_void' && (r < 0.3 || (combo > 15 && r < 0.5))) return 'phase';
+    if (biome === 'ember_depths') {
+      if (r < 0.4 || (combo > 15 && r < 0.6)) return 'tank';
+      if (r < 0.2 || (combo > 10 && r < 0.35)) return 'ember';
     }
-
-    // Sniper enemy — unlocked from wave 7
-    if (wave >= 7 && Math.random() < 0.08) return 'sniper';
-    // Burrower enemy — unlocked from wave 12
-    if (wave >= 12 && Math.random() < 0.06) return 'burrower';
+    if (biome === 'frostbyte') {
+      if (r < 0.4) return 'scout';
+      if (r < 0.2 || (combo > 12 && r < 0.40)) return 'frost';
+    }
+    if (biome === 'void_abyss') {
+      if (r < 0.4 || (combo > 15 && r < 0.55)) return 'ghost';
+      if (r < 0.2 || (combo > 10 && r < 0.35)) return 'phase';
+    }
+    
+    // Healer chance with combo weighting
+    const healerWeight = this.engine.challengeModifiers?.healerSpawnMultiplier || 1;
+    const healerCutoff = 0.05 * healerWeight + (combo > 20 ? 0.08 : 0);
+    if (effectiveWave > 8 && r < healerCutoff) return 'healer';
 
     const types = ['basic', 'scout', 'tank', 'swarmer', 'ghost', 'phase', 'ember', 'frost'];
-    if (wave < 6) return r < 0.6 ? 'basic' : (r < 0.8 ? 'scout' : 'swarmer');
-    // Challenge modifier: tank_wave increases tank spawn rate
+    
+    // Early wave scaling with combo challenge overrides
+    if (wave < 3) {
+      if (combo > 8 && r < 0.4) {
+        return r < 0.2 ? 'swarmer' : 'scout';
+      }
+      return 'basic';
+    }
+    
+    if (effectiveWave < 6) {
+      return r < 0.5 ? 'basic' : (r < 0.85 ? 'scout' : 'swarmer');
+    }
+    
     const tankWeight = this.engine.challengeModifiers?.tankSpawnMultiplier || 1;
-
-    if (wave < 12) {
-        if (r < 0.3) return 'basic';
-        if (r < 0.5) return 'scout';
-        if (r < 0.7) return 'swarmer';
-        if (r < 0.7 + 0.2 * tankWeight) return 'tank';
+    if (effectiveWave < 12) {
+        if (r < 0.25) return 'basic';
+        if (r < 0.45) return 'scout';
+        if (r < 0.65) return 'swarmer';
+        if (r < 0.65 + 0.2 * tankWeight + (combo > 15 ? 0.1 : 0)) return 'tank';
         return 'ghost';
     }
     
-    // Late game mix
+    // High combo Apex mix
+    if (combo > 30 && r < 0.7) {
+      const eliteTypes = ['tank', 'swarmer', 'ghost', 'phase', 'ember', 'frost', 'healer'];
+      return eliteTypes[Math.floor(Math.random() * eliteTypes.length)];
+    }
+
     const idx = Math.floor(Math.random() * types.length);
     return types[idx];
   }
 
-  private createBug(typeName: string, wave: number): Bug {
-    const edge = Math.floor(Math.random() * 4);
+  private createBug(typeName: string, wave: number, xOverride?: number, yOverride?: number): Bug {
     let x = 0, y = 0;
     const margin = 100;
-    if (edge === 0) { x = Math.random() * this.engine.width; y = -margin; }
-    else if (edge === 1) { x = this.engine.width + margin; y = Math.random() * this.engine.height; }
-    else if (edge === 2) { x = Math.random() * this.engine.width; y = this.engine.height + margin; }
-    else { x = -margin; y = Math.random() * this.engine.height; }
+    
+    if (xOverride !== undefined && yOverride !== undefined) {
+      x = xOverride;
+      y = yOverride;
+    } else {
+      const edge = Math.floor(Math.random() * 4);
+      if (edge === 0) { x = Math.random() * this.engine.width; y = -margin; }
+      else if (edge === 1) { x = this.engine.width + margin; y = Math.random() * this.engine.height; }
+      else if (edge === 2) { x = Math.random() * this.engine.width; y = this.engine.height + margin; }
+      else { x = -margin; y = Math.random() * this.engine.height; }
+    }
 
     const bugsConfig = GameConfig.bugs as unknown as Record<string, { color: string; size: number; baseHp: number; hpPerWave: number; baseSpeed: number; speedPerWave: number; score: number }>;
     const conf = bugsConfig[typeName];
     
-    // Scale stats by both Wave and Performance
-    const scaling = 1 + (wave * 0.05) + (this.engine.performanceFactor - 1.0);
+    // Scale stats by both Wave, Performance Factor and Combo Count
     const hp = Math.floor(
       (conf.baseHp + Math.floor(wave * conf.hpPerWave)) *
         (1 + (this.engine.performanceFactor - 1) * 0.5) *
         this.difficultyHpMultiplier
     );
+
+    // Highly responsive bug movement speed: escalates with player combo up to an extra 45% speedup at 50 hit streak
+    const comboSpeedMultiplier = 1 + Math.min(0.45, this.engine.streakCount * 0.009);
     const speed =
       (conf.baseSpeed + wave * conf.speedPerWave) *
       (1 + (this.engine.performanceFactor - 1) * 0.2) *
-      this.difficultySpeedMultiplier;
+      this.difficultySpeedMultiplier *
+      comboSpeedMultiplier;
 
-    const bug: Bug = {
+    return {
       active: true,
       x, y,
       type: typeName,
@@ -284,18 +423,5 @@ export class WaveManager {
       offsetTime: Math.random() * 100,
       hitTimer: 0
     };
-
-    // Apply wave modifier effects
-    if (this.waveModifier === 'armored') {
-      bug.armor = 0.5; // 50% damage reduction
-      bug.color = '#888888'; // Grey metallic tint
-    }
-
-    // Apply challenge frostbite modifier
-    if (this.engine.challengeModifiers?.frostbiteActive && typeName !== 'boss') {
-      bug.color = '#aaddff';
-    }
-
-    return bug;
   }
 }
