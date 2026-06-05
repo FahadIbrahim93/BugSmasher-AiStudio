@@ -4,6 +4,7 @@
  */
 
 export type AnalyticsEvent =
+  // Core gameplay (9)
   | 'session_start'
   | 'session_end'
   | 'wave_complete'
@@ -12,7 +13,47 @@ export type AnalyticsEvent =
   | 'powerup_collected'
   | 'daily_challenge_start'
   | 'settings_changed'
-  | 'achievement_unlocked';
+  | 'achievement_unlocked'
+  // Retention (7)
+  | 'login_streak_day'
+  | 'login_streak_broken'
+  | 'mission_started'
+  | 'mission_completed'
+  | 'mission_claimed'
+  | 'daily_reward_claimed'
+  | 'app_returned_from_background'
+  // Monetization (8)
+  | 'ad_impression'
+  | 'ad_clicked'
+  | 'ad_skipped'
+  | 'rewarded_ad_offered'
+  | 'rewarded_ad_watched'
+  | 'rewarded_ad_declined'
+  | 'iap_initiated'
+  | 'iap_purchased'
+  | 'iap_failed'
+  // Social (6)
+  | 'score_shared'
+  | 'referral_link_generated'
+  | 'referral_link_shared'
+  | 'referral_completed'
+  | 'friend_challenge_sent'
+  | 'friend_challenge_completed'
+  // Onboarding (4)
+  | 'tutorial_started'
+  | 'tutorial_step_completed'
+  | 'tutorial_completed'
+  | 'tutorial_skipped'
+  // Progression (5)
+  | 'biome_unlocked'
+  | 'prestige_initiated'
+  | 'prestige_completed'
+  | 'level_up'
+  | 'custom_map_created'
+  // Technical (3)
+  | 'error_caught'
+  | 'performance_low_fps'
+  | 'app_crashed';
 
 export interface AnalyticsPayload {
   [key: string]: string | number | boolean | undefined;

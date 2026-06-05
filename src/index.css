@@ -855,3 +855,350 @@ button:hover .theme-preview-particle:nth-child(6) {
   animation-delay: -4s;
   animation-duration: 4.8s;
 }
+
+/* ============================================================================
+   LOGIN STREAK WIDGET
+   ============================================================================ */
+.login-streak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  background: linear-gradient(135deg, rgba(255,107,107,0.2), rgba(255,159,64,0.2));
+  border: 1px solid rgba(255,159,64,0.4);
+  border-radius: 999px;
+  font-family: 'Orbitron', monospace;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.login-streak-badge:hover {
+  transform: scale(1.05);
+  border-color: rgba(255,159,64,0.7);
+}
+
+.streak-icon { font-size: 1.1rem; }
+.streak-count { font-weight: 700; color: #ff9f40; font-size: 1rem; }
+.streak-label { font-size: 0.75rem; color: rgba(255,255,255,0.7); }
+
+.login-streak-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.login-streak-modal {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border: 1px solid rgba(255,159,64,0.4);
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 28rem;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  color: white;
+}
+
+.login-streak-title {
+  text-align: center;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #ff9f40;
+}
+
+.login-streak-current {
+  text-align: center;
+  margin: 1rem 0 1.5rem;
+}
+
+.login-streak-current .big-number {
+  font-size: 4rem;
+  font-weight: 800;
+  color: #ff9f40;
+  line-height: 1;
+}
+
+.login-streak-current .label {
+  display: block;
+  font-size: 0.875rem;
+  color: rgba(255,255,255,0.6);
+  margin-top: 0.5rem;
+}
+
+.login-streak-rewards-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+  margin: 1.5rem 0;
+}
+
+.reward-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem 0.25rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 0.5rem;
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+.reward-cell.past {
+  opacity: 0.4;
+  border-color: rgba(76,175,80,0.3);
+}
+
+.reward-cell.current {
+  border-color: #ff9f40;
+  background: rgba(255,159,64,0.15);
+  transform: scale(1.05);
+}
+
+.reward-icon { font-size: 1.25rem; margin-bottom: 0.25rem; }
+.reward-day { color: rgba(255,255,255,0.8); }
+.reward-crystals { color: #4fc3f7; font-weight: 700; }
+
+.login-streak-claim-box, .login-streak-next {
+  text-align: center;
+  padding: 1rem;
+  background: rgba(255,159,64,0.1);
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+}
+
+.claim-button {
+  display: block;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #ff9f40, #ff6b6b);
+  border: none;
+  border-radius: 0.5rem;
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.claim-button:hover { opacity: 0.9; }
+
+.login-streak-longest {
+  text-align: center;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.5);
+  margin-top: 1rem;
+}
+
+.login-streak-next .hint {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.5);
+  margin-top: 0.25rem;
+}
+
+/* ============================================================================
+   MISSION PANEL
+   ============================================================================ */
+.mission-panel {
+  padding: 1rem;
+  background: rgba(0,0,0,0.4);
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.mission-section { margin-bottom: 1.5rem; }
+.mission-section:last-child { margin-bottom: 0; }
+
+.mission-section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1rem;
+  color: #4fc3f7;
+  margin-bottom: 0.75rem;
+}
+
+.mission-counter {
+  font-size: 0.75rem;
+  background: rgba(79,195,247,0.15);
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+}
+
+.mission-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.mission-row.completed { border-color: rgba(76,175,80,0.4); background: rgba(76,175,80,0.08); }
+.mission-row.claimed { opacity: 0.5; }
+
+.mission-icon { font-size: 1.5rem; flex-shrink: 0; }
+.mission-body { flex: 1; min-width: 0; }
+
+.mission-desc { font-size: 0.875rem; margin-bottom: 0.4rem; }
+
+.mission-progress-bar {
+  height: 4px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 0.25rem;
+}
+
+.mission-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4fc3f7, #00e676);
+  transition: width 0.3s;
+}
+
+.mission-progress-text {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.5);
+}
+
+.mission-reward { flex-shrink: 0; text-align: right; }
+
+.claim-btn {
+  padding: 0.4rem 0.75rem;
+  background: linear-gradient(135deg, #4fc3f7, #00e676);
+  border: none;
+  border-radius: 0.4rem;
+  color: #000;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8rem;
+}
+
+.claim-btn:hover { opacity: 0.9; }
+
+.claimed-badge { color: #4caf50; font-size: 0.75rem; font-weight: 700; }
+.reward-amount { color: #4fc3f7; font-weight: 700; font-size: 0.875rem; }
+
+/* ============================================================================
+   TUTORIAL OVERLAY
+   ============================================================================ */
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+}
+
+.tutorial-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(4px);
+}
+
+.tutorial-card {
+  position: relative;
+  background: linear-gradient(135deg, #1a1a2e, #0f3460);
+  border: 1px solid rgba(79,195,247,0.4);
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 32rem;
+  width: 100%;
+  color: white;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.tutorial-card.position-top { align-self: flex-start; margin-top: 4rem; }
+.tutorial-card.position-bottom { align-self: flex-end; margin-bottom: 4rem; }
+.tutorial-card.position-left { margin-right: auto; }
+.tutorial-card.position-right { margin-left: auto; }
+
+.tutorial-step-indicator {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5rem;
+}
+
+.tutorial-step-title {
+  font-size: 1.5rem;
+  color: #4fc3f7;
+  margin-bottom: 1rem;
+}
+
+.tutorial-step-body {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 1.5rem;
+}
+
+.tutorial-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.tutorial-dots {
+  display: flex;
+  gap: 0.4rem;
+  flex: 1;
+  justify-content: center;
+}
+
+.tutorial-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  transition: all 0.2s;
+}
+
+.tutorial-dot.active { background: #4fc3f7; transform: scale(1.3); }
+.tutorial-dot.past { background: rgba(76,175,80,0.6); }
+
+.tutorial-nav-buttons { display: flex; gap: 0.5rem; }
+
+.tutorial-btn {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 0.4rem;
+  color: white;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tutorial-btn:hover { background: rgba(255,255,255,0.1); }
+
+.tutorial-btn-skip {
+  background: transparent;
+  color: rgba(255,255,255,0.5);
+  border: none;
+}
+
+.tutorial-btn-skip:hover { color: rgba(255,255,255,0.8); }
+
+.tutorial-btn-next {
+  background: linear-gradient(135deg, #4fc3f7, #00e676);
+  color: #000;
+  border: none;
+  font-weight: 700;
+}
+
+.tutorial-btn-next:hover { opacity: 0.9; }
