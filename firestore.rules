@@ -1,20 +1,37 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 1. User Profiles: Only the authenticated owner can read or write
+    
+    // Default fallback: deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // 1. Users collection and its subcollections nested
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+
+      // 2. Private subcollection (progression, story, saves)
+      match /private/{document} {
+        allow read, write: if isSignedIn() && request.auth.uid == userId;
+      }
     }
 
-    // 2. User Private Subcollections (saves, progression, story): Only the authenticated owner can read or write
-    match /users/{userId}/private/{document} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // 3. Leaderboard entries: Publicly readable, but only the authenticated owner can write their own entry
+    // 3. Leaderboard entries: Publicly readable, but owner-writable
     match /leaderboard/{userId} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // 4. Test connection fallback check
+    match /test/{document} {
+      allow read: if true;
     }
   }
 }
+

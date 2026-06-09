@@ -4,9 +4,6 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { Preloader } from './components/Preloader';
 import { AchievementToast } from './components/AchievementToast';
 import { CustomCursor } from './components/CustomCursor';
-import { TutorialOverlay } from './components/TutorialOverlay';
-import { LoginStreakManager } from './game/LoginStreakManager';
-import { analytics } from './lib/analytics';
 import type { ChallengeModifierId } from './game/DailyChallengeManager';
 import type { GameModeId } from './game/GameMode';
 
@@ -22,7 +19,6 @@ export default function App() {
   const [gameMode, setGameMode] = useState<GameModeId>('standard');
   const [friendChallenge, setFriendChallenge] = useState<{ score: number; wave: number } | null>(null);
   const [customBiome, setCustomBiome] = useState<string | undefined>(undefined);
-  const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -33,30 +29,11 @@ export default function App() {
     }
   }, []);
 
-  useEffect(() => {
-    const result = LoginStreakManager.checkIn();
-    if (result.isNewDay && result.streak > 1) {
-      analytics.track('login_streak_day', { streak: result.streak, isMilestone: result.isMilestone });
-    }
-  }, []);
-
-  useEffect(() => {
-    if (gameState === 'menu' && !showTutorial) {
-      const completed = localStorage.getItem('bugsmasher_tutorial_completed') === 'true';
-      if (!completed) {
-        setShowTutorial(true);
-      }
-    }
-  }, [gameState, showTutorial]);
-
   return (
     <ErrorBoundary>
       <div className="w-full h-full bg-black text-white overflow-hidden font-sans">
         <CustomCursor />
         <AchievementToast />
-        {showTutorial && gameState === 'menu' && (
-          <TutorialOverlay onComplete={() => setShowTutorial(false)} />
-        )}
         {gameState === 'preloading' && (
           <Preloader onComplete={() => setGameState('menu')} />
         )}

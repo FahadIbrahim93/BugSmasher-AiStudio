@@ -3,8 +3,7 @@ import { GameConfig } from './GameConfig';
 import { soundManager } from './SoundManager';
 import { Bug, Powerup } from './GameTypes';
 import { loadControlBindings, matchesBinding } from './ControlBindings';
-import { MissionManager } from './MissionManager';
-import { emitMissionUpdate } from './missionEvents';
+import { ProgressionManager } from './ProgressionManager';
 
 export class InputSystem {
   private engine: GameEngine;
@@ -140,8 +139,6 @@ export class InputSystem {
 
         if (distSq < collectRadius * collectRadius) {
           this.engine.activatePowerup(p.type, p.x, p.y);
-          MissionManager.updateProgress('collect_powerups', 1);
-          emitMissionUpdate();
           this.engine.powerups.splice(i, 1);
         }
       }
@@ -243,6 +240,37 @@ export class InputSystem {
       });
     }
 
+    // Gravity Well (Temporal Technomancer) click magnet effect
+    const gravityLevel = ProgressionManager.getSkillLevel('gravity_well');
+    if (gravityLevel > 0) {
+      const pullRadius = gravityLevel * 100 + 100;
+      const pullRadiusSq = pullRadius * pullRadius;
+      engine.resources.forEach(res => {
+        const rx = res.x - x;
+        const ry = res.y - y;
+        const distSq = rx * rx + ry * ry;
+        if (distSq < pullRadiusSq) {
+          const dist = Math.sqrt(distSq);
+          if (dist > 5) {
+            res.x -= (rx / dist) * 100 * gravityLevel * 0.15;
+            res.y -= (ry / dist) * 100 * gravityLevel * 0.15;
+          }
+        }
+      });
+      engine.powerups.forEach(p => {
+        const px = p.x - x;
+        const py = p.y - y;
+        const distSq = px * px + py * py;
+        if (distSq < pullRadiusSq) {
+          const dist = Math.sqrt(distSq);
+          if (dist > 5) {
+            p.x -= (px / dist) * 100 * gravityLevel * 0.15;
+            p.y -= (py / dist) * 100 * gravityLevel * 0.15;
+          }
+        }
+      });
+    }
+
     for (let i = engine.powerups.length - 1; i >= 0; i--) {
       const p = engine.powerups[i];
       const dx = p.x - x;
@@ -270,6 +298,15 @@ export class InputSystem {
           navigator.vibrate(12);
         }
         engine.damageBug(bug, 1);
+
+        // Nanite Lifesteal (Bio-Scavenger) passive hit restoration
+        const lifestealChance = ProgressionManager.getSkillBonus('nanite_lifesteal');
+        if (lifestealChance > 0 && Math.random() < lifestealChance) {
+          engine.health = Math.min(engine.maxHealth, engine.health + 1);
+          engine.particleSystem.spawnShockwave(x, y, '#10b981', 30);
+          soundManager.heal();
+        }
+
         break;
       }
     }

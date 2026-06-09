@@ -104,12 +104,16 @@ export class EnvironmentRenderer {
 
     // Biome specific background particles/grid (cached offscreen when static)
     if (biomeId === 'neon_core') {
-      const cached = this.staticLayerCache.blitStaticLayer(this.engine, biomeId, (c) => {
-        this.paintGrid(c as CanvasRenderingContext2D, 160, 'rgba(57, 255, 20, 0.012)');
+      const coreTheme = getActiveCoreThemeConfig();
+      const cacheKey = `neon_core_${coreTheme?.id || 'default'}`;
+      const cached = this.staticLayerCache.blitStaticLayer(this.engine, cacheKey, (c) => {
+        const gridColor = coreTheme ? `${coreTheme.colors.primary}0a` : 'rgba(57, 255, 20, 0.012)';
+        this.paintGrid(c as CanvasRenderingContext2D, 160, gridColor);
         this.paintNeonCoreDetails(c as CanvasRenderingContext2D);
       });
       if (!cached) {
-        this.paintGrid(ctx, 160, 'rgba(57, 255, 20, 0.012)');
+        const gridColor = coreTheme ? `${coreTheme.colors.primary}0a` : 'rgba(57, 255, 20, 0.012)';
+        this.paintGrid(ctx, 160, gridColor);
         this.paintNeonCoreDetails(ctx);
       }
     } else if (biomeId === 'quantum_void') {
@@ -315,7 +319,10 @@ export class EnvironmentRenderer {
     const w = this.engine.width;
     const h = this.engine.height;
     
-    ctx.strokeStyle = 'rgba(57, 255, 20, 0.05)';
+    const coreTheme = getActiveCoreThemeConfig();
+    const primaryColor = coreTheme ? coreTheme.colors.primary : '#39ff14';
+    
+    ctx.strokeStyle = coreTheme ? `${primaryColor}22` : 'rgba(57, 255, 20, 0.05)';
     ctx.lineWidth = 1;
 
     // Corner high-tech bracket wireframes
@@ -345,7 +352,7 @@ export class EnvironmentRenderer {
     ctx.stroke();
 
     // Technical labeling texts
-    ctx.fillStyle = 'rgba(57, 255, 20, 0.15)';
+    ctx.fillStyle = coreTheme ? `${primaryColor}44` : 'rgba(57, 255, 20, 0.15)';
     ctx.font = '700 8px "JetBrains Mono", monospace';
     ctx.fillText('TACTICAL_GRID_LN-01', offset, offset - 10);
     ctx.fillText('NEXUS_SHIELDS_ONLINE', w - offset - 100, offset - 10);

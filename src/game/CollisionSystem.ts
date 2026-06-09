@@ -19,7 +19,7 @@ export class CollisionSystem {
    * Applies damage, impact effects, and streak-break logic.
    */
   handleBugImpact(bug: Bug, cx: number, cy: number) {
-    if (this.engine.shieldTimer <= 0) {
+    if (!this.engine.isInvulnerable()) {
       this.engine.health -= GameConfig.player.hitDamage;
       this.engine.renderer.impactFlash = 1.0;
       this.engine.lastHitTime = this.engine.globalTime;

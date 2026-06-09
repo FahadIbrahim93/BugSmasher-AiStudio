@@ -77,6 +77,30 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
   const [gmailStatus, setGmailStatus] = useState<{ success?: boolean; message?: string } | null>(null);
   const [backupStatus, setBackupStatus] = useState<{ success?: boolean; message?: string } | null>(null);
 
+  // Somatic Diagnostics States (Infinity-UI Inspired)
+  const [diagIdx, setDiagIdx] = useState(0);
+  const [somaticVoltage, setSomaticVoltage] = useState(48);
+  const [dopamineRate, setDopamineRate] = useState(82);
+
+  const somaticStatements = [
+    "CHANNULATING ACUTE VENT VECTORS...",
+    "DISCHARGING AMYGDALA OVERLOAD VOLTAGE...",
+    "FLUSHING RESIDUAL STRESS HORMONES & CORTISOL...",
+    "CONVERTING ANXIETY FREQUENCIES TO DOPAMINE BURSTS...",
+    "STABILIZING SOMATIC CALIBRATION RATIO...",
+    "VENT ENGINE DISCHARGE STAGE: SUCCESSFUL // RECOVERY COMPLETE"
+  ];
+
+  useEffect(() => {
+    if (activeTab !== 'dashboard') return;
+    const interval = setInterval(() => {
+      setDiagIdx((prev) => (prev + 1) % somaticStatements.length);
+      setSomaticVoltage(Math.floor(Math.random() * 30) + 35);
+      setDopamineRate(Math.floor(Math.random() * 20) + 78);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [activeTab]);
+
   const stats = StatsManager.getStats();
 
   // Load Spreadsheet performance points on opening dashboard
@@ -239,14 +263,14 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
       <div className="bg-[#05070a] border border-[#22d3ee]/20 w-full max-w-6xl h-[85vh] rounded-3xl overflow-hidden flex flex-col shadow-[0_0_50px_rgba(6,182,212,0.15)]">
         
         {/* Header */}
-        <div className="p-6 border-b border-cyan-500/20 flex justify-between items-center bg-cyan-950/10">
+        <div className="p-6 border-b border-rose-500/20 flex justify-between items-center bg-rose-950/10">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-black text-cyan-400 select-none tracking-tight flex items-center gap-3 font-display uppercase">
-              <Database className="text-cyan-400 animate-pulse" />
-              Nexus Command Intelligence
+            <h2 className="text-2xl sm:text-3xl font-black text-rose-500 select-none tracking-tight flex items-center gap-3 font-display uppercase">
+              <Database className="text-rose-500 animate-pulse" />
+              Somatic Catharsis Log
             </h2>
-            <p className="text-cyan-400/50 text-[10px] sm:text-xs font-mono mt-1 uppercase tracking-widest leading-none">
-              SECURE TELEMETRY FEED // SECTOR VECTOR CALIBRATION // ACTIVE USER: N-02
+            <p className="text-rose-400/50 text-[10px] sm:text-xs font-mono mt-1 uppercase tracking-widest leading-none">
+              COGNITIVE STRESS TRACKER // AGGRESSION VENT DISCHARGE METRICS // CLINICAL DETOX LOBBY
             </p>
           </div>
           <button 
@@ -258,36 +282,36 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
         </div>
 
         {/* Tab Selection Ribbon */}
-        <div className="flex bg-cyan-950/5 border-b border-cyan-500/10 p-2 gap-2 select-none">
+        <div className="flex bg-rose-950/5 border-b border-rose-500/10 p-2 gap-2 select-none">
           <button
             onClick={() => { soundManager.uiClick(); setActiveTab('tree'); }}
             className={`flex-1 sm:flex-initial px-6 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-widest transition-all ${
               activeTab === 'tree'
-                ? 'bg-cyan-500/15 border border-cyan-400 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.1)]'
+                ? 'bg-rose-500/15 border border-rose-400 text-rose-300 shadow-[0_0_15px_rgba(244,63,94,0.1)]'
                 : 'text-zinc-500 hover:text-white hover:bg-white/5 border border-transparent'
             }`}
           >
-            Weapon System Upgrades Tree
+            Catharsis Upgrade Tree
           </button>
           <button
             onClick={() => { soundManager.uiClick(); setActiveTab('log'); }}
             className={`flex-1 sm:flex-initial px-6 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-widest transition-all ${
               activeTab === 'log'
-                ? 'bg-cyan-500/15 border border-cyan-400 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.1)]'
+                ? 'bg-rose-500/15 border border-rose-400 text-rose-300 shadow-[0_0_15px_rgba(244,63,94,0.1)]'
                 : 'text-zinc-500 hover:text-white hover:bg-white/5 border border-transparent'
             }`}
           >
-            Biological Threat Logs Index
+            Cognitive Stress Logs Index
           </button>
           <button
             onClick={() => { soundManager.uiClick(); setActiveTab('dashboard'); }}
             className={`flex-1 sm:flex-initial px-6 py-2.5 rounded-xl text-xs font-mono font-bold uppercase tracking-widest transition-all ${
               activeTab === 'dashboard'
-                ? 'bg-cyan-500/15 border border-cyan-400 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.1)]'
+                ? 'bg-rose-500/15 border border-rose-400 text-rose-300 shadow-[0_0_15px_rgba(244,63,94,0.1)]'
                 : 'text-zinc-500 hover:text-white hover:bg-white/5 border border-transparent'
             }`}
           >
-            Tactical Combat Dashboard
+            Detox & Recovery Metrics
           </button>
         </div>
 
@@ -377,18 +401,18 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
                             onClick={() => { soundManager.uiClick(); setSelectedNodeId(node.id); }}
                             className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all ${
                               isUnlocked 
-                                ? 'bg-[#082f49] border-[#06b6d4] text-cyan-400 hover:scale-110 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
+                                ? 'bg-rose-950/40 border-rose-500 text-rose-400 hover:scale-110 shadow-[0_0_15px_rgba(244,63,94,0.4)]'
                                 : isAvailable
-                                ? 'bg-zinc-950 border-cyan-500/40 text-cyan-600/70 hover:scale-110 hover:border-cyan-400'
+                                ? 'bg-zinc-950 border-rose-500/45 text-rose-500/70 hover:scale-110 hover:border-rose-400'
                                 : 'bg-zinc-950 border-zinc-800 text-zinc-700 cursor-not-allowed opacity-50'
-                            } ${isSelected ? 'ring-4 ring-cyan-400 ring-offset-4 ring-offset-black scale-110' : ''}`}
+                            } ${isSelected ? 'ring-4 ring-rose-400 ring-offset-4 ring-offset-black scale-110' : ''}`}
                             disabled={!isAvailable && !isUnlocked}
                           >
                             <NodeIcon size={20} />
                           </button>
                           
                           {/* Rank Pip */}
-                          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-black border border-cyan-500/30 rounded px-1.5 py-0.5 text-[8px] font-mono text-cyan-300 pointer-events-none font-bold whitespace-nowrap">
+                          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-black border border-rose-500/30 rounded px-1.5 py-0.5 text-[8px] font-mono text-rose-300 pointer-events-none font-bold whitespace-nowrap">
                             RANK {rank}
                           </div>
                         </div>
@@ -396,24 +420,24 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
                     })}
                   </div>
 
-                  <div className="z-10 select-none text-right">
-                    <span className="text-[10px] font-mono text-cyan-500/30 uppercase tracking-widest">TAP NODES TO ANALYZE OR UPGRADE SYSTEMS</span>
+                  <div className="z-10 select-none text-right font-mono">
+                    <span className="text-[10px] font-mono text-rose-500/30 uppercase tracking-widest">TAP NODES TO ANALYZE OR UPGRADE SYSTEMS</span>
                   </div>
                 </div>
 
                 {/* Selection Inspector Column */}
-                <div className="w-full lg:w-[380px] bg-cyan-950/5 flex flex-col justify-between p-6">
+                <div className="w-full lg:w-[380px] bg-rose-950/5 flex flex-col justify-between p-6">
                   {selectedNode && selectedSkill ? (
                     <div className="space-y-6">
                       <div>
                         <div className="flex justify-between items-center mb-1">
-                          <span className="text-[10px] font-mono text-cyan-400 font-extrabold uppercase bg-cyan-500/10 px-2.5 py-0.5 rounded border border-cyan-500/20">
+                          <span className="text-[10px] font-mono text-rose-400 font-extrabold uppercase bg-rose-500/10 px-2.5 py-0.5 rounded border border-rose-500/20">
                             {selectedNode.branch.toUpperCase()} SYSTEM
                           </span>
                           <span className="text-zinc-500 font-mono text-[9px] uppercase tracking-widest">CALIBRATED</span>
                         </div>
                         <h4 className="text-xl font-black text-white uppercase font-display tracking-tight mt-2">{selectedNode.name}</h4>
-                        <div className="h-px bg-cyan-500/20 mt-3" />
+                        <div className="h-px bg-rose-500/20 mt-3" />
                       </div>
 
                       <div className="space-y-1">
@@ -422,9 +446,9 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
                       </div>
 
                       {/* Rank indicators */}
-                      <div className="flex items-center justify-between p-3.5 bg-cyan-950/20 border border-cyan-500/10 rounded-xl">
+                      <div className="flex items-center justify-between p-3.5 bg-rose-950/20 border border-rose-500/10 rounded-xl">
                         <span className="text-xs font-mono text-zinc-400">Target Efficiency</span>
-                        <span className="text-sm font-mono font-black text-cyan-300 uppercase">
+                        <span className="text-sm font-mono font-black text-rose-300 uppercase">
                           {currentRank >= maxRank ? 'MAX SECTORS SECURED' : `RANK ${currentRank} / ${maxRank}`}
                         </span>
                       </div>
@@ -434,7 +458,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
                         <div className="text-xs space-y-1">
                           <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-wider block">Required Connection</span>
                           <div className="flex items-center gap-1.5 text-zinc-400 font-mono text-[10px]">
-                            <Shield size={12} className="text-cyan-500" />
+                            <Shield size={12} className="text-rose-500" />
                             <span>Must unlock {TREE_NODES.find(n => n.id === selectedNode.parents[0])?.name || 'parent'}</span>
                           </div>
                         </div>
@@ -544,14 +568,14 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
 
                 {/* Regular Bugs */}
                 <section>
-                  <h3 className="text-xl font-bold text-cyan-500 mb-4 border-l-4 border-cyan-500 pl-3 uppercase tracking-tighter">
+                  <h3 className="text-xl font-bold text-rose-500 mb-4 border-l-4 border-rose-500 pl-3 uppercase tracking-tighter">
                     Standard Infestation Log
                   </h3>
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {Object.entries(GameConfig.bugs).filter(([k]) => k !== 'boss' && k !== 'mini').map(([id, conf]: [string, any]) => (
-                      <div key={id} className="p-3 bg-cyan-950/20 border border-cyan-500/20 rounded hover:border-cyan-400 transition-colors">
+                      <div key={id} className="p-3 bg-rose-950/20 border border-rose-500/20 rounded hover:border-rose-400 transition-colors">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-mono text-cyan-400 uppercase">{id}</span>
+                          <span className="text-xs font-mono text-rose-400 uppercase">{id}</span>
                           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: conf.color }} />
                         </div>
                         <div className="text-[10px] space-y-1 opacity-70">
@@ -598,32 +622,130 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
               >
                 {/* Connection Status Overlay if not authorized */}
                 {!accessToken ? (
-                  <div className="m-auto max-w-md p-8 bg-cyan-950/20 border border-cyan-500/30 rounded-2xl text-center shadow-[0_0_50px_rgba(6,182,212,0.05)] select-none">
-                    <Lock className="mx-auto text-cyan-400 mb-4 animate-bounce" size={48} />
-                    <h3 className="text-xl font-bold font-display text-white uppercase tracking-tight mb-2">Google Workspace Connection Required</h3>
-                    <p className="text-sm text-zinc-400 mb-6 leading-relaxed">
-                      Connect your Google Account to authorize cross-device backups, real-time Google Sheets tracking, and Gmail report dispatches.
-                    </p>
-                    <div className="space-y-3 text-left bg-black/40 p-4 rounded-xl border border-white/5 mb-6 text-xs text-zinc-400 font-mono">
-                      <div className="flex items-center gap-2">
-                        <FileSpreadsheet size={14} className="text-cyan-400" />
-                        <span>Google Sheets: Browse & plot historical statistics</span>
+                  <div className="space-y-6 select-none max-w-5xl mx-auto w-full">
+                    {/* Informative Clinical Banner */}
+                    <div className="p-4 bg-rose-950/20 border border-rose-500/30 rounded-xl flex flex-col md:flex-row items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/30 flex items-center justify-center shrink-0">
+                        <Activity className="text-rose-400 animate-pulse" size={24} />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Database size={14} className="text-cyan-400" />
-                        <span>Google Drive: Archiving & cross-device restore</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Mail size={14} className="text-cyan-400" />
-                        <span>Gmail Service: Delivery of Week Briefs</span>
+                      <div>
+                        <h4 className="text-xs font-mono font-black text-rose-300 uppercase tracking-wider">SOMATIC COMPACTION INTERACTION MODE // ACTIVE FEED</h4>
+                        <p className="text-[11px] text-zinc-400 font-mono mt-0.5">
+                          The client-side catharsis telemetry is tracking your active rage venting cycles. Anchor this session below to deploy automated metric sync protocols.
+                        </p>
                       </div>
                     </div>
-                    <button
-                      onClick={() => { soundManager.uiClick(); signIn(); }}
-                      className="w-full py-3 bg-cyan-500 text-black font-mono font-bold text-sm uppercase rounded-xl hover:bg-cyan-400 transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)] active:scale-95 cursor-pointer"
-                    >
-                      Establish Workspace Portal
-                    </button>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      {/* Left: Simulated Amygdala & Cortisol Diagnostic Readout */}
+                      <div className="lg:col-span-2 bg-[#05070a]/45 p-6 rounded-2xl border border-rose-500/20 shadow-xl flex flex-col justify-between font-mono space-y-6">
+                        <div>
+                          <div className="flex items-center justify-between border-b border-rose-500/10 pb-3 mb-4">
+                            <div className="flex items-center gap-2">
+                              <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                              </span>
+                              <span className="text-xs font-black text-rose-300 uppercase tracking-widest">CEREBRAL_VENT_DIAGNOSTICS</span>
+                            </div>
+                            <span className="text-[9px] text-[#22c55e] bg-emerald-950/20 border border-emerald-500/25 px-2 py-0.5 rounded font-extrabold tracking-widest uppercase">VENTING_ACTIVE</span>
+                          </div>
+
+                          {/* Specific Telemetry Items matching infinity-ui but clinical */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="p-3 bg-rose-950/10 border border-rose-500/10 rounded-xl space-y-1">
+                              <span className="text-[9px] text-zinc-500 uppercase block font-bold">Amygdala Calibration Voltage</span>
+                              <div className="flex items-baseline justify-between">
+                                <span className="text-xl font-black text-white">{somaticVoltage} mV</span>
+                                <span className="text-[8px] text-rose-400 uppercase tracking-widest animate-pulse">[PEAK]</span>
+                              </div>
+                            </div>
+
+                            <div className="p-3 bg-amber-950/10 border border-amber-500/10 rounded-xl space-y-1">
+                              <span className="text-[9px] text-zinc-500 uppercase block font-bold">Cortisol Disposal Rate</span>
+                              <div className="flex items-baseline justify-between">
+                                <span className="text-xl font-black text-white">DISCHARGING</span>
+                                <span className="text-xs font-black text-amber-400">{dopamineRate}%</span>
+                              </div>
+                              <div className="w-full bg-amber-950/40 rounded-full h-1 overflow-hidden relative mt-1.5">
+                                <div 
+                                  className="bg-amber-500 h-full shadow-[0_0_6px_rgba(245,158,11,0.7)] transition-all duration-500" 
+                                  style={{ width: `${dopamineRate}%` }}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="p-3 bg-zinc-950 border border-white/5 rounded-xl space-y-1">
+                              <span className="text-[9px] text-zinc-500 uppercase block font-bold">Anxiolytic Release Success</span>
+                              <div className="flex justify-between items-center">
+                                <span className="text-lg font-black text-white">{(stats.totalBugsKilled || 0).toLocaleString()} releases</span>
+                              </div>
+                            </div>
+
+                            <div className="p-3 bg-zinc-950 border border-white/5 rounded-xl space-y-1">
+                              <span className="text-[9px] text-zinc-500 uppercase block font-bold">Discharged Load Limits</span>
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="text-zinc-600">STABLE CORE //</span>
+                                <span className="text-emerald-400 font-bold">REDUCED FRUSTRATIONS</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Statements cycle inspired by infinity-ui and matching visual style */}
+                        <div className="bg-black/60 border border-rose-500/10 rounded-xl p-4 flex flex-col items-center justify-center text-center py-6 min-h-[90px]">
+                          <span className="text-[8px] text-zinc-600 uppercase tracking-widest block mb-2 font-black">NEURAL SYSTEM TELEMETRY STREAM</span>
+                          <div className="text-xs text-rose-400 font-extrabold tracking-wider leading-relaxed h-10 flex items-center justify-center">
+                            <AnimatePresence mode="wait">
+                              <motion.span
+                                key={diagIdx}
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -8 }}
+                                className="max-w-md block"
+                              >
+                                {somaticStatements[diagIdx]}
+                              </motion.span>
+                            </AnimatePresence>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: Connect Workspace card */}
+                      <div className="bg-[#05070a]/45 p-6 rounded-2xl border border-rose-500/20 shadow-xl flex flex-col justify-between text-center select-none font-mono">
+                        <div className="space-y-4">
+                          <div className="w-10 h-10 rounded-full border border-rose-500/30 bg-rose-950/20 flex items-center justify-center mx-auto mb-2 animate-bounce">
+                            <Lock className="text-rose-400" size={18} />
+                          </div>
+                          <h3 className="text-sm font-black text-white uppercase tracking-tight">Deploy HQ Cloud Sync</h3>
+                          <p className="text-[11px] text-zinc-400 leading-relaxed max-w-xs mx-auto">
+                            Unlock dynamic plotting, cross-device persistence backups, Google Sheets log-writing and automated encrypted email brief dispatches.
+                          </p>
+
+                          <div className="space-y-2 text-left bg-black/40 p-3 rounded-xl border border-white/5 text-[9px] text-zinc-400">
+                            <div className="flex items-center gap-2">
+                              <FileSpreadsheet size={12} className="text-rose-400 shrink-0" />
+                              <span>Sheets: Drive real-time historical stats graphs</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Database size={12} className="text-rose-400 shrink-0" />
+                              <span>Drive API: Nanotech profile save archives</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Mail size={12} className="text-rose-400 shrink-0" />
+                              <span>Gmail Service: Dispatch Weekly Intel briefs</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => { soundManager.uiClick(); signIn(); }}
+                          className="w-full mt-6 py-3 bg-rose-600 text-white font-mono font-bold text-xs uppercase rounded-xl hover:bg-rose-500 transition-all shadow-[0_0_15px_rgba(244,63,94,0.3)] active:scale-95 cursor-pointer"
+                        >
+                          Establish Workspace Portal
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <>
