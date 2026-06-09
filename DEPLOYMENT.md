@@ -1,23 +1,23 @@
 # BUGSMASHER — Deployment Guide
 
-**Last updated:** 2026-06-03  
-**Target environments:** Local dev · CI (GitHub Actions) · Firebase Hosting · Firebase Firestore
+**Last updated:** 2026-06-09  
+**Target environments:** Local dev · CI (GitHub Actions) · Firebase Hosting · Firebase Firestore  
+**Live URL:** https://studio-1155838266-56095.web.app
 
 ---
 
 ## Repository Map
 
-| Remote | URL | Role |
+| Repository | URL | Role |
 |--------|-----|------|
-| **origin** | `https://github.com/HopeTheoory/BugSmasher-ApZz` | Primary fork / deployment source |
-| **upstream** | `https://github.com/FahadIbrahim93/BugSmasher-HopeTheory.git` | Upstream integration |
+| **Primary** | `https://github.com/FahadIbrahim93/BugSmasher-HopeTheory` | Main source of truth; deployment origin |
 
 ### Branch Strategy
 
 | Branch | Purpose |
 |--------|---------|
 | `main` | Production-ready; CI must pass; deploys to Firebase Hosting |
-| `develop` | Integration branch (optional) |
+| `develop` | Optional integration branch |
 | `feat/*` / `fix/*` | Feature work; PR into `main` |
 
 ---
@@ -34,8 +34,8 @@
 ## Local Development
 
 ```bash
-git clone https://github.com/HopeTheoory/BugSmasher-ApZz.git
-cd BugSmasher-ApZz
+git clone https://github.com/FahadIbrahim93/BugSmasher-HopeTheory.git
+cd BugSmasher-HopeTheory
 npm install
 npm run dev
 ```
@@ -102,7 +102,7 @@ firebase login
 firebase deploy --only hosting
 ```
 
-Live URL (default): `https://studio-1155838266-56095.web.app`
+**Live URL (default):** https://studio-1155838266-56095.web.app
 
 ### Firestore rules only
 
