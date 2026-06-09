@@ -1,8 +1,8 @@
 # BUGSMASHER // Tactical QA System 🛡️👾
 
-An ultra-minimalist, high-intensity AI-themed base defense game showcasing the visual contrast between a pristine, deadpan modern "Brutalist OS" terminal and viscous, glowing neon bio-luminescent bugs. Built inside the browser with a high-performance **React 19**, **Vite**, and high-tier **Canvas 2D** rendering engine.
+An ultra-minimalist, high-intensity AI-themed base defense game showcasing the visual contrast between a pristine, deadpan modern "Brutalist OS" terminal and viscous, glowing neon bio-luminescent bugs. Built with React + TypeScript + Canvas 2D. Optimized for 60+ FPS on all devices. Real-time procedural audio, physics, and adaptive performance scaling.
 
-**Repository:** [github.com/HopeTheoory/BugSmasher-ApZz](https://github.com/HopeTheoory/BugSmasher-ApZz) · **Version:** 2.4.0
+**Repository:** [github.com/FahadIbrahim93/BugSmasher-HopeTheory](https://github.com/FahadIbrahim93/BugSmasher-HopeTheory) · **Live:** [studio-1155838266-56095.web.app](https://studio-1155838266-56095.web.app) · **Version:** 2.4.0
 
 ---
 
@@ -50,19 +50,19 @@ Full analysis: [`AUDIT_REPORT.md`](./AUDIT_REPORT.md) · AI task list: [`TASKBOA
 ### 1. ⚙️ Real-Time Performance Scaler Utility
 To ensure a buttery smooth, high-intensity 60 FPS experience on any system, we implemented a real-time framerate scaling utility in `Renderer.ts`:
 - **Smooth FPS Sampling**: Tracks delta render loops using high-accuracy timestamps (`performance.now()`), calculating a sliding window average (last 6 samples) to eliminate scale-jitter.
-- **Dynamic VFX Quality Downscaling**: If the framerate falls below **40 FPS**, the scaler dynamically reduces particle counts (`vfxScalar`) proportionally down to `0.15` and optimizes rendering calculations.
+- **Dynamic VFX Quality Downscaling**: If the framerate falls below **40 FPS**, the scaler dynamically reduces particle counts (`vfxScalar`) proportionally down to `0.15` and optimizes rendering calls.
 - **Geometric Complexity Reduction**: Seamlessly increases the dynamic background mesh grid spacing step (from `10px` all the way up to `80px` during severe lag), cutting rendering vertices in real-time.
 - **Auto-Recovery**: Smoothly restores full visual fidelity once high-framerates stabilize above the critical 40 FPS benchmark.
 
 ### 2. 🎛️ High-Fidelity VFX Switcher & Mobile Protection
 Integrated adaptive configuration policies:
-- **Intelligent Defaults**: Automatically detects touch capabilities, inner screen widths, and user-agent details. High Fidelity settings are deactivated on mobile screens to safeguard battery life and eliminate overheating.
-- **Manual Toggle Controls**: Added a stylized toggler inside the settings menu with custom ambient green halo glows to toggle glows, heavy shadow blurs, vector cloud simulations, and complex particle lifespans.
-- **Device Pixel Ratio (DPR) Clamping**: When high-fidelity features are disabled, the engine clamps down retina and high-DPI scaling factors to a strict `1.0`, rescuing fill-rate bound systems instantly.
+- **Intelligent Defaults**: Automatically detects touch capabilities, inner screen widths, and user-agent details. High Fidelity settings are deactivated on mobile screens to safeguard battery life.
+- **Manual Toggle Controls**: Added a stylized toggler inside the settings menu with custom ambient green halo glows to toggle glows, heavy shadow blurs, vector cloud simulations, and complex particle effects.
+- **Device Pixel Ratio (DPR) Clamping**: When high-fidelity features are disabled, the engine clamps down retina and high-DPI scaling factors to a strict `1.0`, rescuing fill-rate bound systems.
 
 ### 3. 🫧 Particle Spawn Multiplexing
 Re-engineered particle generation in `ParticleSystem.ts` to follow the dynamic scaler's outputs:
-- All core effects (`spawnGibs`, `spawnSmoke`, `spawnSparkExplosion`, `spawnExplosion`, `spawnMissParticles`) multiply their spawn iteration indices with the scaler's current real-time performance factor (`vfxCountMultiplier`).
+- All core effects (`spawnGibs`, `spawnSmoke`, `spawnSparkExplosion`, `spawnExplosion`, `spawnMissParticles`) multiply their spawn iteration indices with the scaler's current real-time performance factor.
 
 ### 4. 🪱 React Hook-Mismatch Architectural Fix
 Resolved a critical rendering crash within `<CustomCursor>`:
@@ -107,8 +107,8 @@ Resolved a critical rendering crash within `<CustomCursor>`:
 
 ### Development
 ```bash
-git clone https://github.com/HopeTheoory/BugSmasher-ApZz.git
-cd BugSmasher-ApZz
+git clone https://github.com/FahadIbrahim93/BugSmasher-HopeTheory.git
+cd BugSmasher-HopeTheory
 npm install
 npm run dev
 ```
