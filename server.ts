@@ -66,9 +66,10 @@ async function startServer() {
 
       const mapData = JSON.parse(outputText.trim());
       res.json(mapData);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("GenAI generateContent error:", err);
-      res.status(500).json({ error: err.message || 'Failed to generate battleground theme' });
+      const message = err instanceof Error ? err.message : 'Failed to generate battleground theme';
+      res.status(500).json({ error: message });
     }
   });
 

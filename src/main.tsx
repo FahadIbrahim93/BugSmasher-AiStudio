@@ -24,8 +24,8 @@ if (typeof window !== 'undefined') {
   }
 
   // Intercept and absorb unhandled read-only / getter-only fetch errors
-  const isFetchError = (err: any) => {
-    const msg = String(err?.message || err || '');
+  const isFetchError = (err: unknown) => {
+    const msg = String(err instanceof Error ? err.message : err || '');
     return msg.includes('fetch') && (msg.includes('getter') || msg.includes('read only') || msg.includes('redefine'));
   };
 

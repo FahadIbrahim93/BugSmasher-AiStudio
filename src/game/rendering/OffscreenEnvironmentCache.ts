@@ -1,24 +1,29 @@
 import { GameEngine } from '../GameEngine';
 
-interface PeriodicCache {
+type CacheCanvas = OffscreenCanvas | HTMLCanvasElement;
+type CacheContext = OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
+
+interface CanvasLayer {
+  canvas: CacheCanvas;
+  ctx: CacheContext;
+  width: number;
+  height: number;
+}
+
+interface PeriodicLayer extends CanvasLayer {
   lastRedraw: number;
   interval: number;
 }
 
 /**
- * Caches static and semi-static environment layers to an offscreen canvas.
- * Handles:
- * - Fully static layers (grid, starfield) — drawn once, blitted every frame
- * - Periodic layers (lava bubbles, snowflakes) — redrawn every N ms, blitted in between
- * - Static overlays (scanlines, CRT) — drawn once per resize
+ * Caches static and semi-static environment layers to offscreen canvases.
+ * Static and periodic layers deliberately use separate backing canvases; sharing one
+ * canvas corrupts the static cache after a periodic redraw.
  */
 export class OffscreenEnvironmentCache {
-  private canvas: OffscreenCanvas | HTMLCanvasElement | null = null;
-  private ctx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D | null = null;
-  
-  // Separate cache keys for static vs periodic layers (they use the same offscreen canvas)
+  private staticLayer: CanvasLayer | null = null;
   private staticCacheKey = '';
-  private periodicKeys = new Map<string, PeriodicCache>();
+  private periodicLayers = new Map<string, PeriodicLayer>();
 
   // Separate canvas for scanlines (fully static between resizes)
   private scanlineCanvas: OffscreenCanvas | HTMLCanvasElement | null = null;
@@ -27,28 +32,53 @@ export class OffscreenEnvironmentCache {
 
   invalidate(): void {
     this.staticCacheKey = '';
+    this.staticLayer = null;
     this.scanlineKey = '';
-    this.periodicKeys.clear();
+    this.periodicLayers.clear();
   }
 
-  private ensureCanvas(width: number, height: number): boolean {
+  private createLayer(width: number, height: number): CanvasLayer | null {
+    let canvas: CacheCanvas;
+    let ctx: CacheContext | null;
+
     if (typeof OffscreenCanvas !== 'undefined') {
-      if (!this.canvas || (this.canvas as OffscreenCanvas).width !== width) {
-        this.canvas = new OffscreenCanvas(width, height);
-        this.ctx = this.canvas.getContext('2d');
-      }
-      return !!this.ctx;
+      canvas = new OffscreenCanvas(width, height);
+      ctx = canvas.getContext('2d');
+    } else {
+      canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      ctx = canvas.getContext('2d');
     }
-    if (!this.canvas) {
-      this.canvas = document.createElement('canvas');
+
+    return ctx ? { canvas, ctx, width, height } : null;
+  }
+
+  private ensureStaticLayer(width: number, height: number): CanvasLayer | null {
+    if (!this.staticLayer || this.staticLayer.width !== width || this.staticLayer.height !== height) {
+      this.staticLayer = this.createLayer(width, height);
+      this.staticCacheKey = '';
     }
-    const c = this.canvas as HTMLCanvasElement;
-    if (c.width !== width || c.height !== height) {
-      c.width = width;
-      c.height = height;
-      this.ctx = c.getContext('2d');
+    return this.staticLayer;
+  }
+
+  private ensurePeriodicLayer(key: string, width: number, height: number, intervalMs: number): PeriodicLayer | null {
+    const existing = this.periodicLayers.get(key);
+    if (existing && existing.width === width && existing.height === height) {
+      existing.interval = intervalMs;
+      return existing;
     }
-    return !!this.ctx;
+
+    const created = this.createLayer(width, height);
+    if (!created) return null;
+
+    const layer: PeriodicLayer = {
+      ...created,
+      lastRedraw: 0,
+      interval: intervalMs,
+    };
+    this.periodicLayers.set(key, layer);
+    return layer;
   }
 
   /**
@@ -60,15 +90,16 @@ export class OffscreenEnvironmentCache {
     drawStatic: (ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) => void
   ): boolean {
     const key = `${layerKey}:${engine.width}x${engine.height}`;
-    if (!this.ensureCanvas(engine.width, engine.height) || !this.ctx) return false;
+    const layer = this.ensureStaticLayer(engine.width, engine.height);
+    if (!layer) return false;
 
     if (this.staticCacheKey !== key) {
-      this.ctx.clearRect(0, 0, engine.width, engine.height);
-      drawStatic(this.ctx);
+      layer.ctx.clearRect(0, 0, engine.width, engine.height);
+      drawStatic(layer.ctx);
       this.staticCacheKey = key;
     }
 
-    engine.ctx.drawImage(this.canvas as CanvasImageSource, 0, 0);
+    engine.ctx.drawImage(layer.canvas as CanvasImageSource, 0, 0);
     return true;
   }
 
@@ -83,24 +114,17 @@ export class OffscreenEnvironmentCache {
     drawAnimated: (ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, time: number) => void
   ): void {
     const key = `${layerKey}:${engine.width}x${engine.height}`;
-    if (!this.ensureCanvas(engine.width, engine.height) || !this.ctx) return;
+    const layer = this.ensurePeriodicLayer(key, engine.width, engine.height, intervalMs);
+    if (!layer) return;
 
     const now = performance.now();
-    let cache = this.periodicKeys.get(key);
-
-    if (!cache) {
-      cache = { lastRedraw: 0, interval: intervalMs };
-      this.periodicKeys.set(key, cache);
+    if (layer.lastRedraw === 0 || (now - layer.lastRedraw) >= layer.interval) {
+      layer.ctx.clearRect(0, 0, engine.width, engine.height);
+      drawAnimated(layer.ctx, engine.globalTime);
+      layer.lastRedraw = now;
     }
 
-    // Redraw on resize or when interval has elapsed (uses own key, not shared cacheKey)
-    if (this.periodicKeys.get(key)!.lastRedraw === 0 || (now - cache.lastRedraw) >= cache.interval) {
-      this.ctx.clearRect(0, 0, engine.width, engine.height);
-      drawAnimated(this.ctx, engine.globalTime);
-      cache.lastRedraw = now;
-    }
-
-    engine.ctx.drawImage(this.canvas as CanvasImageSource, 0, 0);
+    engine.ctx.drawImage(layer.canvas as CanvasImageSource, 0, 0);
   }
 
   /**
@@ -138,8 +162,8 @@ export class OffscreenEnvironmentCache {
     if (!this.scanlineCtx) return false;
 
     this.scanlineCtx.fillStyle = color;
-    for (let i = 0; i < height; i += lineSpacing) {
-      this.scanlineCtx.fillRect(0, i, width, 1);
+    for (let y = 0; y < height; y += lineSpacing) {
+      this.scanlineCtx.fillRect(0, y, width, 1);
     }
 
     this.scanlineKey = key;
