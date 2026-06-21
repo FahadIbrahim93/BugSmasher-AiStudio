@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Trophy, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import type { Achievement } from '../game/AchievementManager';
 
 export function AchievementToast() {
-  const [achievement, setAchievement] = useState<any>(null);
+  const [achievement, setAchievement] = useState<Achievement | null>(null);
 
   useEffect(() => {
-    const handleAchievement = (e: any) => {
+    const handleAchievement = (e: CustomEvent<Achievement>) => {
       setAchievement(e.detail);
       setTimeout(() => setAchievement(null), 5000);
     };
 
-    window.addEventListener('achievement_unlocked', handleAchievement);
-    return () => window.removeEventListener('achievement_unlocked', handleAchievement);
+    window.addEventListener('achievement_unlocked', handleAchievement as EventListener);
+    return () => window.removeEventListener('achievement_unlocked', handleAchievement as EventListener);
   }, []);
 
   return (

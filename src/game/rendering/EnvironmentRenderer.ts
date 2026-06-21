@@ -181,7 +181,7 @@ export class EnvironmentRenderer {
     this.drawDynamicMesh();
   }
 
-  private paintCustomMapDetails(ctx: CanvasRenderingContext2D, map: any) {
+  private paintCustomMapDetails(ctx: CanvasRenderingContext2D, map: { id?: string; seed?: string; color?: string; [k: string]: unknown }) {
     const w = this.engine.width;
     const h = this.engine.height;
     const mainColor = map.color || '#00ffcc';

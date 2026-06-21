@@ -33,8 +33,8 @@ export function BattlegroundGenerator({
   const [copiedNotification, setCopiedNotification] = useState(false);
 
   // Instantiating a dummy/offline pcg generator for live client-side blueprint computation
-  const dummyEngine = { width: 800, height: 600 } as any;
-  const pcgGenerator = new PCGSystem(dummyEngine);
+  const dummyEngine = { width: 800, height: 600 } as { width: number; height: number; [key: string]: unknown };
+  const pcgGenerator = new PCGSystem(dummyEngine as any); // PCG accepts partial engine shape; cast kept minimal here for interop
   const livePcgMap: PCGMapConfig = pcgGenerator.generateMap(pcgSeed, pcgTheme);
 
   // Load preset config
@@ -55,8 +55,8 @@ export function BattlegroundGenerator({
     CustomMapManager.setRotationEnabled(nextState);
   };
 
-  const updateConfig = (key: keyof CustomMapConfig, value: any) => {
-    const updated = { ...mapConfig, [key]: value };
+  const updateConfig = (key: keyof CustomMapConfig, value: string | number | boolean) => {
+    const updated = { ...mapConfig, [key]: value } as CustomMapConfig;
     setMapConfig(updated);
     CustomMapManager.saveCustomMap(updated);
   };
@@ -87,7 +87,7 @@ export function BattlegroundGenerator({
     
     if (activeTab === 'pcg') {
       // Save procedurally generated map as the active custom battleground config
-      CustomMapManager.saveCustomMap(livePcgMap as any);
+      CustomMapManager.saveCustomMap(livePcgMap);
     }
     
     onLaunch();
@@ -411,14 +411,14 @@ export function BattlegroundGenerator({
               <div className="space-y-2 bg-white/[0.01] p-3 rounded-xl border border-white/5">
                 <div className="flex justify-between items-center text-[10px] font-mono">
                   <span className="text-zinc-400 font-bold">BIOTIC PARTICLES DENSITY</span>
-                  <span className="text-cyan-400 font-extrabold">{(resolvedMap as any).particleCount || 40} units</span>
+                  <span className="text-cyan-400 font-extrabold">{(resolvedMap as { particleCount?: number }).particleCount || 40} units</span>
                 </div>
                 <input
                   type="range"
                   min="20"
                   max="120"
                   step="5"
-                  value={(resolvedMap as any).particleCount || 40}
+                  value={(resolvedMap as { particleCount?: number }).particleCount || 40}
                   onChange={(e) => {
                     if (activeTab === 'presets') updateConfig('particleCount', parseInt(e.target.value));
                   }}

@@ -20,7 +20,7 @@ export interface LeaderboardEntry {
   username: string;
   score: number;
   wave: number;
-  updatedAt: any;
+  updatedAt: number | { seconds: number; nanoseconds: number } | null;
 }
 
 export enum OperationType {

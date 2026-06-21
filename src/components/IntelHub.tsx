@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ComponentType } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, Bug, Database, Info, Activity, Shield, Zap, Target, Award, BrainCircuit, Sparkles, Coins,
-  TrendingUp, Mail, UploadCloud, DownloadCloud, CheckCircle, RefreshCw, AlertTriangle, FileSpreadsheet, Lock
+  TrendingUp, Mail, UploadCloud, DownloadCloud, CheckCircle, RefreshCw, AlertTriangle, FileSpreadsheet, Lock,
+  type LucideProps
 } from 'lucide-react';
 import { GameConfig } from '../game/GameConfig';
 import { ProgressionManager, ProgressionData } from '../game/ProgressionManager';
@@ -44,7 +45,7 @@ interface TreeNode {
   x: number; // grid x (%)
   y: number; // grid y (%)
   parents: string[];
-  icon: any;
+  icon: ComponentType<LucideProps>;
 }
 
 const TREE_NODES: TreeNode[] = [
@@ -92,8 +93,9 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
     try {
       const data = await fetchPerformanceHistory(accessToken!);
       setChartData(data);
-    } catch (err: any) {
-      setDashboardError(err.message || 'Failed to sync with performance spreadsheet.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to sync with performance spreadsheet.';
+      setDashboardError(msg);
     } finally {
       setIsLoadingChart(false);
     }
@@ -163,7 +165,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
       };
       await exportSaveToGoogleDrive(accessToken, JSON.stringify(backupBundle));
       setBackupStatus({ success: true, message: 'OPERATIONAL BACKUP DEPLOYED SUCCESSFULLY TO GOOGLE DRIVE.' });
-    } catch (err: any) {
+    } catch (err: unknown) {
       setBackupStatus({ success: false, message: err.message || 'Drive archiving upload failed.' });
     } finally {
       setIsActionLoading(false);
@@ -194,7 +196,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
       setTimeout(() => {
         window.location.reload();
       }, 2000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setBackupStatus({ success: false, message: err.message || 'Drive restore failed.' });
     } finally {
       setIsActionLoading(false);
@@ -209,7 +211,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
       const targetEmail = recipientEmail || user?.email || 'hopetheorybd@gmail.com';
       await sendGmailReport(accessToken, targetEmail, stats, SaveManager.getHighScore());
       setGmailStatus({ success: true, message: `COMBAT BRIEFS DISPATCHED SECURELY TO: ${targetEmail}` });
-    } catch (err: any) {
+    } catch (err: unknown) {
       setGmailStatus({ success: false, message: err.message || 'Failed to dispatch Gmail briefs.' });
     } finally {
       setIsActionLoading(false);
@@ -222,7 +224,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
     try {
       await pushPerformanceRow(accessToken, stats);
       await loadChartData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.warn("Append failed:", err);
     } finally {
       setIsActionLoading(false);

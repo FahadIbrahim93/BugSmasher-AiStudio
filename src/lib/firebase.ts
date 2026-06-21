@@ -19,21 +19,20 @@ try {
     localCache: persistentLocalCache({
       tabManager: persistentMultipleTabManager()
     })
-  }, (firebaseConfig as any).firestoreDatabaseId);
+  }, (firebaseConfig as { firestoreDatabaseId?: string }).firestoreDatabaseId);
 } catch (e) {
   console.warn('Failed to initialize Firestore with persistent multi-tab cache, falling back to default:', e);
-  db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId);
+  db = getFirestore(app, (firebaseConfig as { firestoreDatabaseId?: string }).firestoreDatabaseId);
 }
 
 export { db };
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
-googleProvider.addScope('https://www.googleapis.com/auth/drive.file');
-googleProvider.addScope('https://www.googleapis.com/auth/gmail.send');
-googleProvider.addScope('https://www.googleapis.com/auth/documents');
-googleProvider.addScope('https://www.googleapis.com/auth/tasks');
-googleProvider.addScope('https://www.googleapis.com/auth/spreadsheets');
-googleProvider.addScope('https://www.googleapis.com/auth/calendar.events');
+// SECURITY: Only request minimal OIDC scopes required for auth/profile.
+// Broad Drive/Gmail/Docs/Sheets/Calendar access removed — previous scopes created
+// unacceptable data-access attack surface for a game. Workspace sync features
+// (if re-enabled) must use incremental consent or separate dedicated flows.
+
 
 // Test Connection
 async function testConnection() {

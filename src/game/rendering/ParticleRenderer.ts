@@ -150,7 +150,7 @@ export class ParticleRenderer {
     ctx.closePath();
     ctx.fill();
     
-    s.drops.forEach((drop: any, index: number) => {
+    s.drops.forEach((drop: { x: number; y: number; size: number; active: boolean }, index: number) => {
       ctx.beginPath();
       // Every 3rd drop is a square for that brutalist digital glitch look
       if (index % 3 === 0) {

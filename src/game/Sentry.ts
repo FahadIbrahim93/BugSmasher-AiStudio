@@ -1,4 +1,5 @@
 import { GameEngine } from './GameEngine';
+import type { Bug } from './GameTypes';
 
 export interface Sentry {
   active: boolean;
@@ -62,8 +63,8 @@ export class SentryManager {
     }
   }
   
-  findTarget(engine: GameEngine, sentry: Sentry): any | null {
-    let closest: any | null = null;
+  findTarget(engine: GameEngine, sentry: Sentry): Bug | null {
+    let closest: Bug | null = null;
     let minDist = 300; // Range cap — squared comparison (no sqrt needed)
     const sx = engine.width / 2 + sentry.x;
     const sy = engine.height / 2 + sentry.y;
@@ -81,7 +82,7 @@ export class SentryManager {
     return minDist < rangeSq ? closest : null;
   }
   
-  fireSentry(sentry: Sentry, target: any, engine: GameEngine) {
+  fireSentry(sentry: Sentry, target: Bug, engine: GameEngine) {
     const sx = engine.width / 2 + sentry.x;
     const sy = engine.height / 2 + sentry.y;
     // Damage scales with level: 2, 5, 10

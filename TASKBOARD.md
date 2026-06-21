@@ -1,6 +1,6 @@
 # BUGSMASHER — AI Coder Taskboard
 
-**Session closed:** 2026-06-03 · See `SESSION.md` for wrap-up.
+**Session closed:** 2026-06-21 (Autonomous Principal Engineer Hardening Pass) · Strict mode, security scopes nuked, slop removed, types cleaned. See updated AUDIT_REPORT.md.
 
 > **10X Elevation (this feat branch):** CI hardened (functions + previews), PWA complete (icons + SW), bundle split (main ~290kB), QUALITY_PRESETS + post FX tunables added (three.js concepts ported to Canvas2D), tests green 411/411. See docs/2026_10X_TRANSFORMATION_ROADMAP.md and git log. Next: remaining any cleanup + full i18n wire + E2E.
 
@@ -17,7 +17,7 @@
 | P1-03 | GameEngineStatusBus | [x] |
 | P1-04 | ParticleEngineHost | [x] |
 | P1-05 | Test suite 400+ | [x] |
-| P1-06 | Remove UI `any` types | [x] |
+| P1-06 | Remove UI `any` types | [x] | (more eliminated in hardening; strict enabled) |
 | P1-07 | Server checksum validation | [x] client + functions stub |
 | P1-08 | Offscreen environment cache | [x] |
 

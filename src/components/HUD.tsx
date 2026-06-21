@@ -5,6 +5,7 @@ import { soundManager } from '../game/SoundManager';
 import { ProgressionManager } from '../game/ProgressionManager';
 import { SaveManager, type SaveSyncStatus } from '../game/SaveManager';
 import { MissionPanel } from './MissionPanel';
+import type { GameEngine } from '../game/GameEngine';
 
 interface KillLog {
   id: string;
@@ -15,7 +16,7 @@ interface KillLog {
   time: number;
 }
 
-export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef: React.RefObject<any>, onPauseToggle?: () => void, isPaused?: boolean }) {
+export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef: React.RefObject<GameEngine | null>, onPauseToggle?: () => void, isPaused?: boolean }) {
   const scoreRef = useRef<HTMLSpanElement>(null);
   const waveRef = useRef<HTMLSpanElement>(null);
   const healthTextRef = useRef<HTMLSpanElement>(null);
@@ -155,7 +156,7 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
         if (showPerfStatsLocal) {
           const engine = engineRef.current;
           if (engine) {
-            const pCount = engine.particleSystem?.particles?.filter((p: any) => p.active)?.length || 0;
+            const pCount = engine.particleSystem?.particles?.filter((p: { active?: boolean }) => p.active)?.length || 0;
             setPerfData({
               fps: measuredFps,
               frameTime: parseFloat(avgFrameTime.toFixed(1)),
@@ -168,7 +169,7 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
         }
 
         if (showPerfDebugLocal) {
-          const memory = (performance as any).memory;
+          const memory = (performance as Performance & { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
           let used = 0;
           let total = 0;
           let limit = 0;
@@ -184,7 +185,7 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
             const elapsed = Date.now() / 1000;
             const engine = engineRef.current;
             const bugCount = engine?.bugs?.length || 0;
-            const particleCount = engine?.particleSystem?.particles?.filter((p: any) => p.active)?.length || 0;
+            const particleCount = engine?.particleSystem?.particles?.filter((p: { active?: boolean }) => p.active)?.length || 0;
             const waveIndex = engine?.wave || 1;
             
             const baseMemory = 39.4 + (waveIndex * 1.1) + (Math.sin(elapsed / 10) * 1.2);
@@ -625,7 +626,7 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
   );
 }
 
-function ConsumableBar({ engineRef }: { engineRef: React.RefObject<any> }) {
+function ConsumableBar({ engineRef }: { engineRef: React.RefObject<GameEngine | null> }) {
     const [counts, setCounts] = useState<Record<string, number>>({});
     
     useEffect(() => {
@@ -681,7 +682,7 @@ function ConsumableBar({ engineRef }: { engineRef: React.RefObject<any> }) {
     );
 }
 
-function ActivePowerups({ engineRef }: { engineRef: React.RefObject<any> }) {
+function ActivePowerups({ engineRef }: { engineRef: React.RefObject<GameEngine | null> }) {
     const [activeTypes, setActiveTypes] = useState<string[]>([]);
     
     useEffect(() => {

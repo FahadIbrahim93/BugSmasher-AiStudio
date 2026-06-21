@@ -109,7 +109,7 @@ function getTodayString(): string {
  * Returns format like "2026-W23".
  */
 function getWeekId(): string {
-  const d = new Date();
+  const d = now();
   // Copy date to avoid mutating
   const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   // Shift to Thursday of current week: ISO uses Thursday to determine the week
@@ -235,23 +235,10 @@ function writeToStorage(state: MissionState): void {
 
 export class MissionManager {
   static getState(): MissionState {
-    const today = getTodayString();
-    // If cached state is for a different day, regenerate
-    if (cachedState && cachedState.date !== today) {
-      const fresh = this.generateNewState();
-      cachedState = fresh;
-      flushSync();
-      return fresh;
-    }
+    // Pending in-memory write takes priority (avoids stale localStorage reads)
     if (cachedState) return cachedState;
     const stored = readFromStorage();
     if (stored) {
-      if (stored.date !== today) {
-        const fresh = this.generateNewState();
-        cachedState = fresh;
-        flushSync();
-        return fresh;
-      }
       cachedState = stored;
       return stored;
     }
@@ -259,6 +246,26 @@ export class MissionManager {
     cachedState = fresh;
     flushSync();
     return fresh;
+  }
+
+  /**
+   * Call this on app start / date boundary to regenerate missions if the
+   * stored state is from a previous day. Explicit, not implicit in getState.
+   */
+  static refreshIfNewDay(): void {
+    const today = getTodayString();
+    if (cachedState && cachedState.date !== today) {
+      const fresh = this.generateNewState();
+      cachedState = fresh;
+      flushSync();
+      return;
+    }
+    const stored = readFromStorage();
+    if (stored && stored.date !== today) {
+      const fresh = this.generateNewState();
+      cachedState = fresh;
+      flushSync();
+    }
   }
 
   private static generateNewState(): MissionState {
@@ -284,10 +291,12 @@ export class MissionManager {
   }
 
   static getDaily(): Mission[] {
+    this.refreshIfNewDay();
     return this.getState().daily;
   }
 
   static getWeekly(): Mission[] {
+    this.refreshIfNewDay();
     return this.getState().weekly;
   }
 

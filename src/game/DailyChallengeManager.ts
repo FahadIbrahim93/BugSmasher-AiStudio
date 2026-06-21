@@ -435,13 +435,21 @@ export function isSkinUnlocked(skinId: string): boolean {
 
 // ---- INTERNAL REWARD GRANTING ----
 
-function loadCosmetics(): any {
+interface CosmeticsState {
+  unlockedSkins: string[];
+  activeSkin: string | null;
+}
+
+function loadCosmetics(): CosmeticsState {
   try {
     const raw = localStorage.getItem(STORAGE_COSMETICS);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (!Array.isArray(parsed.unlockedSkins)) parsed.unlockedSkins = [];
-      return parsed;
+      return {
+        unlockedSkins: parsed.unlockedSkins,
+        activeSkin: parsed.activeSkin ?? null
+      };
     }
   } catch {
     // fall through

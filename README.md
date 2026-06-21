@@ -2,7 +2,7 @@
 
 An ultra-minimalist, high-intensity AI-themed base defense game showcasing the visual contrast between a pristine, deadpan modern "Brutalist OS" terminal and viscous, glowing neon bio-luminescent bugs. Built inside the browser with a high-performance **React 19**, **Vite**, and high-tier **Canvas 2D** rendering engine.
 
-**Repository:** [github.com/HopeTheoory/BugSmasher-ApZz](https://github.com/HopeTheoory/BugSmasher-ApZz) · **Version:** 2.4.0
+**Repository:** [github.com/fahadibrahim93/bugsmasher-hopetheory](https://github.com/fahadibrahim93/bugsmasher-hopetheory) · **Version:** 2.5.0
 
 ---
 

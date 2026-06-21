@@ -186,7 +186,7 @@ export class GameEngine {
     this.powerupSystem = new PowerupSystem(this);
     this.hazardSystem = new HazardSystem(this);
     this.pcgSystem = new PCGSystem(this);
-    const activeCustom = CustomMapManager.getActiveConfiguration() as any;
+    const activeCustom = CustomMapManager.getActiveConfiguration();
     if (activeCustom && activeCustom.obstacles && activeCustom.seed) {
       this.pcgSystem.activeMap = activeCustom;
     }

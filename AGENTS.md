@@ -47,7 +47,7 @@ It follows a modular architecture where the `GameEngine` orchestrates several sy
 | `TASKBOARD.md` | Picking next implementation task |
 | `AUDIT_REPORT.md` | Understanding quality gaps |
 
-**Pre-push:** `npm run ci` · **Release:** follow DEPLOYMENT.md checklist · **Version:** `package.json` (currently 2.4.0)
+**Pre-push:** `npm run ci` · **Release:** follow DEPLOYMENT.md checklist · **Version:** `package.json` (currently 2.5.0)
 
 ## Recent Refactors (Completed June 2026)
 - Split `Renderer` into `src/game/rendering/*` sub-modules.

@@ -25,15 +25,15 @@ export const GameCanvas = forwardRef<GameEngine | null, GameCanvasProps>(({
     return new Proxy({} as GameEngine, {
       get: (_, prop) => {
         if (!engineRef.current) return undefined;
-        const value = (engineRef.current as any)[prop];
+        const value = (engineRef.current as unknown as Record<string, unknown>)[prop as string];
         if (typeof value === 'function') {
-          return value.bind(engineRef.current);
+          return (value as Function).bind(engineRef.current);
         }
         return value;
       },
       set: (_, prop, value) => {
         if (engineRef.current) {
-          (engineRef.current as any)[prop] = value;
+          (engineRef.current as unknown as Record<string, unknown>)[prop as string] = value;
           return true;
         }
         return false;

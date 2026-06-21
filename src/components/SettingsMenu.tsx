@@ -476,7 +476,7 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
                   ].map((preset) => (
                     <button
                       key={preset.id}
-                      onClick={() => applyPreset(preset.id as any)}
+                      onClick={() => applyPreset(preset.id as 'brutal' | 'tactical' | 'ambient' | 'stealth')}
                       className="px-1 py-2 text-[8px] font-mono uppercase tracking-wider border border-white/5 bg-white/5 hover:border-white/20 hover:bg-white/10 rounded-lg text-zinc-400 hover:text-white transition-all text-center flex flex-col items-center justify-center leading-tight gap-0.5"
                       title={preset.hint}
                     >

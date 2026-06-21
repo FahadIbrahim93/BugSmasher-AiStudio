@@ -135,6 +135,7 @@ export class LoginStreakManager {
 
     let newStreak: number;
     let usedFreeze = false;
+    let freezeTokensAfter = state.freezeTokens;
 
     if (!state.lastLoginDate) {
       newStreak = 1;
@@ -145,6 +146,7 @@ export class LoginStreakManager {
       } else if (daysSince === 2 && state.freezeTokens > 0) {
         newStreak = state.currentStreak + 1;
         usedFreeze = true;
+        freezeTokensAfter = state.freezeTokens - 1;
       } else {
         newStreak = 1;
       }
@@ -153,8 +155,8 @@ export class LoginStreakManager {
     const reward = getRewardForDay(newStreak);
     const isMilestone = newStreak % MILESTONE_DAYS === 0;
     const newFreezeTokens = isMilestone
-      ? Math.min(MAX_FREEZE_TOKENS, state.freezeTokens + FREEZE_TOKEN_PER_MILESTONE)
-      : state.freezeTokens;
+      ? Math.min(MAX_FREEZE_TOKENS, freezeTokensAfter + FREEZE_TOKEN_PER_MILESTONE)
+      : freezeTokensAfter;
 
     const newState: LoginStreakState = {
       currentStreak: newStreak,

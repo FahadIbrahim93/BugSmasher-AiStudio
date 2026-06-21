@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { motion, type Variants } from 'motion/react';
 import { Target, Timer, Activity, ChevronRight, Award } from 'lucide-react';
 import { soundManager } from '../game/SoundManager';
 import { StatsManager } from '../game/StatsManager';
@@ -32,7 +32,7 @@ export function WaveSummaryModal({
   };
 
   // Glitch text block variant setup
-  const titleGlitchVariants: any = {
+  const titleGlitchVariants: Variants = {
     animate: {
       x: [0, -3, 3, -1, 1, 0],
       skewX: [0, 5, -5, 2, -2, 0],
