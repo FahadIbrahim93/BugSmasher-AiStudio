@@ -72,7 +72,7 @@ export class FirebaseService {
         updatedAt: new Date().toISOString() 
       });
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       handleFirestoreError(error, OperationType.UPDATE, `users/${userId}`);
       return false;
     }
@@ -93,7 +93,7 @@ export class FirebaseService {
         updatedAt: new Date().toISOString(),
       });
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       handleFirestoreError(error, OperationType.WRITE, `users/${userId}/private/saves`);
       return false;
     }
@@ -115,7 +115,7 @@ export class FirebaseService {
         }
       }
       return { ...payload, checksum } as GameSaveData;
-    } catch (error) {
+    } catch (error: unknown) {
       handleFirestoreError(error, OperationType.GET, `users/${userId}/private/saves`);
       return null;
     }
@@ -141,7 +141,7 @@ export class FirebaseService {
         updatedAt: serverTimestamp()
       });
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       handleFirestoreError(error, OperationType.WRITE, `leaderboard/${userId}`);
       return false;
     }
@@ -156,7 +156,7 @@ export class FirebaseService {
       );
       const snap = await getDocs(leaderboardQuery);
       return snap.docs.map(d => d.data() as LeaderboardEntry);
-    } catch (error) {
+    } catch (error: unknown) {
       handleFirestoreError(error, OperationType.LIST, 'leaderboard');
       return [];
     }

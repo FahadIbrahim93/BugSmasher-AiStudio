@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } else {
             setProfile(userDoc.data() as UserProfile);
           }
-        } catch (error) {
+        } catch (error: unknown) {
           console.warn("Offline or failed to sync user profile from Firestore:", error);
           // High-reliability fallback: use auth details to build local profile state
           setProfile({
@@ -109,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           };
           console.error('Firestore Error: ', JSON.stringify(errInfo));
         });
-      } catch (e) {
+      } catch (e: unknown) {
         console.error("Synchronous error starting profile listener:", e);
       }
     };

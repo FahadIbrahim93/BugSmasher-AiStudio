@@ -64,7 +64,7 @@ export class AdManager {
 
       this.state = loaded ? 'idle' : 'failed';
       return loaded;
-    } catch (error) {
+    } catch (error: unknown) {
       this.state = 'failed';
       this.callbacks.onAdFailed?.(String(error));
       return false;
@@ -90,7 +90,7 @@ export class AdManager {
         default:
           return false;
       }
-    } catch (error) {
+    } catch (error: unknown) {
       this.callbacks.onAdFailed?.(String(error));
       return false;
     }

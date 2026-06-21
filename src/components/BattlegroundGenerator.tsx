@@ -34,7 +34,7 @@ export function BattlegroundGenerator({
 
   // Instantiating a dummy/offline pcg generator for live client-side blueprint computation
   const dummyEngine = { width: 800, height: 600 } as { width: number; height: number; [key: string]: unknown };
-  const pcgGenerator = new PCGSystem(dummyEngine as any); // PCG accepts partial engine shape; cast kept minimal here for interop
+  const pcgGenerator = new PCGSystem(dummyEngine as unknown as Parameters<typeof PCGSystem>[0]); // PCG accepts partial engine shape; cast for interop with test/dummy shape
   const livePcgMap: PCGMapConfig = pcgGenerator.generateMap(pcgSeed, pcgTheme);
 
   // Load preset config

@@ -20,7 +20,7 @@ try {
       tabManager: persistentMultipleTabManager()
     })
   }, (firebaseConfig as { firestoreDatabaseId?: string }).firestoreDatabaseId);
-} catch (e) {
+} catch (e: unknown) {
   console.warn('Failed to initialize Firestore with persistent multi-tab cache, falling back to default:', e);
   db = getFirestore(app, (firebaseConfig as { firestoreDatabaseId?: string }).firestoreDatabaseId);
 }
@@ -42,7 +42,7 @@ async function testConnection() {
     const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('connection timeout')), 2500));
     
     await Promise.race([testPromise, timeoutPromise]);
-  } catch (error) {
+  } catch (error: unknown) {
     console.warn("Firestore connection check: operating in offline mode.", error instanceof Error ? error.message : error);
   }
 }

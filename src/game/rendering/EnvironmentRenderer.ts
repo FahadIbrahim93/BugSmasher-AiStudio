@@ -61,7 +61,7 @@ export class EnvironmentRenderer {
     }
 
     const healthRatio = this.engine.health / this.engine.maxHealth;
-    const customMapId = (biomeId === 'custom_map' && customMap) ? (('id' in customMap) ? customMap.id : (customMap as any).seed || 'pcg') : '';
+    const customMapId = (biomeId === 'custom_map' && customMap) ? (('id' in customMap) ? customMap.id : (customMap as { seed?: string }).seed || 'pcg') : '';
     
     // Cache background gradient — recreate only on dimension/biome/health change
     if (this.cachedBgGradient === null ||
@@ -166,7 +166,7 @@ export class EnvironmentRenderer {
         this.paintGoldenCircuitry(ctx);
       }
     } else if (biomeId === 'custom_map' && customMap) {
-      const mapIdPart = 'id' in customMap ? customMap.id : (customMap as any).seed || 'pcg';
+      const mapIdPart = 'id' in customMap ? customMap.id : (customMap as { seed?: string }).seed || 'pcg';
       const cached = this.staticLayerCache.blitStaticLayer(this.engine, `custom_map_static_${mapIdPart}_${customMap.visualStyle}`, (c) => {
         this.paintCustomMapDetails(c as CanvasRenderingContext2D, customMap);
       });
