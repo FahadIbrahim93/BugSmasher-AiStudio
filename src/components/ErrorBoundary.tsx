@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { monitor } from '../lib/monitoring';
 
 interface Props {
@@ -27,7 +27,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Report to monitoring
-    monitor.errors.track(error, errorInfo.componentStack);
+    monitor.errors.track(error, errorInfo.componentStack ?? undefined);
     monitor.error('React component error', {
       error,
       componentStack: errorInfo.componentStack,

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Sparkles, Terminal, Play, X, Sliders, Repeat, Layers, Eye, RefreshCw, Copy, Share2, Clipboard, ShieldCheck } from 'lucide-react';
+import { useState } from 'react';
+import { Sparkles, Terminal, Play, X, Sliders, Repeat, Layers, Eye, RefreshCw, Copy } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { soundManager } from '../game/SoundManager';
 import { CustomMapManager, HANDCRAFTED_BATTLEGROUNDS, type CustomMapConfig } from '../game/CustomMapManager';
@@ -33,8 +33,9 @@ export function BattlegroundGenerator({
   const [copiedNotification, setCopiedNotification] = useState(false);
 
   // Instantiating a dummy/offline pcg generator for live client-side blueprint computation
-  const dummyEngine = { width: 800, height: 600 } as { width: number; height: number; [key: string]: unknown };
-  const pcgGenerator = new PCGSystem(dummyEngine as unknown as Parameters<typeof PCGSystem>[0]); // PCG accepts partial engine shape; cast for interop with test/dummy shape
+  // Minimal structural match for PCGSystem (which only reads width/height + a few other things in practice)
+  const dummyEngine = { width: 800, height: 600, bugs: [], hazards: [] } as unknown as import('../game/GameEngine').GameEngine;
+  const pcgGenerator = new PCGSystem(dummyEngine);
   const livePcgMap: PCGMapConfig = pcgGenerator.generateMap(pcgSeed, pcgTheme);
 
   // Load preset config
@@ -87,7 +88,7 @@ export function BattlegroundGenerator({
     
     if (activeTab === 'pcg') {
       // Save procedurally generated map as the active custom battleground config
-      CustomMapManager.saveCustomMap(livePcgMap);
+      CustomMapManager.saveCustomMap(livePcgMap as unknown as CustomMapConfig);
     }
     
     onLaunch();

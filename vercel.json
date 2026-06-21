@@ -1,12 +1,10 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "vite build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "vite",
   "outputDirectory": "dist",
   "env": {
-    "VITE_SUPABASE_URL": "",
-    "VITE_SUPABASE_ANON_KEY": "",
     "GEMINI_API_KEY": ""
   },
   "headers": [

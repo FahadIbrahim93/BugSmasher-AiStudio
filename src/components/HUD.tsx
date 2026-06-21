@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Shield, Target, Zap, Pause, Play, Wrench, Cpu, Ghost } from 'lucide-react';
+import { Shield, Target, Zap, Pause, Play, Wrench, Cpu } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { soundManager } from '../game/SoundManager';
 import { ProgressionManager } from '../game/ProgressionManager';
@@ -125,7 +125,7 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
     let lastHealth = -1;
     let lastMaxHealth = -1;
 
-    let lastTime = performance.now();
+    performance.now(); // last frame time tracked if needed for fps calc
     let frameCount = 0;
     let lastPerfUpdate = performance.now();
     let lastFrameTime = performance.now();
@@ -169,7 +169,7 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
         }
 
         if (showPerfDebugLocal) {
-          const memory = (performance as Performance & { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
+          const memory = (performance as Performance & { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit?: number } }).memory;
           let used = 0;
           let total = 0;
           let limit = 0;
@@ -178,8 +178,9 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
           if (memory) {
             used = Math.round(memory.usedJSHeapSize / 1048576);
             total = Math.round(memory.totalJSHeapSize / 1048576);
-            limit = Math.round(memory.jsHeapLimit / 1048576);
-            pct = limit > 0 ? (memory.usedJSHeapSize / memory.jsHeapLimit) * 100 : 0;
+            limit = Math.round((memory.jsHeapSizeLimit || memory.totalJSHeapSize) / 1048576);
+            const limitForPct = memory.jsHeapSizeLimit || memory.totalJSHeapSize || 1;
+            pct = (memory.usedJSHeapSize / limitForPct) * 100;
           } else {
             // Highly robust, realistic active-workload emulation for standard JS environments
             const elapsed = Date.now() / 1000;

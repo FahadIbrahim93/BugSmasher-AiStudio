@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { User as LucideUser, LogIn, LogOut, Trophy, X, Shield, History, Cloud, Mail, ExternalLink, AlertCircle, BarChart3, Clock, Target, Zap, Cpu } from 'lucide-react';
+import { User as LucideUser, X, Shield, History, Cloud, AlertCircle, BarChart3, Clock, Target, Zap, Cpu } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../contexts/AuthContext';
-import { FirebaseService } from '../lib/firebaseService';
 import { soundManager } from '../game/SoundManager';
 import { StatsManager, UserStats } from '../game/StatsManager';
 

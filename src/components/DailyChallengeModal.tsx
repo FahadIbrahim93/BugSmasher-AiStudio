@@ -2,9 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import {
   getTodaysChallenge,
   getStreakInfo,
-  generateDailyChallenge,
   CHALLENGE_MODIFIERS,
-  type DailyChallenge,
   type ChallengeModifierId,
 } from '../game/DailyChallengeManager';
 import { soundManager } from '../game/SoundManager';
@@ -24,7 +22,6 @@ import {
   X,
   Play,
   Clock,
-  ChevronRight,
 } from 'lucide-react';
 
 interface DailyChallengeModalProps {

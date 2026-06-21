@@ -14,12 +14,14 @@ async function startServer() {
     try {
       const { theme } = req.body;
       if (!theme || typeof theme !== 'string') {
-        return res.status(400).json({ error: 'Theme string is required' });
+        res.status(400).json({ error: 'Theme string is required' });
+        return;
       }
 
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) {
-        return res.status(500).json({ error: 'GEMINI_API_KEY is not configured in environment secrets.' });
+        res.status(500).json({ error: 'GEMINI_API_KEY is not configured in environment secrets.' });
+        return;
       }
 
       const ai = new GoogleGenAI({
@@ -66,9 +68,12 @@ async function startServer() {
 
       const mapData = JSON.parse(outputText.trim());
       res.json(mapData);
-    } catch (err: any) {
+      return;
+    } catch (err: unknown) {
       console.error("GenAI generateContent error:", err);
-      res.status(500).json({ error: err.message || 'Failed to generate battleground theme' });
+      const message = err instanceof Error ? err.message : 'Failed to generate battleground theme';
+      res.status(500).json({ error: message });
+      return;
     }
   });
 
@@ -82,7 +87,7 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*', (req, res) => {
+    app.get('*', (_req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }

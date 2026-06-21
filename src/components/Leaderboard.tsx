@@ -150,7 +150,11 @@ export function Leaderboard({ onClose }: LeaderboardProps) {
                         {entry.score.toLocaleString()}
                       </div>
                       <div className="text-[10px] text-zinc-600 font-mono uppercase tracking-widest">
-                        {entry.updatedAt?.toMillis ? new Date(entry.updatedAt.toMillis()).toLocaleDateString() : 'JUST NOW'}
+                        {(() => {
+                          const ua = entry.updatedAt;
+                          const ms = typeof ua === 'number' ? ua : (ua && typeof ua === 'object' && 'seconds' in ua ? (ua as any).seconds * 1000 : Date.now());
+                          return new Date(ms).toLocaleDateString();
+                        })()}
                       </div>
                     </div>
                   </motion.div>

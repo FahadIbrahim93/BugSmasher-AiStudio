@@ -3,10 +3,9 @@ import { motion, AnimatePresence } from 'motion/react';
 
 interface BiomeBackgroundGalleryProps {
   biome: string;
-  intensity: number;
 }
 
-export function BiomeBackgroundGallery({ biome, intensity }: BiomeBackgroundGalleryProps) {
+export function BiomeBackgroundGallery({ biome }: BiomeBackgroundGalleryProps) {
   const [activeTheme, setActiveTheme] = useState<string>('neon_core');
 
   useEffect(() => {
@@ -28,19 +27,19 @@ export function BiomeBackgroundGallery({ biome, intensity }: BiomeBackgroundGall
           className="absolute inset-0 w-full h-full bg-zinc-950"
         >
           {/* Theme-specific Backdrop Layers */}
-          {activeTheme === 'toxic_reactor' && <ToxicReactorBackdrop intensity={intensity} />}
-          {activeTheme === 'chrono_singularity' && <ChronoSingularityBackdrop intensity={intensity} />}
-          {activeTheme === 'hellfire_forge' && <HellfireForgeBackdrop intensity={intensity} />}
-          {activeTheme === 'digital_matrix' && <DigitalMatrixBackdrop intensity={intensity} />}
-          {activeTheme === 'cryo_aurora' && <CryoAuroraBackdrop intensity={intensity} />}
-          {activeTheme === 'imperial_cache' && <ImperialCacheBackdrop intensity={intensity} />}
-          {activeTheme === 'golden_spire' && <ImperialCacheBackdrop intensity={intensity} />}
-          {activeTheme === 'golden_cache' && <ImperialCacheBackdrop intensity={intensity} />}
-          {activeTheme === 'neon_core' && <NeonCoreBackdrop intensity={intensity} />}
-          {activeTheme === 'quantum_void' && <QuantumVoidBackdrop intensity={intensity} />}
-          {activeTheme === 'void_abyss' && <VoidAbyssBackdrop intensity={intensity} />}
-          {activeTheme === 'ember_depths' && <HellfireForgeBackdrop intensity={intensity} />}
-          {activeTheme === 'frostbyte' && <CryoAuroraBackdrop intensity={intensity} />}
+          {activeTheme === 'toxic_reactor' && <ToxicReactorBackdrop />}
+          {activeTheme === 'chrono_singularity' && <ChronoSingularityBackdrop />}
+          {activeTheme === 'hellfire_forge' && <HellfireForgeBackdrop />}
+          {activeTheme === 'digital_matrix' && <DigitalMatrixBackdrop />}
+          {activeTheme === 'cryo_aurora' && <CryoAuroraBackdrop />}
+          {activeTheme === 'imperial_cache' && <ImperialCacheBackdrop />}
+          {activeTheme === 'golden_spire' && <ImperialCacheBackdrop />}
+          {activeTheme === 'golden_cache' && <ImperialCacheBackdrop />}
+          {activeTheme === 'neon_core' && <NeonCoreBackdrop />}
+          {activeTheme === 'quantum_void' && <QuantumVoidBackdrop />}
+          {activeTheme === 'void_abyss' && <VoidAbyssBackdrop />}
+          {activeTheme === 'ember_depths' && <HellfireForgeBackdrop />}
+          {activeTheme === 'frostbyte' && <CryoAuroraBackdrop />}
         </motion.div>
       </AnimatePresence>
 
@@ -54,7 +53,7 @@ export function BiomeBackgroundGallery({ biome, intensity }: BiomeBackgroundGall
 /* ==========================================
    1. TOXIC REACTOR BACKDROP
    ========================================== */
-function ToxicReactorBackdrop({ intensity }: { intensity: number }) {
+function ToxicReactorBackdrop() {
   return (
     <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-[#021405] via-[#010803] to-[#041a08] overflow-hidden">
       {/* Radioactive Acid Grid Overlay */}
@@ -117,7 +116,7 @@ function ToxicReactorBackdrop({ intensity }: { intensity: number }) {
 /* ==========================================
    2. CHRONO SINGULARITY BACKDROP
    ========================================== */
-function ChronoSingularityBackdrop({ intensity }: { intensity: number }) {
+function ChronoSingularityBackdrop() {
   return (
     <div className="absolute inset-0 w-full h-full bg-gradient-to-b from-[#060010] via-[#090018] to-[#14002c] overflow-hidden">
       {/* Nebulous Deep Galactic Grid */}
@@ -188,7 +187,7 @@ function ChronoSingularityBackdrop({ intensity }: { intensity: number }) {
 /* ==========================================
    3. HELLFIRE FORGE BACKDROP
    ========================================== */
-function HellfireForgeBackdrop({ intensity }: { intensity: number }) {
+function HellfireForgeBackdrop() {
   return (
     <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-[#120100] via-[#090100] to-[#1f0500] overflow-hidden">
       {/* Crag Grid lines */}
@@ -268,7 +267,7 @@ function HellfireForgeBackdrop({ intensity }: { intensity: number }) {
 /* ==========================================
    4. DIGITAL MATRIX BACKDROP
    ========================================== */
-function DigitalMatrixBackdrop({ intensity }: { intensity: number }) {
+function DigitalMatrixBackdrop() {
   return (
     <div className="absolute inset-0 w-full h-full bg-gradient-to-b from-[#00080f] via-[#000407] to-[#000e16] overflow-hidden">
       {/* High precision cybernetic grid */}
@@ -331,7 +330,7 @@ function DigitalMatrixBackdrop({ intensity }: { intensity: number }) {
 /* ==========================================
    5. CRYO AURORA BACKDROP
    ========================================== */
-function CryoAuroraBackdrop({ intensity }: { intensity: number }) {
+function CryoAuroraBackdrop() {
   return (
     <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-[#000b14] via-[#00050a] to-[#001322] overflow-hidden">
       {/* Glacial blueprint matrix */}
@@ -378,7 +377,6 @@ function CryoAuroraBackdrop({ intensity }: { intensity: number }) {
       {/* Floating Frozen snowflake crystal nodes */}
       <div className="absolute inset-0">
         {Array.from({ length: 12 }).map((_, i) => {
-          const size = 15 + (i * 4) % 20;
           const left = `${15 + (i * 12) % 75}%`;
           const top = `${10 + (i * 15) % 80}%`;
           return (
@@ -409,7 +407,7 @@ function CryoAuroraBackdrop({ intensity }: { intensity: number }) {
 /* ==========================================
    6. IMPERIAL CACHE / SACRED GOLDEN SPIRE BACKDROP
    ========================================== */
-function ImperialCacheBackdrop({ intensity }: { intensity: number }) {
+function ImperialCacheBackdrop() {
   return (
     <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-[#1c1400] via-[#0b0800] to-[#251a02] overflow-hidden">
       {/* Royal Amber circuitry grid spacer */}
@@ -471,7 +469,7 @@ function ImperialCacheBackdrop({ intensity }: { intensity: number }) {
 /* ==========================================
    7. NEON CORE BACKDROP
    ========================================== */
-function NeonCoreBackdrop({ intensity }: { intensity: number }) {
+function NeonCoreBackdrop() {
   return (
     <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-[#021004] via-[#010501] to-[#041a08] overflow-hidden">
       <div 
@@ -499,7 +497,7 @@ function NeonCoreBackdrop({ intensity }: { intensity: number }) {
 /* ==========================================
    8. QUANTUM VOID BACKDROP
    ========================================== */
-function QuantumVoidBackdrop({ intensity }: { intensity: number }) {
+function QuantumVoidBackdrop() {
   return (
     <div className="absolute inset-0 w-full h-full bg-gradient-to-b from-[#08001a] via-[#100022] to-[#1a0033] overflow-hidden">
       {/* Quantum Lattice */}
@@ -524,7 +522,7 @@ function QuantumVoidBackdrop({ intensity }: { intensity: number }) {
 /* ==========================================
    9. VOID ABYSS BACKDROP
    ========================================== */
-function VoidAbyssBackdrop({ intensity }: { intensity: number }) {
+function VoidAbyssBackdrop() {
   return (
     <div className="absolute inset-0 w-full h-full bg-black overflow-hidden">
       {/* Extreme low-opacity starfield */}

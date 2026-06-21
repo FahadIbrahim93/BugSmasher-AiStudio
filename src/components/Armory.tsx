@@ -1,16 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Gem, Palette, Star, Crown, KeyRound, Sparkles, Bug, Shield, Wrench, ChevronRight } from 'lucide-react';
+import { X, Gem, Palette, Star, Crown, KeyRound, Sparkles, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { soundManager } from '../game/SoundManager';
 import {
   CORE_THEMES,
   PURCHASABLE_SKINS,
-  SUPPORTER_KEY,
-  PREMIUM_KEY,
-  ULTIMATE_KEY,
   getActiveCoreTheme,
   setActiveCoreTheme,
-  getUnlockedCoreThemes,
   isCoreThemeUnlocked,
   isSupporter,
   getSupporterTier,
@@ -37,7 +33,6 @@ export function Armory({ onClose }: ArmoryProps) {
   const [testDriveSkinId, setTestDriveSkinId] = useState<string | null>(null);
   const [activeThemeId, setActiveThemeId] = useState<CoreThemeId | null>(getActiveCoreTheme());
   const [unlockedSkins, setUnlockedSkins] = useState<string[]>(getUnlockedSkins());
-  const [unlockedThemes, setUnlockedThemes] = useState<CoreThemeId[]>(getUnlockedCoreThemes());
   const [keyInput, setKeyInput] = useState('');
   const [keyResult, setKeyResult] = useState<{ success: boolean; tier?: string } | null>(null);
   const [showDevTools, setShowDevTools] = useState(false);
@@ -102,7 +97,7 @@ export function Armory({ onClose }: ArmoryProps) {
       setKeyResult({ success: true, tier: result });
       setKeyInput('');
       setUnlockedSkins(getUnlockedSkins());
-      setUnlockedThemes(getUnlockedCoreThemes());
+      // unlocked core themes refreshed via getUnlockedCoreThemes() on mount/effect if needed (no local state)
       soundManager.armoryUnlockTier();
     } else {
       setKeyResult({ success: false });
@@ -113,7 +108,6 @@ export function Armory({ onClose }: ArmoryProps) {
   const handleDevUnlock = () => {
     devUnlockAll();
     setUnlockedSkins(getUnlockedSkins());
-    setUnlockedThemes(getUnlockedCoreThemes());
     setActiveSkinId(getActiveSkin());
     setActiveThemeId(getActiveCoreTheme());
     soundManager.powerup('overdrive');
@@ -681,7 +675,6 @@ function ThemeTooltip({ themeId }: { themeId: CoreThemeId }) {
 function SkinTooltip({ skinId, skinName, skinDesc, tier }: { skinId: string; skinName: string; skinDesc: string; tier: SupporterTier }) {
   const colors = SKIN_PARTICLE_COLORS[skinId] || { primary: '#fff', secondary: '#fff', accent: '#fff' };
   const particleColors = [colors.primary, colors.secondary, colors.accent, colors.primary, colors.accent];
-  const unlocked = true; // Tooltip always shows full preview
 
   return (
     <div className="skin-tooltip bottom-full left-1/2 -translate-x-1/2 mb-4">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion } from 'motion/react';
+// import { motion } from 'motion/react'; // motion not currently used in this panel
 import { MissionManager, type Mission } from '../game/MissionManager';
 import { analytics } from '../lib/analytics';
 import { MISSION_UPDATE_EVENT } from '../game/missionEvents';

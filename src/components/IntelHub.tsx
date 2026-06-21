@@ -94,7 +94,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
       const data = await fetchPerformanceHistory(accessToken!);
       setChartData(data);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to sync with performance spreadsheet.';
+      const msg = err instanceof Error ? (err instanceof Error ? err.message : String(err)) : String(err);
       setDashboardError(msg);
     } finally {
       setIsLoadingChart(false);
@@ -166,7 +166,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
       await exportSaveToGoogleDrive(accessToken, JSON.stringify(backupBundle));
       setBackupStatus({ success: true, message: 'OPERATIONAL BACKUP DEPLOYED SUCCESSFULLY TO GOOGLE DRIVE.' });
     } catch (err: unknown) {
-      setBackupStatus({ success: false, message: err.message || 'Drive archiving upload failed.' });
+      setBackupStatus({ success: false, message: (err instanceof Error ? err.message : String(err)) || 'Drive archiving upload failed.' });
     } finally {
       setIsActionLoading(false);
     }
@@ -197,7 +197,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
         window.location.reload();
       }, 2000);
     } catch (err: unknown) {
-      setBackupStatus({ success: false, message: err.message || 'Drive restore failed.' });
+      setBackupStatus({ success: false, message: (err instanceof Error ? err.message : String(err)) || 'Drive restore failed.' });
     } finally {
       setIsActionLoading(false);
     }
@@ -212,7 +212,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
       await sendGmailReport(accessToken, targetEmail, stats, SaveManager.getHighScore());
       setGmailStatus({ success: true, message: `COMBAT BRIEFS DISPATCHED SECURELY TO: ${targetEmail}` });
     } catch (err: unknown) {
-      setGmailStatus({ success: false, message: err.message || 'Failed to dispatch Gmail briefs.' });
+      setGmailStatus({ success: false, message: (err instanceof Error ? err.message : String(err)) || 'Failed to dispatch Gmail briefs.' });
     } finally {
       setIsActionLoading(false);
     }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Hammer, BrainCircuit, Box, X, Zap, Cpu, Shield, Wrench, FlaskConical, Target, Binary } from 'lucide-react';
+import { Hammer, BrainCircuit, Box, X, Wrench, FlaskConical, Binary } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ProgressionManager, ProgressionData } from '../game/ProgressionManager';
 import { RESOURCES, RECIPES, SKILLS, ResourceType, Recipe, Skill } from '../game/ResourceTypes';

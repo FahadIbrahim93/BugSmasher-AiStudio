@@ -20,7 +20,7 @@ export function GameOver({ score, wave, onRetry, onMainMenu }: { score: number, 
   const handlePrestige = () => {
     setIsPrestigeAnimation(true);
     setTimeout(() => {
-      const points = ProgressionManager.prestige(score);
+      ProgressionManager.prestige(score); // prestige side effects only
       onRetry();
     }, 2000);
   };

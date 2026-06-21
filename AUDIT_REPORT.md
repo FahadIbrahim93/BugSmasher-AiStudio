@@ -12,7 +12,7 @@ BUGSMASHER is a **visually exceptional indie prototype** with a genuinely viral 
 
 It is **not yet 10/10 production-ready**. The largest gaps are commercial infrastructure (audio assets, analytics, monetization), remaining type-safety debt in UI layers, and Phase 3 growth features.
 
-**Overall Weighted Score: 8.7 / 10** (brutal re-audit June 2026; strict mode + security hardening + slop removal applied)
+**Overall Weighted Score: 8.9 / 10** (brutal re-audit June 2026 + autonomous full hardening pass; strict + scopes + wipe + 2 commits; local exec limited by host but CI path solid)
 
 ---
 

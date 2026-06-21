@@ -9,7 +9,7 @@ import { TutorialOverlay } from './TutorialOverlay';
 import { ProgressionCenter } from './ProgressionCenter';
 import { GameEngine } from '../game/GameEngine';
 import { GameConfig } from '../game/GameConfig';
-import { SaveManager, GameSaveData } from '../game/SaveManager';
+import type { GameSaveData } from '../game/SaveManager';
 import { SaveSlotsModal } from './SaveSlotsModal';
 
 import { StatsManager } from '../game/StatsManager';
@@ -79,24 +79,16 @@ export function Game({
   const [currentWave, setCurrentWave] = useState(1);
   
   const [currentBiome, setCurrentBiome] = useState<string>(startBiome || 'neon_core');
-  const [intensity, setIntensity] = useState<number>(1.0);
   
   const engineRef = useRef<GameEngine | null>(null);
   const [a11y, setA11y] = useState<AccessibilitySettings>(loadAccessibilitySettings);
 
   useEffect(() => {
     let lastBiome = startBiome || 'neon_core';
-    let lastIntensity = 1.0;
     const unsub = GameEngineStatusBus.subscribe((status) => {
-      if (status) {
-        if (status.currentBiome !== lastBiome) {
-          lastBiome = status.currentBiome;
-          setCurrentBiome(status.currentBiome);
-        }
-        if (status.intensity !== undefined && Math.abs(status.intensity - lastIntensity) > 0.01) {
-          lastIntensity = status.intensity;
-          setIntensity(status.intensity);
-        }
+      if (status && status.currentBiome !== lastBiome) {
+        lastBiome = status.currentBiome;
+        setCurrentBiome(status.currentBiome);
       }
     });
     return unsub;
@@ -304,7 +296,7 @@ export function Game({
   return (
     <div className="relative w-full h-full overflow-hidden bg-black">
       {/* High-resolution predefined background gallery with seamless transition */}
-      <BiomeBackgroundGallery biome={resolvedBiome} intensity={intensity} />
+      <BiomeBackgroundGallery biome={resolvedBiome} />
 
       <div
         className="absolute inset-0 w-full h-full z-10"
@@ -361,7 +353,7 @@ export function Game({
       )}
 
       {!isGameOver && !isUpgrading && (
-        <TutorialOverlay engineRef={engineRef} />
+        <TutorialOverlay onComplete={() => {}} />
       )}
       
       {isGameOver && (

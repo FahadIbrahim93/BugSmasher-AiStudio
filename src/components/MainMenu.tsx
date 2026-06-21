@@ -5,7 +5,7 @@ import { SaveSlotsModal } from './SaveSlotsModal';
 import { ProgressionManager } from '../game/ProgressionManager';
 import { useState } from 'react';
 import { AccountMenu } from './AccountMenu';
-import { IntelHub } from './IntelHub';
+// import { IntelHub } from './IntelHub'; // kept for future lazy use if needed
 import { Leaderboard } from './Leaderboard';
 import { Armory } from './Armory';
 import { DailyChallengeModal } from './DailyChallengeModal';
