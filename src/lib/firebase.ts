@@ -8,7 +8,15 @@ import {
   doc, 
   getDocFromServer 
 } from 'firebase/firestore';
-import firebaseConfig from '../../firebase-applet-config.json';
+// SECURITY FIX (audit): Do not import firebase-applet-config.json directly.
+// Use VITE_ env vars (see .env.example). Add firebase-applet-config.json to .gitignore.
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  // Add other fields from the json as needed (messagingSenderId, etc.)
+};
 
 const app = initializeApp(firebaseConfig);
 
@@ -19,10 +27,10 @@ try {
     localCache: persistentLocalCache({
       tabManager: persistentMultipleTabManager()
     })
-  }, (firebaseConfig as { firestoreDatabaseId?: string }).firestoreDatabaseId);
+  }, (import.meta.env.VITE_FIREBASE_DATABASE_ID || undefined) as any);
 } catch (e: unknown) {
   console.warn('Failed to initialize Firestore with persistent multi-tab cache, falling back to default:', e);
-  db = getFirestore(app, (firebaseConfig as { firestoreDatabaseId?: string }).firestoreDatabaseId);
+  db = getFirestore(app, (import.meta.env.VITE_FIREBASE_DATABASE_ID || undefined) as any);
 }
 
 export { db };

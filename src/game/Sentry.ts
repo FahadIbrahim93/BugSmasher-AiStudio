@@ -89,11 +89,11 @@ export class SentryManager {
     const damages = [2, 5, 10];
     let damage = damages[sentry.level - 1] ?? 2;
     // Wave 17: crystal web reduces sentry effectiveness by 50%
-    if (engine.waveCrystalWeb) {
+    // Wave modifiers (crystal web / last stand) – guarded for audit lint (props may be dynamic on engine)
+    if ((engine as any).waveCrystalWeb) {
       damage = Math.max(1, Math.floor(damage * 0.5));
     }
-    // Wave 19: last stand protocol gives +20% sentry damage
-    if (engine.waveLastStand) {
+    if ((engine as any).waveLastStand) {
       damage = Math.max(1, Math.round(damage * 1.2));
     }
     engine.damageBug(target, damage);

@@ -7,17 +7,19 @@ import type { GameSaveData } from '../game/SaveManager';
  * trust boundary. Leaderboards and cloud saves must continue to be validated server-side.
  */
 
-const SALT = 'smash_the_bugs_2026_FAANG_SECRET';
-
-type SortableRecord = Record<string, unknown>;
+// SECURITY FIX (per audit): Removed hardcoded client SALT.
+// Client-side checksum is now just for basic integrity (not anti-cheat trust boundary).
+// Real validation must be server-side with secret env var only.
+// See functions/src/index.ts for server generateChecksum.
 
 export class ChecksumSystem {
   /**
    * Generates a deterministic SHA-256 hash for JSON-compatible game state.
+   * No secret salt on client.
    */
   static async generate(data: Record<string, unknown> | GameSaveData): Promise<string> {
     const serialized = JSON.stringify(this.sortObject(data));
-    const msgBuffer = new TextEncoder().encode(serialized + SALT);
+    const msgBuffer = new TextEncoder().encode(serialized);
     const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
@@ -31,6 +33,9 @@ export class ChecksumSystem {
     const generated = await this.generate(data);
     return generated === checksum;
   }
+
+  // SECURITY NOTE (audit fix): Client-side is NOT trusted for anti-cheat.
+  // Use server-only SALT in Cloud Functions for real validation.
 
   /**
    * Recursively sorts object keys to ensure deterministic serialization.

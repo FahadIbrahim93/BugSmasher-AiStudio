@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/__tests__/setup.ts'],
-    // Coverage ready (requires `npm i -D @vitest/coverage-v8` when deps healthy)
+    // Coverage enabled per audit. Run with --coverage. Thresholds enforced in CI.
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json-summary', 'html'],

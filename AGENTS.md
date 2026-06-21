@@ -4,19 +4,24 @@
 This is a high-intensity, FAANG-level React/TypeScript game engine using Canvas 2D. 
 It follows a modular architecture where the `GameEngine` orchestrates several systems.
 
-## Audit Status (June 2026, Verified)
-**Overall Rating: 9.1/10** — Strong pre-production. Source strict-clean, scopes removed, slop eliminated, pushed. See `AUDIT_REPORT.md`.
+## Audit Status (June 2026, Verified - HONEST)
+**Overall Rating: 5.6/10** (per independent CTO audit). Pre-Alpha prototype with polished facade.
+Security is critically broken (2/10). Do not trust previous self-ratings.
+
+See `AUDIT_HONEST.md` and the full Claude CTO audit report for details.
 
 | Category | Rating | Key Issue |
 |---|---|---|
-| Architecture & Code Quality | 9.0 | Strict TS source clean; systems modular |
-| Performance & Optimization | 8.1 | FPS scaler excellent |
-| UI/UX & Visual Design | 9.0 | Brutalist excellence |
-| Game Design & Engagement | 7.5 | Procedural audio still gap |
-| Business Viability | 4.5 | Analytics/payment pending |
-| Security & Data Integrity | 9.0 | Scopes removed; server validation live |
-| Testing Coverage | 8.5 | 400+ tests (source clean; test warnings isolated) |
-| Feature Completeness | 7.8 | A11y complete; i18n/social partial |
+| Security & Data Integrity | 2/10 | CRITICAL: Hardcoded client salt, firebase key in git |
+| Test Coverage & Reliability | 5.5/10 | 3 failing tests (missing import in InputSystem); coverage not enforced |
+| Standards & Compliance | 5/10 | Docs lies (README Supabase vs Firebase); no CSP |
+| Code Quality & Structure | 6.5/10 | SoundManager God Object (1368+ lines); 50+ public fields on GameEngine |
+| Performance & Scalability | 6/10 | 2.6MB PWA precache; WAV audio; heavy Firebase chunk |
+| Architecture & Modularity | 7/10 | Good systems, but static singletons |
+| Team Collaboration Readiness | 7/10 | Good agent docs, but AGENTS.md was misleading |
+| Business Objectives Alignment | 5/10 | Stub analytics/monetization; fake leaderboard seeds |
+
+**Action for agents: Always verify with `npm test`, `npm run build`, grep for "SALT", "Supabase", "firebase-applet-config". Fix issues, do not paper over. Update this section with real findings.**
 
 ## Architecture Standards
 - **Systems over Monoliths**: Avoid adding logic directly to `GameEngine.ts`. Extract specialized systems (e.g., `InputSystem`, `CollisionSystem`) to keep the engine lean.

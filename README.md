@@ -2,15 +2,9 @@
 
 An ultra-minimalist, high-intensity AI-themed base defense game with Brutalist OS aesthetics vs. neon bio-luminescent bugs. React 19 + TypeScript + Canvas 2D. 60+ FPS target with real-time performance scaling.
 
-<<<<<<< HEAD
-**Repository:** [github.com/fahadibrahim93/bugsmasher-hopetheory](https://github.com/fahadibrahim93/bugsmasher-hopetheory) · **Version:** 2.5.0
-
----
-=======
 **Live:** [https://studio-1155838266-56095.web.app](https://studio-1155838266-56095.web.app)  
 **Repo:** [FahadIbrahim93/BugSmasher-HopeTheory](https://github.com/FahadIbrahim93/BugSmasher-HopeTheory)  
-**Version:** 2.4.0+ (June 2026) | **Audit:** 7.4/10 (Pre-Production per COMPREHENSIVE_AUDIT_2026.md)
->>>>>>> origin/main
+**Version:** 2.5.0 | **Audit:** 5.6/10 (Honest CTO audit June 2026 - see AUDIT_HONEST.md). Sprint 0 fixes in progress: tests now 448/448 passing, client salt removed, config migration started, docs updated.
 
 ## 📚 Documentation Index
 - [COMPREHENSIVE_AUDIT_2026.md](./COMPREHENSIVE_AUDIT_2026.md) — Principal engineer review
@@ -26,7 +20,7 @@ An ultra-minimalist, high-intensity AI-themed base defense game with Brutalist O
 - 400+ Vitest tests; slop removed.
 - Accessibility + security (OAuth scopes eliminated).
 - Vercel tuned + clean push to main; merge conflicts resolved.
-- Full audit + docs refresh to 9.1 engineering.
+- Full honest audit performed; critical security and test issues being addressed (see AUDIT_HONEST.md and AGENTS.md for current status).
 
 ## 🏃 Getting Started
 

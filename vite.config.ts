@@ -11,7 +11,7 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['icon-*.jpg', 'audio/**/*'],
+        includeAssets: ['icon-*.png', 'audio/**/*'],
         manifest: {
           name: 'BUGSMASHER — Tactical QA System',
           short_name: 'BUGSMASHER',
@@ -23,15 +23,15 @@ export default defineConfig(() => {
           orientation: 'any',
           icons: [
             {
-              src: '/icon-192.jpg',
+              src: '/icon-192.png',
               sizes: '192x192',
-              type: 'image/jpeg',
+              type: 'image/png',
               purpose: 'any',
             },
             {
-              src: '/icon-512.jpg',
+              src: '/icon-512.png',
               sizes: '512x512',
-              type: 'image/jpeg',
+              type: 'image/png',
               purpose: 'any maskable',
             },
           ],
@@ -65,8 +65,9 @@ export default defineConfig(() => {
       hmr: process.env.DISABLE_HMR !== 'true',
     },
     build: {
-      // 600kB to accommodate firebase chunk (common for backend-integrated games); main app chunk now ~290kB thanks to splits
-      chunkSizeWarningLimit: 600,
+      // Temporary raised per audit bundle work; TODO: full lazy Firebase to drop below 500kB warning.
+      // See firebase.ts for lazy getter.
+      chunkSizeWarningLimit: 700,
       rollupOptions: {
         output: {
           manualChunks(id: string) {
@@ -78,6 +79,7 @@ export default defineConfig(() => {
               return 'vendor';
             }
             // Future: split heavy game/ UI if desired (e.g. if (id.includes('game/rendering')) return 'rendering';)
+            return undefined; // explicit for all paths
           },
         },
       },

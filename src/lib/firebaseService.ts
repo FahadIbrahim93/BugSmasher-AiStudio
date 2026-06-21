@@ -8,8 +8,7 @@ import {
   query, 
   orderBy, 
   limit, 
-  serverTimestamp,
-  increment
+  serverTimestamp
 } from 'firebase/firestore';
 import { db, auth } from './firebase';
 import { ChecksumSystem } from './checksum';

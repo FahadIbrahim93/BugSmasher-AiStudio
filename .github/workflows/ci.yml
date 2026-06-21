@@ -38,8 +38,8 @@ jobs:
           npm ci
           npm run build
 
-      - name: Unit tests
-        run: npm test
+      - name: Unit tests (with coverage per audit)
+        run: npm test -- --coverage
 
       - name: Production build
         run: npm run build

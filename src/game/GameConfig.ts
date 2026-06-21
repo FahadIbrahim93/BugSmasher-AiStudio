@@ -93,5 +93,13 @@ export const GameConfig = {
     baseSpawnRate: 1.5,
     spawnRateReduction: 0.1,
     minSpawnRate: 0.1,
+  },
+  abilities: {
+    // Moved from GameEngine per audit (magic numbers)
+    bioshieldCooldown: 40,
+    overdriveCooldown: 45,
+    empShatterCooldown: 50,
+    dashCooldown: 3.0,
+    dashDistance: 180,
   }
 };

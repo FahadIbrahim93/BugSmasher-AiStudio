@@ -1,5 +1,5 @@
 export const safeStorage = {
-  get(key) {
+  get(key: string): any {
     try {
       const value = localStorage.getItem(key);
       return value ? JSON.parse(value) : null;
@@ -9,7 +9,7 @@ export const safeStorage = {
     }
   },
   
-  set(key, value) {
+  set(key: string, value: any): void {
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch (error) {
@@ -17,7 +17,7 @@ export const safeStorage = {
     }
   },
 
-  remove(key) {
+  remove(key: string): void {
     try {
       localStorage.removeItem(key);
     } catch (error) {

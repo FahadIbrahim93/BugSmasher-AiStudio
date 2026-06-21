@@ -145,8 +145,8 @@ export class GameEngine {
   dashTimer: number = 0;
   dashCooldownTimer: number = 0;
   readonly dashDuration: number = 0.15;
-  readonly dashCooldown: number = 3.0;
-  readonly dashDistance: number = 180;
+  readonly dashCooldown: number = GameConfig.abilities.dashCooldown;
+  readonly dashDistance: number = GameConfig.abilities.dashDistance;
   dashStartX: number = 0;
   dashStartY: number = 0;
   dashTargetX: number = 0;
@@ -875,7 +875,7 @@ export class GameEngine {
 
     if (id === 'nanite_bioshield') {
       if (this.bioshieldCooldown > 0) return false;
-      this.bioshieldCooldown = 40; // 40s cooldown
+      this.bioshieldCooldown = GameConfig.abilities.bioshieldCooldown; // from config per audit
       this.bioshieldActiveTime = 4; // 4s invincibility
       this.health = Math.min(this.maxHealth, this.health + 25);
       this.particleSystem.spawnShockwave(this.coreX, this.coreY, '#10b981', 250);

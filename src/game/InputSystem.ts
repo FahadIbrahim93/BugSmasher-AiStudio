@@ -3,6 +3,7 @@ import { soundManager } from './SoundManager';
 import { Bug, Powerup } from './GameTypes';
 import { loadControlBindings, matchesBinding } from './ControlBindings';
 import { ProgressionManager } from './ProgressionManager';
+import { GameConfig } from './GameConfig';  // Fixed: added missing import per audit (was causing ReferenceError and 3 test failures)
 
 export class InputSystem {
   private engine: GameEngine;

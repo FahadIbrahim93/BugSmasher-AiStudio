@@ -109,7 +109,7 @@ export const SKILLS: Skill[] = [
     description: 'Reduces auto-sentry fire interval by 0.05 seconds per rank.',
     maxLevel: 10,
     costPerLevel: (l) => ({ plasma: 10 * (l + 1), neural_core: l > 5 ? 1 : 0 }),
-    effect: (l) => l * 0.05,
+    effect: (_l) => _l * 0.05,
     category: 'combat'
   },
   {
@@ -118,7 +118,7 @@ export const SKILLS: Skill[] = [
     description: 'Permanent increase to all click and structural damage (+20% per rank).',
     maxLevel: 5,
     costPerLevel: (l) => ({ neural_core: (l + 1), flux: 5 * (l + 1) }),
-    effect: (l) => l * 0.2,
+    effect: (_l) => _l * 0.2,
     category: 'combat',
     dependencies: ['sentry_optimization']
   },
@@ -127,8 +127,8 @@ export const SKILLS: Skill[] = [
     name: 'Turret Overdrive',
     description: 'ACTIVE: Press "2" or click to overclock turret to fire at 500% speed with piercing beams for 8s (45s cooldown).',
     maxLevel: 1,
-    costPerLevel: (l) => ({ crystals: 100, neural_core: 2 }),
-    effect: (l) => l,
+    costPerLevel: (_l) => ({ crystals: 100, neural_core: 2 }),
+    effect: (_l) => _l,
     category: 'combat',
     dependencies: ['kinetic_amplifier'],
     isActiveAbility: true
@@ -139,7 +139,7 @@ export const SKILLS: Skill[] = [
     description: 'Sentry automatically launches an explosive heat-seeking missile (deals 10 AoE damage) every 10s.',
     maxLevel: 3,
     costPerLevel: (l) => ({ alloy: 15 * (l + 1), flux: 4 * (l + 1) }),
-    effect: (l) => l * 10,
+    effect: (_l) => _l * 10,
     category: 'combat',
     dependencies: ['turret_overdrive']
   },
@@ -151,7 +151,7 @@ export const SKILLS: Skill[] = [
     description: 'Increases maximum base health (+10 health per rank).',
     maxLevel: 10,
     costPerLevel: (l) => ({ scrap: 100 * (l + 1), alloy: 5 * (l + 1) }),
-    effect: (l) => l * 10,
+    effect: (_l) => _l * 10,
     category: 'scavenger'
   },
   {
@@ -160,7 +160,7 @@ export const SKILLS: Skill[] = [
     description: 'Increases the amount of scrap dropped by basic threats (+1 scrap per rank).',
     maxLevel: 10,
     costPerLevel: (l) => ({ scrap: 50 * (l + 1), plasma: 2 * (l + 1) }),
-    effect: (l) => l * 1,
+    effect: (_l) => _l * 1,
     category: 'scavenger'
   },
   {
@@ -169,7 +169,7 @@ export const SKILLS: Skill[] = [
     description: 'Increases crystals earned from bugs by 10% per rank.',
     maxLevel: 10,
     costPerLevel: (l) => ({ scrap: 1000 * (l + 1), crystals: 20 * l }),
-    effect: (l) => l * 0.1,
+    effect: (_l) => _l * 0.1,
     category: 'scavenger',
     dependencies: ['scavenger_protocol']
   },
@@ -179,7 +179,7 @@ export const SKILLS: Skill[] = [
     description: 'Gives player clicks a 2% chance per rank to steal biosca scrap and repair 1 HP.',
     maxLevel: 5,
     costPerLevel: (l) => ({ plasma: 30 * (l + 1), crystals: 15 * (l + 1) }),
-    effect: (l) => l * 0.02,
+    effect: (_l) => _l * 0.02,
     category: 'scavenger',
     dependencies: ['crystal_finder']
   },
@@ -188,8 +188,8 @@ export const SKILLS: Skill[] = [
     name: 'Nanite Bio-Shield',
     description: 'ACTIVE: Press "1" or click to instantly recover 25 HP and trigger temporary absolute invincibility for 4s (40s cooldown).',
     maxLevel: 1,
-    costPerLevel: (l) => ({ crystals: 120, flux: 10 }),
-    effect: (l) => l,
+    costPerLevel: (_l) => ({ crystals: 120, flux: 10 }),
+    effect: (_l) => _l,
     category: 'scavenger',
     dependencies: ['nanite_lifesteal'],
     isActiveAbility: true
@@ -202,7 +202,7 @@ export const SKILLS: Skill[] = [
     description: 'Increases combo decay time by +10% per rank.',
     maxLevel: 10,
     costPerLevel: (l) => ({ plasma: 50 * (l + 1), crystals: 10 * l }),
-    effect: (l) => l * 0.1,
+    effect: (_l) => _l * 0.1,
     category: 'control'
   },
   {
@@ -211,7 +211,7 @@ export const SKILLS: Skill[] = [
     description: 'Increases click interaction shockwave radius (+10% per rank).',
     maxLevel: 5,
     costPerLevel: (l) => ({ scrap: 200 * (l + 1), flux: 3 * (l + 1) }),
-    effect: (l) => l * 0.1,
+    effect: (_l) => _l * 0.1,
     category: 'control',
     dependencies: ['combo_master']
   },
@@ -221,7 +221,7 @@ export const SKILLS: Skill[] = [
     description: 'Grants +5% chance per rank to deal double structural damage on click.',
     maxLevel: 10,
     costPerLevel: (l) => ({ crystals: 50 * (l + 1), flux: l % 4 === 0 ? 1 : 0 }),
-    effect: (l) => l * 0.05,
+    effect: (_l) => _l * 0.05,
     category: 'control',
     dependencies: ['amplified_pulse']
   },
@@ -230,8 +230,8 @@ export const SKILLS: Skill[] = [
     name: 'Chrono EMP Shatter',
     description: 'ACTIVE: Press "3" or click to trigger full screen freeze for 5s and decay all active bug healths by 30% (50s cooldown).',
     maxLevel: 1,
-    costPerLevel: (l) => ({ crystals: 150, neural_core: 3 }),
-    effect: (l) => l,
+    costPerLevel: (_l) => ({ crystals: 150, neural_core: 3 }),
+    effect: (_l) => _l,
     category: 'control',
     dependencies: ['crit_hit'],
     isActiveAbility: true
@@ -242,7 +242,7 @@ export const SKILLS: Skill[] = [
     description: 'Permanent cosmic force: Clicks generate localized gravity wells that immediately pull all scrap, crystals, and powerups in a 300px radius.',
     maxLevel: 3,
     costPerLevel: (l) => ({ flux: 15 * (l + 1), crystals: 40 * (l + 1) }),
-    effect: (l) => l * 100,
+    effect: (_l) => _l * 100,
     category: 'control',
     dependencies: ['chrono_emp_shatter']
   }
