@@ -1398,7 +1398,7 @@ export class SoundManager {
     const now = this.ctx.currentTime;
 
     // Create music layers based on biome config
-    config.layers.forEach((layerConfig, layerIdx) => {
+    config.layers.forEach((layerConfig, _layerIdx) => {
       const oscs: OscillatorNode[] = [];
       const gains: GainNode[] = [];
       const oscCount = config.texture === 'arpeggio' ? 3 : (config.texture === 'chaos' ? 4 : 2);
