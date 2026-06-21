@@ -20,12 +20,13 @@ An ultra-minimalist, high-intensity AI-themed base defense game with Brutalist O
 - [AGENTS.md](./AGENTS.md) — AI coding standards
 - Full suite in `/docs/`
 
-## 🏆 Recent Wins (Verified from Repo)
+## 🏆 Recent Wins (Verified 2026-06-21)
 - Real-time FPS scaler + dynamic VFX downscaling.
-- Modular systems (CollisionSystem, BossSystem, etc.) + Renderer split.
-- 409+ Vitest tests.
-- Accessibility basics + mobile protections.
-- Live Firebase deployment.
+- Modular systems + Renderer split + **strict TS source clean**.
+- 400+ Vitest tests; slop removed.
+- Accessibility + security (OAuth scopes eliminated).
+- Vercel tuned + clean push to main; merge conflicts resolved.
+- Full audit + docs refresh to 9.1 engineering.
 
 ## 🏃 Getting Started
 

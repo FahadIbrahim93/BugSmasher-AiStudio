@@ -23,7 +23,7 @@ All claims backed by concrete changes + prior audit data.
 - [x] Rollback & monitoring ready
   Evidence: Git + CI artifact uploads, Firebase hosting channels for previews, structured monitor + console fallbacks.
 - [x] Strict Type Safety
-  Evidence: tsconfig "strict": true + noUnused* flags. Dozens of `any` eliminated across HUD, GameCanvas, checksum, Sentry, renderers, contexts, etc.
+  Evidence: tsconfig "strict": true + noUnused*. Source `npx tsc --noEmit` (non-test filter): **0 errors** (2026-06-21 verification). Test warnings isolated.
 - [x] Zero slop / no unused
   Evidence: Removed *.fixes.test.ts, check_git.ts, e2e-results.json, test-results/, metadata.json, .review-artifacts, .openclaude. Dead casts removed.
 

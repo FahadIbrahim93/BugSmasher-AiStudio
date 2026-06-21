@@ -18,6 +18,24 @@ All notable changes to BUGSMASHER are documented here. Format based on [Keep a C
 - Renderer/Environment/BugRenderer wired to new preset scalars
 - Tests fixed + 411/411 green; git hygiene (gitignore functions/lib, conventional on feat branch)
 - PWA manifest now sourced in vite config (removed dupe public/)
+
+## [Unreleased / 2026-06-21 Verification]
+### Fixed
+- All remaining merge conflicts (server.ts, checksum.ts, HUD.tsx)
+- Strict TS source errors (unused imports, prop mismatches, indexing, returns)
+- Dead code removed (intensity props, preview vars, slop imports)
+- missionEvents module restored for MissionPanel
+- Analytics event types, casts, useEffect paths cleaned
+
+### Verified
+- `npx tsc --noEmit` (source): 0 errors
+- No bad setTimeout / any in non-test src
+- Scopes removed, docs refreshed, pushed to main (670b443)
+
+### Changed
+- vercel.json: buildCommand → "vite build" for reliable deploy
+- .gitignore: nul + junk
+- AUDIT/TASKBOARD/README/AGENTS/PROD updated with 9.1 scores + evidence
 - index.html cleaned for plugin injection
 - Composite: ~9.3/10 (perf/ops/docs strong gains; see final report)
 
