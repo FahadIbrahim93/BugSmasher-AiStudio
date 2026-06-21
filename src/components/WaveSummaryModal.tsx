@@ -1,5 +1,5 @@
 import { motion, type Variants } from 'motion/react';
-import { Target, Timer, Activity, ChevronRight, Award } from 'lucide-react';
+import { Target, Timer, Activity, ChevronRight } from 'lucide-react';
 import { soundManager } from '../game/SoundManager';
 import { StatsManager } from '../game/StatsManager';
 

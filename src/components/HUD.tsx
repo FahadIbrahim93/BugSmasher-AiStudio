@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { soundManager } from '../game/SoundManager';
 import { ProgressionManager } from '../game/ProgressionManager';
 import { SaveManager, type SaveSyncStatus } from '../game/SaveManager';
-import { MissionPanel } from './MissionPanel';
 import type { GameEngine } from '../game/GameEngine';
 
 interface KillLog {
@@ -444,6 +443,9 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
 
           {/* Consumable Bar */}
           <ConsumableBar engineRef={engineRef} />
+
+          {/* Active Skills Bar */}
+          <ActiveSkillsBar engineRef={engineRef} />
         </div>
       </div>
 
@@ -451,22 +453,51 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
       <div className="fixed top-28 sm:top-32 left-1/2 -translate-x-1/2 flex flex-col items-center space-y-2 pointer-events-none z-20 w-fit max-w-xs sm:max-w-md">
         <AnimatePresence mode="popLayout">
           {killLogs.map((log) => {
-            const label = log.type === 'boss' ? 'CRITICAL TERMINATION' : 'TARGET ELIMINATED';
+            let label = 'TENSION DISSIPATED';
+            let bugDisplayName = log.type.toUpperCase();
             let bgClass = "bg-zinc-950 text-white";
             let borderClass = "border-red-500 shadow-[4px_4px_0px_#ef4444]";
             
+            // Map types to clinical catharsis translations
             if (log.type === 'boss') {
+              bugDisplayName = 'PANIC ATTACK';
+              label = 'CORTICAL BLOCK EXCISED';
               bgClass = "bg-red-600 text-white animate-pulse";
               borderClass = "border-white shadow-[6px_6px_0px_#000000]";
             } else if (log.type === 'tank') {
+              bugDisplayName = 'HEAVY GRIEVANCE';
+              label = 'DEEP WORRY SMASHED';
               bgClass = "bg-amber-500 text-black";
               borderClass = "border-black shadow-[4px_4px_0px_rgba(0,0,0,0.9)]";
             } else if (log.type === 'healer') {
+              bugDisplayName = 'WORRY SPIRAL';
+              label = 'FEEDBACK LOOP BROKEN';
               bgClass = "bg-emerald-600 text-white";
               borderClass = "border-emerald-300 shadow-[4px_4px_0px_rgba(0,0,0,0.9)]";
             } else if (log.type === 'ember') {
+              bugDisplayName = 'BURNING ANGER';
+              label = 'RAGE ENERGY DISCHARGED';
               bgClass = "bg-orange-600 text-white";
               borderClass = "border-orange-300 shadow-[4px_4px_0px_rgba(0,0,0,0.9)]";
+            } else if (log.type === 'swarmer') {
+              bugDisplayName = 'NAGGING OBLIGATION';
+              label = 'MIND SPACE RECLAIMED';
+            } else if (log.type === 'scout') {
+              bugDisplayName = 'FLEETING INSECURITY';
+              label = 'DOUBT DISPELLED';
+            } else if (log.type === 'mini') {
+              bugDisplayName = 'PETTY ANNOYANCE';
+              label = 'IRRITANT FLUSHED';
+            } else {
+              // Dynamic default
+              const charSum = log.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+              const options = [
+                'CORTISOL FLUSH SUCCESS',
+                'DOPAMINE DELIVERED',
+                'ANGER VENT SUCCESSFUL',
+                'PSYCHE STABILIZED'
+              ];
+              label = options[charSum % options.length];
             }
 
             return (
@@ -481,11 +512,11 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
               >
                 <div className="flex flex-col tracking-tight uppercase">
                   <div className="flex items-center gap-1">
-                    <span className="bg-black text-[8px] tracking-widest font-mono text-zinc-100 font-extrabold px-1 py-0.5 mr-1 border border-white/10 [text-shadow:0_0_4px_rgba(255,255,255,0.7)]">
-                      SMASHED
+                    <span className="bg-rose-950 text-rose-400 text-[8px] tracking-widest font-mono font-extrabold px-1 py-0.5 mr-1 border border-rose-500/30">
+                      VENTED
                     </span>
                     <span className="text-[10px] md:text-sm tracking-tighter font-black font-mono">
-                      {log.type.toUpperCase()}
+                      {bugDisplayName}
                     </span>
                   </div>
                   <span className="text-[6.5px] opacity-75 font-mono leading-none tracking-widest mt-1">
@@ -500,12 +531,12 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
                     +{log.scoreValue}
                   </span>
                   {log.streak >= 5 ? (
-                    <span className="text-[7px] tracking-widest font-black text-yellow-400 font-mono animate-pulse">
-                      X{log.streak}_COMBO
+                    <span className="text-[7px] tracking-widest font-black text-rose-400 font-mono animate-pulse">
+                      X{log.streak}_BURST
                     </span>
                   ) : (
                     <span className="text-[6px] tracking-widest text-zinc-400">
-                      SECURED
+                      RELEASED
                     </span>
                   )}
                 </div>
@@ -619,10 +650,6 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
           </motion.div>
         )}
       </AnimatePresence>
-
-      <div className="fixed bottom-4 right-4 w-72 max-w-[calc(100vw-2rem)] pointer-events-auto z-30">
-        <MissionPanel />
-      </div>
     </div>
   );
 }
@@ -715,4 +742,143 @@ function ActivePowerups({ engineRef }: { engineRef: React.RefObject<GameEngine |
             ))}
         </div>
     );
+}
+
+function ActiveSkillsBar({ engineRef }: { engineRef: React.RefObject<any> }) {
+  const [skills, setSkills] = useState<{ id: string; name: string; icon: string; key: string; cooldown: number; active: number; color: string; desc: string; }[]>([]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const engine = engineRef.current;
+      if (!engine) return;
+
+      const items = [];
+      const bioshieldLvl = ProgressionManager.getSkillLevel('nanite_bioshield');
+      const overdriveLvl = ProgressionManager.getSkillLevel('turret_overdrive');
+      const chronoLvl = ProgressionManager.getSkillLevel('chrono_emp_shatter');
+
+      if (bioshieldLvl > 0) {
+        items.push({
+          id: 'nanite_bioshield',
+          name: 'Bio-Shield',
+          icon: '🛡️',
+          key: '1',
+          cooldown: engine.bioshieldCooldown || 0,
+          active: engine.bioshieldActiveTime || 0,
+          color: 'from-emerald-500 to-teal-500 border-emerald-500/30',
+          desc: 'HEALS 25 HP & GRANTS 4S IMMUNITY'
+        });
+      }
+      if (overdriveLvl > 0) {
+        items.push({
+          id: 'turret_overdrive',
+          name: 'Overdrive',
+          icon: '⚔️',
+          key: '2',
+          cooldown: engine.overdriveCooldown || 0,
+          active: engine.overdriveActiveTime || 0,
+          color: 'from-amber-500 to-orange-500 border-amber-500/30',
+          desc: 'OVERCLOCKS AUTO-TURRETS SPEED FOR 8S'
+        });
+      }
+      if (chronoLvl > 0) {
+        items.push({
+          id: 'chrono_emp_shatter',
+          name: 'Chrono EMP',
+          icon: '🔮',
+          key: '3',
+          cooldown: engine.empShatterCooldown || 0,
+          active: engine.empShatterActiveTime || 0,
+          color: 'from-purple-500 to-indigo-500 border-purple-500/30',
+          desc: 'FREEZES BUGS & DECAYS 30% HEALTH'
+        });
+      }
+
+      setSkills(items);
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [engineRef]);
+
+  // Handle hotkeys (keyboard triggering)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const engine = engineRef.current;
+      if (!engine || !engine.isRunning || engine.isPaused) return;
+
+      if (e.key === '1') {
+        engine.triggerActiveAbility('nanite_bioshield');
+      } else if (e.key === '2') {
+        engine.triggerActiveAbility('turret_overdrive');
+      } else if (e.key === '3') {
+        engine.triggerActiveAbility('chrono_emp_shatter');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [engineRef]);
+
+  const handleTrigger = (id: string) => {
+    const engine = engineRef.current;
+    if (engine) {
+      engine.triggerActiveAbility(id);
+    }
+  };
+
+  if (skills.length === 0) return null;
+
+  return (
+    <div className="flex space-x-2 mt-4 pointer-events-auto">
+      {skills.map(s => {
+        const isCooldown = s.cooldown > 0;
+        const isActive = s.active > 0;
+        
+        return (
+          <button
+            key={s.id}
+            onClick={() => handleTrigger(s.id)}
+            disabled={isCooldown}
+            className={`relative p-3 rounded-2xl border transition-all flex flex-col items-center group select-none ${
+              isActive
+                ? 'bg-gradient-to-br ' + s.color + ' border-white/40 scale-105 animate-pulse shadow-[0_0_15px_rgba(255,255,255,0.4)]'
+                : isCooldown
+                ? 'bg-black/80 border-white/5 opacity-50 cursor-not-allowed'
+                : 'bg-black/80 border-white/25 hover:border-white/50 hover:scale-105 active:scale-95 shadow-xl'
+            }`}
+          >
+            <div className="text-white mb-1 group-hover:text-blue-400 transition-colors text-base">
+              {s.icon}
+            </div>
+            
+            <p className="text-[7px] font-black text-zinc-400 group-hover:text-white uppercase tracking-widest font-mono">
+              {s.name}
+            </p>
+
+            {/* Hotkey circle badge */}
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-zinc-800 rounded-full border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span className="text-[8px] font-extrabold text-white font-mono">{s.key}</span>
+            </div>
+
+            {isCooldown && (
+              <div className="absolute inset-0 bg-black/80 rounded-2xl flex items-center justify-center font-mono text-[9px] font-black text-rose-400">
+                {Math.ceil(s.cooldown)}s
+              </div>
+            )}
+
+            {isActive && (
+              <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-1 bg-white text-black font-mono text-[5px] font-black rounded border border-black uppercase animate-bounce whitespace-nowrap">
+                ACTIVE
+              </div>
+            )}
+
+            {/* Hover Tooltip */}
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-zinc-950 border border-white/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-2xl">
+              <p className="text-[8px] font-black text-white uppercase tracking-widest">{s.desc}</p>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
 }

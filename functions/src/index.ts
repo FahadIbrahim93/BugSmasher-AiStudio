@@ -4,7 +4,11 @@ import { createHash } from 'crypto';
 
 admin.initializeApp();
 
-const SALT = process.env.CHECKSUM_SALT || 'smash_the_bugs_2026_FAANG_SECRET';
+const SALT = process.env.CHECKSUM_SALT;
+
+if (!SALT) {
+  throw new Error('CHECKSUM_SALT must be configured for save checksum validation.');
+}
 
 function sortObject(obj: unknown): unknown {
   if (obj === null || typeof obj !== 'object') return obj;

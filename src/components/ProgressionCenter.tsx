@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Hammer, BrainCircuit, Box, X, Wrench, FlaskConical, Binary } from 'lucide-react';
+import { Hammer, BrainCircuit, Box, X, Wrench, Binary } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ProgressionManager, ProgressionData } from '../game/ProgressionManager';
 import { RESOURCES, RECIPES, SKILLS, ResourceType, Recipe, Skill } from '../game/ResourceTypes';
@@ -63,7 +63,7 @@ export function ProgressionCenter({ onClose }: ProgressionCenterProps) {
             <div key={id} className="flex items-center space-x-2 px-3 py-1 bg-black/40 rounded-lg border border-white/5">
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: res.color }} />
               <span className="text-[10px] font-mono text-zinc-500 uppercase">{res.name}</span>
-              <span className="text-sm font-black font-mono">{data.inventory[id as ResourceType] || 0}</span>
+              <span className="text-sm font-black font-mono">{(data.inventory as Record<string, number>)[id as ResourceType] || 0}</span>
             </div>
           ))}
         </div>
@@ -149,7 +149,7 @@ export function ProgressionCenter({ onClose }: ProgressionCenterProps) {
                         </div>
                         <h4 className="font-bold text-xs uppercase tracking-tighter mb-1">{res.name}</h4>
                         <p className="text-[10px] text-zinc-500 font-mono mb-3">{res.rarity.toUpperCase()}</p>
-                        <p className="text-2xl font-black font-mono">{data.inventory[id as ResourceType] || 0}</p>
+                        <p className="text-2xl font-black font-mono">{(data.inventory as Record<string, number>)[id as ResourceType] || 0}</p>
                      </div>
                    ))}
                 </div>
@@ -198,7 +198,7 @@ function TabButton({ active, icon, label, onClick }: { active: boolean, icon: Re
 }
 
 function CraftCard({ recipe, inventory, count, onCraft }: { recipe: Recipe, inventory: Record<ResourceType, number>, count: number, onCraft: () => void }) {
-  const canCraft = Object.entries(recipe.ingredients).every(([res, amount]) => (inventory[res] || 0) >= (amount as number));
+  const canCraft = Object.entries(recipe.ingredients).every(([res, amount]) => ((inventory as Record<string, number>)[res] || 0) >= (amount as number));
 
   return (
     <div className="p-6 bg-white/5 rounded-3xl border border-white/5 flex flex-col hover:border-white/20 transition-all group">
@@ -219,7 +219,7 @@ function CraftCard({ recipe, inventory, count, onCraft }: { recipe: Recipe, inve
         <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">Requirements</p>
         {Object.entries(recipe.ingredients).map(([res, amount]) => {
           const resDef = RESOURCES[res as ResourceType];
-          const has = inventory[res] || 0;
+          const has = (inventory as Record<string, number>)[res] || 0;
           const needed = amount as number;
           return (
             <div key={res} className="flex items-center justify-between">
@@ -252,7 +252,7 @@ function CraftCard({ recipe, inventory, count, onCraft }: { recipe: Recipe, inve
 
 function SkillCard({ skill, inventory, level, onUpgrade }: { skill: Skill, inventory: Record<ResourceType, number>, level: number, onUpgrade: () => void }) {
   const cost = skill.costPerLevel(level);
-  const canUpgrade = Object.entries(cost).every(([res, amount]) => (inventory[res] || 0) >= (amount as number)) && level < skill.maxLevel;
+  const canUpgrade = Object.entries(cost).every(([res, amount]) => ((inventory as Record<string, number>)[res] || 0) >= (amount as number)) && level < skill.maxLevel;
 
   return (
     <div className="p-8 bg-white/5 rounded-3xl border border-white/5 flex flex-col hover:border-white/20 transition-all group">
@@ -271,7 +271,7 @@ function SkillCard({ skill, inventory, level, onUpgrade }: { skill: Skill, inven
           {Object.entries(cost).map(([res, amount]) => {
             if (!amount) return null;
             const resDef = RESOURCES[res as ResourceType];
-            const has = inventory[res] || 0;
+            const has = (inventory as Record<string, number>)[res] || 0;
             const needed = amount as number;
             return (
               <div key={res} className="flex flex-col space-y-1">

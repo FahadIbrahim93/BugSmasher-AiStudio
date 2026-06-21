@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GameEngine } from '../game/GameEngine';
 import { PowerupSystem } from '../game/PowerupSystem';
-import { Powerup } from '../game/GameTypes';
+// import { Powerup } from '../game/GameTypes'; // unused strict
 
 vi.mock('../game/SoundManager', () => ({
   soundManager: {

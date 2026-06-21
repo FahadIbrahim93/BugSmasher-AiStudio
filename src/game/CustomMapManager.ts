@@ -163,7 +163,7 @@ export class CustomMapManager {
   static getRotatedMapForTime(): CustomMapConfig {
     // Systematic rotation based on calendar epoch / play session key
     if (typeof window === 'undefined') return HANDCRAFTED_BATTLEGROUNDS[0];
-    const wave = 1; // standard initial fallback
+    // wave fallback not used currently
     const index = Math.floor(Date.now() / 60000) % HANDCRAFTED_BATTLEGROUNDS.length; // rotates every 60 seconds of session play!
     return HANDCRAFTED_BATTLEGROUNDS[index];
   }

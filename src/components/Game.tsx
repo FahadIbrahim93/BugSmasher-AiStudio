@@ -353,7 +353,7 @@ export function Game({
       )}
 
       {!isGameOver && !isUpgrading && (
-        <TutorialOverlay onComplete={() => {}} />
+        <TutorialOverlay engineRef={engineRef} />
       )}
       
       {isGameOver && (

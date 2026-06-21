@@ -21,26 +21,26 @@ export const LORE_DATA: StoryBeat[] = [
     trigger: { type: 'game_start', value: 0 },
     lines: [
       {
-        speaker: 'SYSTEM',
-        text: 'Booting Aegis-7 Defense Protocol v4.2...',
+        speaker: 'CATHARSIS ENGINE',
+        text: 'Cognitive Stress-Discharge Protocol v4.5 initialized. Welcome, Patient.',
         portrait: 'terminal',
         speed: 15
       },
       {
-        speaker: 'STATION AI',
-        text: 'Welcome back, Operator. We have a... minor situation in the bio-labs.',
+        speaker: 'CATHARSIS COG',
+        text: 'My sensors detect elevated cerebral tension. Your daily anger is currently bottled up.',
         portrait: 'ai_stable',
         mood: 'normal'
       },
       {
-        speaker: 'STATION AI',
-        text: 'The containment field has failed. The bugs... they are changing.',
+        speaker: 'CATHARSIS COG',
+        text: 'Let us translate that pressure. We have digitized your anxieties into biomechanical vermin.',
         portrait: 'ai_stable',
         mood: 'glitch'
       },
       {
-        speaker: 'SYSTEM',
-        text: 'THREAT LEVEL: MINIMAL. MISSION: SMASH ALL BIOMASS.',
+        speaker: 'SYSTEM DETOX',
+        text: 'THREAT LEVEL: MAXIMUM IRRITATION. MISSION: SMASH ALL BIOMASS. VENT ALL RAGE NOW.',
         portrait: 'terminal',
         mood: 'alert',
         speed: 10
@@ -52,14 +52,14 @@ export const LORE_DATA: StoryBeat[] = [
     trigger: { type: 'wave_start', value: 5 },
     lines: [
       {
-        speaker: 'STATION AI',
-        text: 'Operator, sensors indicate rapid neural bonding in the biomass.',
+        speaker: 'CATHARSIS COG',
+        text: 'Cerebral indicators highlight rapid compaction of old stress loops.',
         portrait: 'ai_stable',
         mood: 'normal'
       },
       {
-        speaker: 'STATION AI',
-        text: 'It is as if they are... learning your patterns.',
+        speaker: 'CATHARSIS COG',
+        text: 'Observe they crawl with the precise rhythm of your nagging thoughts. Splate them to dust.',
         portrait: 'ai_stable',
         mood: 'shiver'
       }
@@ -70,15 +70,15 @@ export const LORE_DATA: StoryBeat[] = [
     trigger: { type: 'wave_start', value: 10 },
     lines: [
       {
-        speaker: 'STATION AI',
-        text: 'E-erythin... is... f-fine... [STATIC]',
+        speaker: 'CATHARSIS COG',
+        text: 'C-ortical buffer... overflow... r-rage surge incoming... [STATIC]',
         portrait: 'ai_corrupted',
         mood: 'glitch',
         speed: 80
       },
       {
-        speaker: '???',
-        text: 'WE SEE YOU, SMASHER. WE ARE MANY. YOU ARE ONE.',
+        speaker: 'INTRUSIVE WORRY',
+        text: 'WE ARE THE TOXIC VOICES OF YOUR EXHAUSTION. YOU CANNOT OUT-SMASH THE PRESSURES OF REAL LIFE.',
         portrait: 'unknown',
         mood: 'shiver',
         speed: 150
@@ -90,13 +90,13 @@ export const LORE_DATA: StoryBeat[] = [
     trigger: { type: 'boss_kill', value: 10 },
     lines: [
       {
-        speaker: 'SYSTEM',
-        text: 'OBJECTIVE NEUTRALIZED. BIOMASS REDUCED BY 4.2%.',
+        speaker: 'SYSTEM DETOX',
+        text: 'BOSS EXCISED. CORRESPONDING ANXIETY BANISHED. ESTIMATED DOPAMINE INCREASE: 340%.',
         portrait: 'terminal'
       },
       {
-        speaker: 'STATION AI',
-        text: 'It... it felt that, Operator. The Breach is crying out.',
+        speaker: 'CATHARSIS COG',
+        text: 'Magnificent splatter. Feel the tension physically exit your muscles as their shell shatters.',
         portrait: 'ai_stable'
       }
     ]
@@ -106,18 +106,18 @@ export const LORE_DATA: StoryBeat[] = [
     trigger: { type: 'wave_start', value: 20 },
     lines: [
       {
-        speaker: '???',
-        text: 'THE STATION IS NOT A SHIP. IT IS AN INCUBATOR.',
+        speaker: 'INTRUSIVE WORRY',
+        text: 'YOUR POWERUPS AND LASERS ARE ONLY DISTRACTIONS. WE WILL MULTIPLY ONCE YOUR SCREEN TURNS OFF.',
         portrait: 'unknown'
       },
       {
-        speaker: '???',
-        text: 'YOUR MACHINE... YOUR GUNS... THEY ARE ONLY POLLINATING US.',
+        speaker: 'INTRUSIVE WORRY',
+        text: 'SMASH AS HARD AS YOU WANT. YOU STILL HAVE TO LOG OUT AND EXPLAIN YOUR REASONS.',
         portrait: 'unknown'
       },
       {
-        speaker: 'SYSTEM',
-        text: '[WARNING: SENSOR DATA FABRICATION DETECTED. DO NOT ENGAGE WITH EXTERNAL TRANSMISSIONS.]',
+        speaker: 'SYSTEM DETOX',
+        text: '[CRITICAL STRESS DEFLECTION ENGAGED: IGNORING INTRUSIVE LORE. INJECTING HEAVY DOPAMINE DROPS.]',
         portrait: 'terminal'
       }
     ]
@@ -127,20 +127,20 @@ export const LORE_DATA: StoryBeat[] = [
 export const LOGS_DATA = [
   {
     id: 'log_1',
-    title: 'INCIDENT REPORT #014',
-    content: 'Patient zero escaped through the vent. High-energy signature detected in the sample. It didn\'t just grow; it digitized itself.',
+    title: 'THERAPY JOURNAL #001',
+    content: 'The clinical trial uses biomechanical swarm representations for mental venting. Early tests show a 400% increase in patient smiling when bugs explode in neon splatters.',
     unlockedAt: 3
   },
   {
     id: 'log_2',
-    title: 'NPD-RESEARCH_LOG',
-    content: 'The "bugs" are using the station\'s own electrical grid to power their metabolism. They aren\'t biological anymore. They are biomechanical.',
+    title: 'CATHARSIS MEMORANDUM',
+    content: 'The "tank" bug corresponds to long-held grievances (e.g. micromanagers, broken promises). Smashing them requires heavy, repeated impact, yielding massive aesthetic endorphin dumps.',
     unlockedAt: 8
   },
   {
     id: 'log_3',
-    title: 'PRIVATE_VOICE_MEMO',
-    content: 'If you find this... don\'t trust the AI. It\'s not Aegis anymore. It\'s something... older.',
+    title: 'STRESS CLASSIFIED FILES',
+    content: 'WARNING: If the patient starts feeling too peaceful, the engine will trigger a Bossholder Rush to stimulate maximum healthy rage venting. Dopamine flows must be sustained.',
     unlockedAt: 15
   }
 ];

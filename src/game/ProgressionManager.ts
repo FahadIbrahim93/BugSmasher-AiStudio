@@ -132,6 +132,17 @@ export class ProgressionManager {
     const skill = SKILLS.find(s => s.id === skillId);
     if (!skill) return false;
 
+    // Validate branch dependencies
+    if (skill.dependencies) {
+      const hasMissingDependencies = skill.dependencies.some(
+        (depId) => (this.data.skills[depId] || 0) === 0
+      );
+      if (hasMissingDependencies) {
+        console.warn(`Attempted to upgrade ${skillId} without meeting prerequisites: ${skill.dependencies.join(', ')}`);
+        return false;
+      }
+    }
+
     const currentLevel = this.data.skills[skillId] || 0;
     if (currentLevel >= skill.maxLevel) return false;
 

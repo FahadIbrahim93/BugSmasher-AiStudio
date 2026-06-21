@@ -20,7 +20,9 @@
     "ci": "npm run lint && npm run validate:functions && npm test && npm run build",
     "validate:functions": "cd functions && npm ci && npm run build",
     "deploy:hosting": "npm run build && firebase deploy --only hosting",
-    "deploy:rules": "firebase deploy --only firestore:rules"
+    "deploy:functions": "cd functions && npm ci && npm run build && cd .. && firebase deploy --only functions",
+    "deploy:rules": "firebase deploy --only firestore:rules",
+    "deploy:all": "npm run ci && firebase deploy --only hosting,firestore:rules,functions"
   },
   "dependencies": {
     "@google/genai": "^2.7.0",
@@ -32,8 +34,7 @@
     "motion": "^12.23.24",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "recharts": "^3.8.1",
-    "vite": "^6.2.0"
+    "recharts": "^3.8.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",

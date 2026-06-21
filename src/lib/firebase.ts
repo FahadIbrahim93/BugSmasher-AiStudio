@@ -12,7 +12,7 @@ import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
 
-let db;
+let db: any; // Firestore instance, typed loosely for multi-db init
 try {
   // Initialize with robust persistent local cache for multi-tab environments and connect to the correct database instance
   db = initializeFirestore(app, {

@@ -316,10 +316,7 @@ interface PersistedStreak {
   highestStreak: number;
 }
 
-interface PersistedCosmetics {
-  unlockedSkins: string[];
-  activeSkin: string | null;
-}
+// PersistedCosmetics removed (unused)
 
 function loadChallenge(): PersistedChallenge | null {
   try {
@@ -434,11 +431,6 @@ export function isSkinUnlocked(skinId: string): boolean {
 }
 
 // ---- INTERNAL REWARD GRANTING ----
-
-interface CosmeticsState {
-  unlockedSkins: string[];
-  activeSkin: string | null;
-}
 
 function loadCosmetics(): CosmeticsState {
   try {

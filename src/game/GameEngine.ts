@@ -14,9 +14,6 @@ import { PowerupSystem } from './PowerupSystem';
 import { HazardSystem } from './HazardSystem';
 import { PCGSystem } from './PCGSystem';
 import { CustomMapManager } from './CustomMapManager';
-import { damageNumbers } from './DamageNumbers';
-import { MissionManager } from './MissionManager';
-import { emitMissionUpdate } from './missionEvents';
 import { computeModifierState, type ChallengeModifierId, type ChallengeModifierState } from './DailyChallengeManager';
 import { GameEngineStatusBus } from './GameEngineStatusBus';
 import {
@@ -98,6 +95,19 @@ export class GameEngine {
   spikeBurstTimer: number = 0;
   controlDistortionTimer: number = 0;
   hazardSlowdown: number = 1.0;
+
+  // Active abilities cooldowns and durations (Progression Skill Tree)
+  bioshieldCooldown: number = 0;
+  bioshieldActiveTime: number = 0;
+  overdriveCooldown: number = 0;
+  overdriveActiveTime: number = 0;
+  empShatterCooldown: number = 0;
+  empShatterActiveTime: number = 0;
+  missileSentryTimer: number = 0;
+
+  isInvulnerable(): boolean {
+    return this.shieldTimer > 0 || this.bioshieldActiveTime > 0;
+  }
 
   // Session Stats for Achievements
   swarmerKills: number = 0;
@@ -186,7 +196,7 @@ export class GameEngine {
     this.powerupSystem = new PowerupSystem(this);
     this.hazardSystem = new HazardSystem(this);
     this.pcgSystem = new PCGSystem(this);
-    const activeCustom = CustomMapManager.getActiveConfiguration();
+    const activeCustom = CustomMapManager.getActiveConfiguration() as any;
     if (activeCustom && activeCustom.obstacles && activeCustom.seed) {
       this.pcgSystem.activeMap = activeCustom;
     }
@@ -441,7 +451,6 @@ export class GameEngine {
 
     // Environmental Systems
     this.particleSystem.update(dt);
-    damageNumbers.update(dt);
     this.powerupSystem.updatePowerups(dt);
     this.powerupSystem.updateResources(dt);
     if (this.pcgSystem) {
@@ -462,7 +471,6 @@ export class GameEngine {
 
   fireAutoTurret(isRapidFire: boolean = false) {
     let closest = null;
-    let minHealth = Infinity;
     let minDistSq = Infinity;
     const cx = this.coreX;
     const cy = this.coreY;
@@ -553,8 +561,6 @@ export class GameEngine {
       this.shake(0.05, 2);
     }
 
-    damageNumbers.spawn(bug.x, bug.y - bug.size * 0.5, Math.round(finalAmount), isCrit);
-
     if (bug.hp <= 0) {
       this.killBug(bug);
     } else {
@@ -578,15 +584,7 @@ export class GameEngine {
 
     const isBossKill = bug.type === 'boss';
 
-    if (isBossKill) {
-      this.shake(0.4, 18);
-      this.triggerHitStop(0.15);
-      MissionManager.updateProgress('defeat_bosses', 1);
-    }
-
     StatsManager.updateStats({ totalBugsKilled: 1, bossesKilled: isBossKill ? 1 : 0 });
-    MissionManager.updateProgress('kill_bugs', 1);
-    emitMissionUpdate();
 
     const mult = this.multiplierTimer > 0 ? 2 : 1;
     this.score += bug.scoreValue * mult;
@@ -804,6 +802,14 @@ export class GameEngine {
     if (this.waveTransitionTimer > 0) {
       this.waveTransitionTimer = Math.max(0, this.waveTransitionTimer - dt);
     }
+
+    // Decrement active ability cooldowns and durations
+    if (this.bioshieldCooldown > 0) this.bioshieldCooldown = Math.max(0, this.bioshieldCooldown - dt);
+    if (this.bioshieldActiveTime > 0) this.bioshieldActiveTime = Math.max(0, this.bioshieldActiveTime - dt);
+    if (this.overdriveCooldown > 0) this.overdriveCooldown = Math.max(0, this.overdriveCooldown - dt);
+    if (this.overdriveActiveTime > 0) this.overdriveActiveTime = Math.max(0, this.overdriveActiveTime - dt);
+    if (this.empShatterCooldown > 0) this.empShatterCooldown = Math.max(0, this.empShatterCooldown - dt);
+    if (this.empShatterActiveTime > 0) this.empShatterActiveTime = Math.max(0, this.empShatterActiveTime - dt);
   }
 
   private updateMetrics(dt: number) {
@@ -826,20 +832,80 @@ export class GameEngine {
   }
 
   private updateTurrets(dt: number) {
-    if (this.autoTurretLevel > 0 || this.rapidFireTimer > 0 || this.overdriveTimer > 0) {
+    if (this.autoTurretLevel > 0 || this.rapidFireTimer > 0 || this.overdriveTimer > 0 || this.overdriveActiveTime > 0) {
       this.autoTurretTimer += dt * this.hazardSlowdown;
       const baseFireRate = GameConfig.upgrades.turret.baseFireRate;
       let fireRate = Math.max(GameConfig.upgrades.turret.minFireRate,
         baseFireRate - this.autoTurretLevel * GameConfig.upgrades.turret.fireRateReduction - ProgressionManager.getSkillBonus('sentry_optimization')
       );
-      if (this.overdriveTimer > 0) fireRate *= 0.3;
+      if (this.overdriveTimer > 0 || this.overdriveActiveTime > 0) fireRate *= 0.2;
       if (this.rapidFireTimer > 0) fireRate = 0.05;
 
       if (this.autoTurretTimer > fireRate && this.bugs.length > 0) {
         this.autoTurretTimer = 0;
-        this.fireAutoTurret(this.rapidFireTimer > 0);
+        this.fireAutoTurret(this.rapidFireTimer > 0 || this.overdriveActiveTime > 0);
+      }
+
+      // Tactical Missile Sentry
+      const missileLevel = ProgressionManager.getSkillLevel('missile_sentry');
+      if (missileLevel > 0) {
+        this.missileSentryTimer += dt;
+        if (this.missileSentryTimer >= 10.0) {
+          this.missileSentryTimer = 0;
+          const threatTargets = this.bugs.filter(b => b.active && b.hp > 0);
+          if (threatTargets.length > 0) {
+            const target = threatTargets[0];
+            this.particleSystem.spawnLaser(this.coreX, this.coreY, target.x, target.y, '#fd8432');
+            this.particleSystem.spawnShockwave(target.x, target.y, '#f97316', 70);
+            this.damageBug(target, 15 * missileLevel);
+            soundManager.bossWarning();
+          }
+        }
       }
     }
+  }
+
+  // Active skills trigger (Progression Skill Tree)
+  triggerActiveAbility(id: string): boolean {
+    const level = ProgressionManager.getSkillLevel(id);
+    if (level <= 0) {
+      console.warn(`Ability ${id} is not unlocked!`);
+      return false;
+    }
+
+    if (id === 'nanite_bioshield') {
+      if (this.bioshieldCooldown > 0) return false;
+      this.bioshieldCooldown = 40; // 40s cooldown
+      this.bioshieldActiveTime = 4; // 4s invincibility
+      this.health = Math.min(this.maxHealth, this.health + 25);
+      this.particleSystem.spawnShockwave(this.coreX, this.coreY, '#10b981', 250);
+      soundManager.heal();
+      return true;
+    }
+
+    if (id === 'turret_overdrive') {
+      if (this.overdriveCooldown > 0) return false;
+      this.overdriveCooldown = 45; // 45s cooldown
+      this.overdriveActiveTime = 8; // 8s duration
+      this.particleSystem.spawnShockwave(this.coreX, this.coreY, '#fbbf24', 200);
+      soundManager.armoryEquip();
+      return true;
+    }
+
+    if (id === 'chrono_emp_shatter') {
+      if (this.empShatterCooldown > 0) return false;
+      this.empShatterCooldown = 50; // 50s cooldown
+      this.empShatterActiveTime = 5; // 5s duration
+      this.activatePowerup('freeze', this.coreX, this.coreY);
+      this.bugs.forEach((b) => {
+        this.damageBug(b, b.hp * 0.3); // decay 30% of bug's current health
+      });
+      this.particleSystem.spawnShockwave(this.coreX, this.coreY, '#a855f7', 350);
+      soundManager.bossWarning();
+      return true;
+    }
+
+    return false;
   }
 
   private updateBugs(dt: number) {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Shield, Zap, Crosshair, Heart, Hammer, Info } from 'lucide-react';
+import { Zap, Crosshair, Heart, Hammer, Info } from 'lucide-react';
 import { motion, Variants, AnimatePresence } from 'motion/react';
 import { soundManager } from '../game/SoundManager';
 import { GameConfig } from '../game/GameConfig';

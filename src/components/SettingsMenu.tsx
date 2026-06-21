@@ -23,11 +23,6 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
   const [sfxMuted, setSfxMuted] = useState(soundManager.sfxMuted);
   const [musicMuted, setMusicMuted] = useState(soundManager.musicMuted);
   const [a11y, setA11y] = useState<AccessibilitySettings>(loadAccessibilitySettings);
-
-  const [prevMasterVol, setPrevMasterVol] = useState(soundManager.masterVolume || 1.0);
-  const [prevSfxVol, setPrevSfxVol] = useState(soundManager.sfxVolume || 0.8);
-  const [prevMusicVol, setPrevMusicVol] = useState(soundManager.musicVolume || 0.6);
-
   const updateA11y = (patch: Partial<AccessibilitySettings>) => {
     const next = { ...a11y, ...patch };
     setA11y(next);
@@ -39,7 +34,6 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
     soundManager.setMasterVolume(val);
     setMasterVol(val);
     if (val > 0) {
-      setPrevMasterVol(val);
       if (isMuted) {
         soundManager.toggleMute();
         setIsMuted(false);
@@ -51,14 +45,14 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
     const val = parseFloat(e.target.value);
     soundManager.setSfxVolume(val);
     setSfxVol(val);
-    if (val > 0) setPrevSfxVol(val);
+    if (val > 0) { /* preview removed */ }
   };
 
   const handleMusicVolume = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value);
     soundManager.setMusicVolume(val);
     setMusicVol(val);
-    if (val > 0) setPrevMusicVol(val);
+    if (val > 0) { /* preview removed */ }
   };
 
   const toggleMute = () => {
@@ -85,7 +79,7 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
       soundManager.setMasterVolume(next);
       setMasterVol(next);
       if (next > 0) {
-        setPrevMasterVol(next);
+        // prev removed
         if (isMuted) {
           soundManager.toggleMute();
           setIsMuted(false);
@@ -95,12 +89,12 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
       const next = Math.max(0, Math.min(1, parseFloat((sfxVol + delta).toFixed(2))));
       soundManager.setSfxVolume(next);
       setSfxVol(next);
-      if (next > 0) setPrevSfxVol(next);
+      if (next > 0) { /* prev removed */ }
     } else if (type === 'music') {
       const next = Math.max(0, Math.min(1, parseFloat((musicVol + delta).toFixed(2))));
       soundManager.setMusicVolume(next);
       setMusicVol(next);
-      if (next > 0) setPrevMusicVol(next);
+      if (next > 0) { /* prev removed */ }
     }
   };
 
@@ -176,10 +170,9 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
   }, [listeningFor, bindings]);
 
   useEffect(() => {
-    if (listeningFor) {
-      window.addEventListener('keydown', handleKeyCapture, true);
-      return () => window.removeEventListener('keydown', handleKeyCapture, true);
-    }
+    if (!listeningFor) return;
+    window.addEventListener('keydown', handleKeyCapture, true);
+    return () => window.removeEventListener('keydown', handleKeyCapture, true);
   }, [listeningFor, handleKeyCapture]);
 
   const [showPerformance, setShowPerformance] = useState(() => {

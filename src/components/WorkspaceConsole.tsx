@@ -8,14 +8,9 @@ import {
   FileText, 
   ClipboardList, 
   ShieldAlert, 
-  Sparkles, 
   RefreshCw, 
   UserPlus, 
-  Clock, 
   Zap, 
-  Send, 
-  Trophy, 
-  ChevronRight,
   Database,
   Info
 } from 'lucide-react';
@@ -47,9 +42,10 @@ export function WorkspaceConsole({ onClose }: WorkspaceConsoleProps) {
 
   useEffect(() => {
     if (feedback) {
-      const timer = setTimeout(() => setFeedback(null), 10000); // long display for external URLs
+      const timer = setTimeout(() => setFeedback(null), 10000);
       return () => clearTimeout(timer);
     }
+    return;
   }, [feedback]);
 
   // General Fetch Client for Google APIs
@@ -261,7 +257,7 @@ export function WorkspaceConsole({ onClose }: WorkspaceConsoleProps) {
         };
       }
 
-      const eventRes = await apiCall('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+      await apiCall('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
         method: 'POST',
         body: JSON.stringify(eventBody)
       });
@@ -291,7 +287,8 @@ export function WorkspaceConsole({ onClose }: WorkspaceConsoleProps) {
     setLoading(true);
     setFeedback(null);
     try {
-      const mapConfig = SaveManager.getHighScore() > 0 ? "ADVANCED CORE" : "RECRUIT SIMULATOR";
+      // mapConfig was unused
+      // const _mapConfig = SaveManager.getHighScore() > 0 ? "ADVANCED CORE" : "RECRUIT SIMULATOR";
       const docTitle = `BUGSMASHER Tactical Debrief - Operative Report`;
 
       // Step A: Create Document

@@ -49,7 +49,7 @@ export class HazardSystem {
     }
 
     // Apply cumulative hazard effects
-    if (isInLava && this.engine.shieldTimer <= 0) {
+    if (isInLava && !this.engine.isInvulnerable()) {
       this.engine.health -= dt * 8;
       if (Math.random() < 0.1) {
         this.engine.shake(0.1, 2);
@@ -72,7 +72,7 @@ export class HazardSystem {
       const distSq =
         (h.x - this.engine.coreX) ** 2 + (h.y - this.engine.coreY) ** 2;
       const damageRadius = h.radius + 30;
-      if (distSq < damageRadius * damageRadius && this.engine.shieldTimer <= 0) {
+      if (distSq < damageRadius * damageRadius && !this.engine.isInvulnerable()) {
         this.engine.health -= GameConfig.player.hitDamage * 1.5;
         this.engine.renderer.impactFlash = 1.5;
         this.engine.shake(0.5, 25);

@@ -18,9 +18,9 @@ export const ACHIEVEMENTS_DATA: Omit<Achievement, 'unlocked'>[] = [
   { id: 'score_10k', title: 'Elite Smasher', description: 'Reach a score of 10,000.', icon: 'star', check: (s) => s.totalScore >= 10000 },
   { id: 'wave_10', title: 'Survivor', description: 'Reach Wave 10.', icon: 'shield', check: (s) => s.totalWavesCompleted >= 10 },
   { id: 'boss_slayer', title: 'Giant Slayer', description: 'Kill your first boss.', icon: 'award', check: (s) => s.bossesKilled >= 1 },
-  { id: 'swarmer_slayer', title: 'Swarmer Slayer', description: 'Kill 10 swarmers.', icon: 'zap', check: (s, sess) => sess.swarmerKills >= 10 },
-  { id: 'healer_hunter', title: 'Healer Hunter', description: 'Kill 5 healers.', icon: 'heart-off', check: (s, sess) => sess.healerKills >= 5 },
-  { id: 'perfectionist', title: 'Perfectionist', description: 'Complete sub-wave without missing a click.', icon: 'aim', check: (s, sess) => sess.perfectSequence && sess.kills >= 10 }
+  { id: 'swarmer_slayer', title: 'Swarmer Slayer', description: 'Kill 10 swarmers.', icon: 'zap', check: (_s, sess) => sess.swarmerKills >= 10 },
+  { id: 'healer_hunter', title: 'Healer Hunter', description: 'Kill 5 healers.', icon: 'heart-off', check: (_s, sess) => sess.healerKills >= 5 },
+  { id: 'perfectionist', title: 'Perfectionist', description: 'Complete sub-wave without missing a click.', icon: 'aim', check: (_s, sess) => sess.perfectSequence && sess.kills >= 10 }
 ];
 
 export class AchievementManager {

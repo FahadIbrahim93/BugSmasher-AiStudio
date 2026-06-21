@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { Terminal, Database, ShieldAlert, Cpu, Volume2, VolumeX } from 'lucide-react';
 import { DialogueLine } from '../data/lore';
 import { soundManager } from '../game/SoundManager';

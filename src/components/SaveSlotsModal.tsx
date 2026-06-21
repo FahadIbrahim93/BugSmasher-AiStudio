@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { X, Save, Download, Trash2, Edit2, Calendar, Trophy, Eye, Check } from 'lucide-react';
+import { motion } from 'motion/react';
+import { X, Save, Download, Trash2, Edit2, Calendar, Check } from 'lucide-react';
 import { SaveManager, GameSaveData } from '../game/SaveManager';
 import { SaveSlot } from '../game/IndexedDBSaveSystem';
 import { soundManager } from '../game/SoundManager';

@@ -24,7 +24,7 @@ import {
   // Dev tools
   devUnlockAll,
   isDevUnlocked,
-  type CoreThemeId,
+  type CoreThemeId as _CoreThemeId,
   type SupporterTier,
 } from '../game/CosmeticsManager';
 

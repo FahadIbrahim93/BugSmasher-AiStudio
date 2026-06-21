@@ -2,8 +2,6 @@ import { GameEngine } from './GameEngine';
 import { Bug } from './GameTypes';
 import { GameConfig } from './GameConfig';
 import { soundManager } from './SoundManager';
-import { MissionManager } from './MissionManager';
-import { emitMissionUpdate } from './missionEvents';
 
 export class WaveManager {
   engine: GameEngine;
@@ -45,6 +43,12 @@ export class WaveManager {
         const cappedPerf = Math.min(this.engine.performanceFactor, 1.5);
         const perfBonus = Math.floor(cappedPerf * 3);
         this.bugsToSpawn = GameConfig.waves.baseBugs + this.engine.wave * GameConfig.waves.bugsPerWave + perfBonus;
+    }
+    
+    // Scale count by seed thematic multiplier if procedural map is active
+    if (this.engine.pcgSystem && this.engine.pcgSystem.activeMap) {
+      const mult = this.engine.pcgSystem.activeMap.spawnMultiplier || 1.0;
+      this.bugsToSpawn = Math.floor(this.bugsToSpawn * mult);
     }
     
     this.spawnTimer = 0;
@@ -146,8 +150,6 @@ export class WaveManager {
     } else if (this.engine.bugs.length === 0) {
       this.waveActive = false;
       this.engine.wave++;
-      MissionManager.updateProgress('survive_waves', 1);
-      emitMissionUpdate();
       const mode = this.engine.gameModeConfig;
       if (mode.endlessWaves) {
         this.engine.onWaveComplete?.();
@@ -318,6 +320,16 @@ export class WaveManager {
   }
 
   private decideType(wave: number): string {
+    // Override to enforce seed-based, deterministic enemy placements if PCG map is active
+    if (this.engine.pcgSystem && this.engine.pcgSystem.activeMap) {
+      const rng = this.engine.pcgSystem.getPRNGForWave(wave, `enemy_type_${this.bugsToSpawn}`);
+      const types = ['basic', 'scout', 'tank', 'swarmer', 'ghost', 'phase', 'ember', 'frost'];
+      // Progressively expand the pool of enemy types based on the wave
+      const selectionRange = Math.min(types.length, 2 + Math.floor(wave / 2));
+      const idx = Math.floor(rng() * selectionRange);
+      return types[idx];
+    }
+
     const biome = this.engine.currentBiome;
     const r = Math.random();
     const combo = this.engine.streakCount;

@@ -1,6 +1,6 @@
 export class AssetManager {
   private images: Map<string, HTMLImageElement> = new Map();
-  private audioContextInitialized: boolean = false;
+  // audioContextInitialized removed (unused)
   
   // Default backgrounds to preload for instant switching
   private defaultAssets: string[] = [
@@ -20,7 +20,7 @@ export class AssetManager {
     }
 
     const promises = this.defaultAssets.map((url) => {
-      return new Promise<void>((resolve, reject) => {
+      return new Promise<void>((resolve, _reject) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => {

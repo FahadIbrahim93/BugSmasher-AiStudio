@@ -15,21 +15,21 @@ export const TerminalLog = ({ unlockedLogs }: TerminalLogProps) => {
 
   useEffect(() => {
     const latest = unlockedLogs[unlockedLogs.length - 1];
-    if (latest && latest !== lastUnlocked) {
-      setLastUnlocked(latest);
-      const log = LOGS_DATA.find(l => l.id === latest);
-      if (log) {
-        setActiveLog(log);
-        setShowNotification(true);
-        soundManager.uiClick();
-        
-        // Auto-hide notification after 5 seconds
-        const timer = setTimeout(() => {
-          setShowNotification(false);
-        }, 5000);
-        return () => clearTimeout(timer);
-      }
+    if (!latest || latest === lastUnlocked) {
+      return;
     }
+    setLastUnlocked(latest);
+    const log = LOGS_DATA.find(l => l.id === latest);
+    if (log) {
+      setActiveLog(log);
+      setShowNotification(true);
+      soundManager.uiClick();
+      const timer = setTimeout(() => {
+        setShowNotification(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+    return;
   }, [unlockedLogs, lastUnlocked]);
 
   const [isExpanded, setIsExpanded] = useState(false);

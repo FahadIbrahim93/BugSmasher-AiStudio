@@ -1,6 +1,7 @@
 import { GameEngine } from './GameEngine';
 import { Bug } from './GameTypes';
 import { soundManager } from './SoundManager';
+import { ResourceType } from './ResourceTypes';
 
 export type PCGTheme = 'nuclear_melt' | 'cyberspace_node' | 'void_rift' | 'glacier_ice' | 'magma_core';
 
@@ -66,6 +67,14 @@ export class PCGSystem {
   engine: GameEngine;
   activeMap: PCGMapConfig | null = null;
   currentSeed: string = 'ALPHA-99';
+
+  // Procedural content generation state trackers (Tied to seed + wave)
+  resourceSpawnedForWave: Record<number, boolean> = {};
+  hazardSpawnTimer: number = 0;
+
+  getPRNGForWave(wave: number, salt: string) {
+    return createPRNG(this.currentSeed + `_w${wave}_` + salt);
+  }
 
   constructor(engine: GameEngine) {
     this.engine = engine;
@@ -229,7 +238,64 @@ export class PCGSystem {
   update(dt: number) {
     if (!this.activeMap) return;
 
-    // 1. Process Lava / Magma damage to bugs walked over MAGMA_VENTS
+    const currentWave = this.engine.wave;
+
+    // 1. Procedural Resource Drop Distribution (Tied directly to seed + wave)
+    if (this.engine.waveManager.waveActive && !this.resourceSpawnedForWave[currentWave]) {
+      this.resourceSpawnedForWave[currentWave] = true;
+      const rng = this.getPRNGForWave(currentWave, 'resources');
+      const numResources = Math.floor(rng() * 4) + 3; // 3 to 6 drops
+      const width = this.engine.width;
+      const height = this.engine.height;
+      const rTypes: ResourceType[] = ['scrap', 'crystals', 'plasma', 'alloy', 'flux'];
+
+      for (let i = 0; i < numResources; i++) {
+        const rx = Math.floor(rng() * (width - 240)) + 120;
+        const ry = Math.floor(rng() * (height - 240)) + 120;
+        const type = rTypes[Math.floor(rng() * rTypes.length)];
+
+        this.engine.resources.push({
+          active: true,
+          x: rx,
+          y: ry,
+          type,
+          color: type === 'scrap' ? '#cbd5e1' : type === 'crystals' ? '#00ffd2' : type === 'plasma' ? '#a855f7' : type === 'alloy' ? '#fb7185' : '#38bdf8',
+          life: 25,
+          maxLife: 25,
+          size: 14
+        });
+        this.engine.particleSystem.spawnShockwave(rx, ry, '#00ffd2', 40);
+      }
+      console.log(`[PCGSystem] Distributed ${numResources} resources on wave ${currentWave} (seed ${this.currentSeed})`);
+    }
+
+    // 2. Procedural Environmental Hazard Spawner (Tied directly to seed + wave + timing)
+    if (this.engine.waveManager.waveActive) {
+      this.hazardSpawnTimer += dt;
+      if (this.hazardSpawnTimer >= 12.0) {
+        this.hazardSpawnTimer = 0;
+        const rng = this.getPRNGForWave(currentWave, `hazard_${Math.floor(this.engine.globalTime)}`);
+        const hx = Math.floor(rng() * (this.engine.width - 240)) + 120;
+        const hy = Math.floor(rng() * (this.engine.height - 240)) + 120;
+        const hTypes: ('barrage' | 'shockwave' | 'lava' | 'web')[] = ['barrage', 'lava', 'web'];
+        const selectedType = hTypes[Math.floor(rng() * hTypes.length)];
+
+        this.engine.hazards.push({
+          id: `pcg_haz_${Date.now()}`,
+          x: hx,
+          y: hy,
+          radius: 60 + Math.floor(rng() * 40),
+          type: selectedType,
+          timer: 0,
+          duration: selectedType === 'barrage' ? 3.0 : 8.0,
+          active: true
+        });
+        this.engine.particleSystem.spawnShockwave(hx, hy, '#ff5500', 80);
+        console.log(`[PCGSystem] Spawned environmental hazard '${selectedType}' at [${hx}, ${hy}]`);
+      }
+    }
+
+    // 3. Process Lava / Magma damage to bugs walked over MAGMA_VENTS
     const map = this.activeMap;
     map.obstacles.forEach((obs) => {
       if (!obs.active) return;
