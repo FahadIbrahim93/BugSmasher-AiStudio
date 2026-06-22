@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { GameEngine } from '../GameEngine';
+import { getActiveCoreThemeConfig } from '../CosmeticsManager';
 import type { Renderer } from '../Renderer';
 import type { PerformanceScaler } from './PerformanceScaler';
 import { OffscreenEnvironmentCache } from './OffscreenEnvironmentCache';

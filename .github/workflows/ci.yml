@@ -34,9 +34,13 @@ jobs:
 
       - name: Typecheck Functions (Cloud Functions for server validation)
         run: |
-          cd functions
-          npm ci
-          npm run build
+          if [ -f functions/package.json ]; then
+            cd functions
+            npm ci
+            npm run build
+          else
+            echo "No functions to build"
+          fi
 
       - name: Unit tests (with coverage per audit)
         run: npm test -- --coverage

@@ -3,6 +3,7 @@ import { GameEngine } from '../GameEngine';
 import { Bug } from '../GameTypes';
 import { Splatter, Particle, Shockwave, Laser, MuzzleFlash } from '../ParticleSystem';
 import { GameConfig } from '../GameConfig';
+import { getActiveCoreThemeConfig } from '../CosmeticsManager';
 import type { Renderer } from '../Renderer';
 import type { PerformanceScaler } from './PerformanceScaler';
 

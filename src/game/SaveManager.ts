@@ -82,9 +82,7 @@ export class SaveManager {
     this.notifySync('syncing');
     try {
       const stats = StatsManager.getStats();
-      const rawData = { ...data, stats };
-      // @ts-ignore
-      delete rawData.checksum;
+      const rawData: Omit<GameSaveData & { stats: unknown }, 'checksum'> = { ...data, stats };
 
       const checksum = await ChecksumSystem.generate(rawData);
       const fullData = { ...rawData, checksum };
@@ -181,9 +179,7 @@ export class SaveManager {
     this.notifySync('syncing');
     try {
       const stats = StatsManager.getStats();
-      const rawData = { ...data, stats };
-      // @ts-ignore
-      delete rawData.checksum; // Ensure we don't hash the previous checksum
+      const rawData: Omit<GameSaveData & { stats: unknown }, 'checksum'> = { ...data, stats }; // Ensure we don't hash the previous checksum
 
       const checksum = await ChecksumSystem.generate(rawData);
       const fullData = { ...rawData, checksum };
