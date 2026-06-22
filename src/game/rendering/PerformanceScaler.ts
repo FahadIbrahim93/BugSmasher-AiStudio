@@ -34,8 +34,6 @@ export class PerformanceScaler {
 
   currentPreset: QualityPresetName = 'High';
 
-  private lastFpsAlert: number = 0;
-
   /** Force a full quality downgrade when FPS has been critically low for too long */
   private emergencyDowngradeFps: number = 0;
 
@@ -113,7 +111,6 @@ export class PerformanceScaler {
       // Emergency downgrade: if FPS stays below 25 for 3+ consecutive readings, drop to Headless
       if (this.emergencyDowngradeFps >= 3) {
         this.applyPreset('Headless');
-        this.lastFpsAlert = now;
         return;
       }
 

@@ -279,7 +279,6 @@ describe('PowerupSystem', () => {
 
     it('should attract resources within 200px of core', () => {
       // Place resource just inside the 200px threshold
-      const angle = Math.atan2(0, 1);
       const rX = engine.coreX + 180;
       const rY = engine.coreY;
 

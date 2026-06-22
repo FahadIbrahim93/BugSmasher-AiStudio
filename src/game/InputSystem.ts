@@ -1,6 +1,6 @@
 import { GameEngine } from './GameEngine';
 import { soundManager } from './SoundManager';
-import { Bug, Powerup } from './GameTypes';
+// (removed unused Bug/Powerup import for lint)
 import { loadControlBindings, matchesBinding } from './ControlBindings';
 import { ProgressionManager } from './ProgressionManager';
 import { GameConfig } from './GameConfig';  // Fixed: added missing import per audit (was causing ReferenceError and 3 test failures)
@@ -9,7 +9,6 @@ export class InputSystem {
   private engine: GameEngine;
   public lastMouseX: number = 0;
   public lastMouseY: number = 0;
-  private _lastClickTime: number = 0;
   private rapidClickCount: number = 0;
   private rapidClickWindow: number = 0;
 
@@ -211,10 +210,7 @@ export class InputSystem {
       }
     }
 
-    const cx = engine.width / 2;
-    const cy = engine.height / 2;
     const throttled = this.isClickThrottled;
-    const lowEnd = engine.renderer?.isLowEnd ?? false;
 
     if (!throttled) {
       // Full tactile smash effects

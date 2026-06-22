@@ -8,7 +8,7 @@ Thank you for contributing. This project uses strict architecture rules so human
 
 1. Read [AGENTS.md](./AGENTS.md) — architecture and coding standards  
 2. Read [TASKBOARD.md](./TASKBOARD.md) — pick an open task by ID  
-3. Read [AUDIT_REPORT.md](./AUDIT_REPORT.md) — understand current quality bar (7.4/10)
+3. Read [AUDIT_HONEST.md](./AUDIT_HONEST.md) — understand current quality bar (honest 5.6/10 per CTO audit, many fixed)
 
 ---
 
@@ -28,6 +28,13 @@ npm run dev
 ```bash
 npm run lint
 npm test
+```
+
+## Branch Protection (per audit)
+Direct pushes to main are not allowed. All changes via PR + CI pass required. 
+Set up in GitHub repo settings: Require PR reviews, status checks (lint, test, build).
+
+See AGENTS.md for full standards.
 npm run build
 ```
 

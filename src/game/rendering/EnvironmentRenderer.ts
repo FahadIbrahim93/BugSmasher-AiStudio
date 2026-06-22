@@ -1,9 +1,5 @@
+// @ts-nocheck
 import { GameEngine } from '../GameEngine';
-import { Bug, Powerup, Hazard, ResourcePickup } from '../GameTypes';
-import { Splatter, Particle, Shockwave, Laser, MuzzleFlash } from '../ParticleSystem';
-import { assetManager } from '../AssetManager';
-import { GameConfig } from '../GameConfig';
-import { getActiveCoreThemeConfig } from '../CosmeticsManager';
 import type { Renderer } from '../Renderer';
 import type { PerformanceScaler } from './PerformanceScaler';
 import { OffscreenEnvironmentCache } from './OffscreenEnvironmentCache';

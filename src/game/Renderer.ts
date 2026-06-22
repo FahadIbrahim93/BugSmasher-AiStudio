@@ -30,7 +30,6 @@ export class Renderer {
   private cachedVignette: CanvasGradient | null = null;
   private lastVignetteWidth: number = 0;
   private lastVignetteHeight: number = 0;
-  private lastHealthRatio: number = -1;
   private lastCrisis: boolean = false;
   private lastVOpacity: number = -1;
 

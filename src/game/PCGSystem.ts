@@ -1,5 +1,4 @@
 import { GameEngine } from './GameEngine';
-import { Bug } from './GameTypes';
 import { soundManager } from './SoundManager';
 import { ResourceType } from './ResourceTypes';
 

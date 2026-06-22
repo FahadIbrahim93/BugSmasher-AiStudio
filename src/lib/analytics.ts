@@ -43,7 +43,7 @@ class AnalyticsService {
     if (provider === 'console') {
       console.info('[analytics]', envelope);
     }
-    // posthog / mixpanel: inject SDK in Sprint B (TASKBOARD P3-01)
+    // Analytics stub. For production, integrate PostHog or similar (see audit recommendation). Currently logs to console only.
   }
 
   identify(userId: string, traits?: AnalyticsPayload): void {

@@ -1,5 +1,4 @@
 import { GameEngine } from './GameEngine';
-import { Powerup } from './GameTypes';
 import { GameConfig } from './GameConfig';
 import { ProgressionManager } from './ProgressionManager';
 import { StatsManager } from './StatsManager';

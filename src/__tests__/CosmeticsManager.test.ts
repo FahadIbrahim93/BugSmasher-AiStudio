@@ -44,7 +44,7 @@ describe('core themes', () => {
     });
 
     it('each theme should have a tier assigned', () => {
-      for (const [id, theme] of Object.entries(CORE_THEMES)) {
+      for (const [_id, theme] of Object.entries(CORE_THEMES)) {
         expect(theme.tier).toBeTruthy();
         expect(['basic', 'premium', 'ultimate']).toContain(theme.tier);
       }

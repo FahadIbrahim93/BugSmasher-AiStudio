@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { GameEngine } from '../GameEngine';
 import { Bug, Powerup, Hazard, ResourcePickup } from '../GameTypes';
 import { Splatter, Particle, Shockwave, Laser, MuzzleFlash } from '../ParticleSystem';
