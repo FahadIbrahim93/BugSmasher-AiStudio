@@ -198,9 +198,9 @@ export class GameEngine {
     this.powerupSystem = new PowerupSystem(this);
     this.hazardSystem = new HazardSystem(this);
     this.pcgSystem = new PCGSystem(this);
-    const activeCustom = CustomMapManager.getActiveConfiguration();
+    const activeCustom: any = CustomMapManager.getActiveConfiguration();
     if (activeCustom && activeCustom.obstacles && activeCustom.seed) {
-      this.pcgSystem.activeMap = activeCustom as any; // mixed config types
+      this.pcgSystem.activeMap = activeCustom;
     }
     this.applyAccessibility();
     this.unsubscribeAccessibility = subscribeAccessibility((settings) => {
