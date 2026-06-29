@@ -150,7 +150,7 @@ export class FirebaseService {
       const snap = await getDocs(leaderboardQuery);
       return snap.docs.map(d => d.data() as LeaderboardEntry);
     } catch (error: unknown) {
-      handleFirestoreError(error, OperationType.LIST, 'leaderboard');
+      handleFirestoreError(error, OperationType.LIST, 'leaderboard', false);
       return [];
     }
   }

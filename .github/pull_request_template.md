@@ -1,6 +1,14 @@
 ## Summary
 
-<!-- What does this PR do? Reference TASKBOARD ID e.g. P2-01 -->
+<!-- What does this PR do? One TASKBOARD ID only. -->
+
+## TASKBOARD reference
+
+**Primary ID:** <!-- e.g. V-01, S-06, T-03 -->
+
+**Acceptance criteria met:**
+
+- [ ] <!-- paste from TASKBOARD row -->
 
 ## Type of change
 
@@ -11,22 +19,34 @@
 - [ ] test — tests only
 - [ ] ci — pipeline changes
 
-## TASKBOARD reference
+## Parallel work / conflict notes
 
-`ID:` <!-- e.g. P1-06 -->
+<!-- Files or domains touched; flag if others should avoid same paths -->
 
-## Checklist
+**Paths touched:**
+-
 
-- [ ] `npm run ci` passes locally
+## Verification
+
+- [ ] `npm run ci` passes locally (or scoped gates per AGENTIC_WORKFLOW.md)
 - [ ] Tests added/updated for changed systems
 - [ ] No new `any` in `src/game/`
 - [ ] `TASKBOARD.md` updated if task completed
-- [ ] `CHANGELOG.md` updated (if user-facing)
+- [ ] `docs/VERIFICATION_2026-06-30.md` updated if security/coverage/CI gates changed
+- [ ] `firestore.rules` / `security_spec.md` updated if Firebase security changed
+- [ ] `CHANGELOG.md` updated (release or user-facing only)
+
+## Agent / reviewer checklist
+
+- [ ] One TASKBOARD ID per PR
+- [ ] No secrets committed (`.env`, service accounts, client SALT)
+- [ ] Stubs not marked complete
+- [ ] Coverage thresholds not lowered without approval
 
 ## Screenshots / recordings
 
-<!-- For UI or gameplay changes -->
+<!-- Required for UI/visual TASKBOARD items (Phase V) -->
 
 ## Deployment notes
 
-<!-- Firebase rules, env vars, secrets -->
+<!-- Firebase rules, env vars, CHECKSUM_SALT, Java 21 for emulator CI -->

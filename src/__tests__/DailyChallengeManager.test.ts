@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   generateDailyChallenge,
   getTodaysChallenge,
@@ -20,10 +20,13 @@ function clearStorage() {
 describe('DailyChallengeManager', () => {
   beforeEach(() => {
     clearStorage();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-15T12:00:00Z'));
   });
 
   afterEach(() => {
     clearStorage();
+    vi.useRealTimers();
   });
 
   describe('generateDailyChallenge', () => {
@@ -123,14 +126,9 @@ describe('DailyChallengeManager', () => {
     });
 
     it('should update streak for consecutive days', () => {
-      // Mock localStorage to simulate yesterday's completion
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
-
       localStorage.setItem('bugsmasher_challenge_streak', JSON.stringify({
         currentStreak: 3,
-        lastCompletedDate: yesterdayStr,
+        lastCompletedDate: '2026-06-14',
         highestStreak: 3,
       }));
 
@@ -141,47 +139,35 @@ describe('DailyChallengeManager', () => {
     });
 
     it('should reset streak when a day is skipped', () => {
-      // Simulate streak from 2 days ago
-      const twoDaysAgo = new Date();
-      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-      const dateStr = `${twoDaysAgo.getFullYear()}-${String(twoDaysAgo.getMonth() + 1).padStart(2, '0')}-${String(twoDaysAgo.getDate()).padStart(2, '0')}`;
-
       localStorage.setItem('bugsmasher_challenge_streak', JSON.stringify({
         currentStreak: 5,
-        lastCompletedDate: dateStr,
+        lastCompletedDate: '2026-06-13',
         highestStreak: 5,
       }));
 
       completeChallenge({ completed: true, score: 10000, wave: 5, modifierConditions: {} });
 
       const streak = getStreakInfo();
-      expect(streak.currentStreak).toBe(1); // Reset to 1
+      expect(streak.currentStreak).toBe(1);
     });
 
     it('should not duplicate streak for same-day completion', () => {
       localStorage.setItem('bugsmasher_challenge_streak', JSON.stringify({
         currentStreak: 3,
-        lastCompletedDate: (() => {
-          const d = new Date();
-          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        })(),
+        lastCompletedDate: '2026-06-15',
         highestStreak: 3,
       }));
 
       completeChallenge({ completed: true, score: 10000, wave: 5, modifierConditions: {} });
 
       const streak = getStreakInfo();
-      expect(streak.currentStreak).toBe(3); // Same day, no change
+      expect(streak.currentStreak).toBe(3);
     });
 
     it('should track highest streak', () => {
       localStorage.setItem('bugsmasher_challenge_streak', JSON.stringify({
         currentStreak: 7,
-        lastCompletedDate: (() => {
-          const d = new Date();
-          d.setDate(d.getDate() - 1);
-          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        })(),
+        lastCompletedDate: '2026-06-14',
         highestStreak: 7,
       }));
 

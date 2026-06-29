@@ -43,7 +43,18 @@ jobs:
           fi
 
       - name: Unit tests (with coverage per audit)
-        run: npm test -- --coverage
+        run: npm run test:coverage
+
+      - name: Setup Java (Firestore emulator)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Firebase emulator security tests
+        run: npm run test:emulator
+        env:
+          CHECKSUM_SALT: ci-test-salt-not-for-production
 
       - name: Production build
         run: npm run build

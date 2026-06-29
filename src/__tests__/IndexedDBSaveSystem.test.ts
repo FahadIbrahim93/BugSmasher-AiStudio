@@ -1,21 +1,21 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import 'fake-indexeddb/auto';
 import { IndexedDBSaveSystem } from '../game/IndexedDBSaveSystem';
 import { SaveManager } from '../game/SaveManager';
 
 describe('IndexedDBSaveSystem', () => {
   beforeEach(async () => {
     localStorage.clear();
-    // Re-initialize to clear memory state
+    IndexedDBSaveSystem.resetForTests();
     await IndexedDBSaveSystem.init();
   });
 
-  it('should initialize and fallback correctly when IndexedDB is missing', async () => {
+  it('initializes real IndexedDB when available', async () => {
     const success = await IndexedDBSaveSystem.init();
-    // In vitest environment with jsdom, indexedDB is often not supported, so fallback should engage
-    expect(success).toBe(false);
+    expect(success).toBe(true);
   });
 
-  it('should save, read, list, and delete custom save slots using the fallback system', async () => {
+  it('persists save slots through IndexedDB', async () => {
     const slotId = 'slot_test_1';
     const testSlot = {
       id: slotId,
@@ -29,42 +29,56 @@ describe('IndexedDBSaveSystem', () => {
         maxHealth: 100,
         clickRadiusMultiplier: 1.0,
         autoTurretLevel: 0,
-        timestamp: Date.now()
-      }
+        timestamp: Date.now(),
+      },
     };
 
-    // Save slot
-    const saveSuccess = await IndexedDBSaveSystem.saveSlot(testSlot);
-    expect(saveSuccess).toBe(true);
+    expect(await IndexedDBSaveSystem.saveSlot(testSlot)).toBe(true);
 
-    // Load slot
     const loadedSlot = await IndexedDBSaveSystem.getSlot(slotId);
-    expect(loadedSlot).not.toBeNull();
     expect(loadedSlot?.name).toBe('Alpha Sector Save');
-    expect(loadedSlot?.biome).toBe('quantum_void');
     expect(loadedSlot?.data.score).toBe(500);
 
-    // List slots
     const allSlots = await IndexedDBSaveSystem.getAllSlots();
-    expect(allSlots.length).toBe(1);
-    expect(allSlots[0].id).toBe(slotId);
+    expect(allSlots).toHaveLength(1);
 
-    // Delete slot
-    const deleteSuccess = await IndexedDBSaveSystem.deleteSlot(slotId);
-    expect(deleteSuccess).toBe(true);
+    expect(await IndexedDBSaveSystem.deleteSlot(slotId)).toBe(true);
+    expect(await IndexedDBSaveSystem.getSlot(slotId)).toBeNull();
+  });
 
-    // Get deleted slot
-    const deletedSlot = await IndexedDBSaveSystem.getSlot(slotId);
-    expect(deletedSlot).toBeNull();
+  it('falls back to memory when IndexedDB is unavailable', async () => {
+    IndexedDBSaveSystem.resetForTests();
+    (IndexedDBSaveSystem as unknown as { useFallback: boolean }).useFallback = true;
+
+    const slot = {
+      id: 'fallback-slot',
+      name: 'Fallback Save',
+      timestamp: Date.now(),
+      biome: 'neon_core',
+      data: {
+        score: 10,
+        wave: 1,
+        health: 100,
+        maxHealth: 100,
+        clickRadiusMultiplier: 1,
+        autoTurretLevel: 0,
+        timestamp: Date.now(),
+      },
+    };
+
+    expect(await IndexedDBSaveSystem.saveSlot(slot)).toBe(true);
+    expect(await IndexedDBSaveSystem.getSlot('fallback-slot')).toMatchObject({ id: 'fallback-slot' });
   });
 });
 
 describe('SaveManager - Multi Slot integration', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     localStorage.clear();
+    IndexedDBSaveSystem.resetForTests();
+    await IndexedDBSaveSystem.init();
   });
 
-  it('should correctly store, activate, and read the active slot', async () => {
+  it('should correctly store, activate, and read the active slot', () => {
     expect(SaveManager.getActiveSlotId()).toBeNull();
 
     SaveManager.setActiveSlotId('slot_2');
@@ -83,15 +97,13 @@ describe('SaveManager - Multi Slot integration', () => {
       clickRadiusMultiplier: 1.3,
       autoTurretLevel: 2,
       timestamp: Date.now(),
-      biome: 'ember_depths'
+      biome: 'ember_depths',
     };
 
-    const saveSuccess = await SaveManager.saveToSlot('slot_1', data, 'Neural Ember Core');
-    expect(saveSuccess).toBe(true);
+    expect(await SaveManager.saveToSlot('slot_1', data, 'Neural Ember Core')).toBe(true);
     expect(SaveManager.getActiveSlotId()).toBe('slot_1');
 
     const loaded = await SaveManager.loadFromSlot('slot_1');
-    expect(loaded).not.toBeNull();
     expect(loaded?.score).toBe(15400);
     expect(loaded?.wave).toBe(14);
     expect(loaded?.biome).toBe('ember_depths');

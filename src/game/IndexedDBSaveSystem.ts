@@ -18,6 +18,12 @@ export class IndexedDBSaveSystem {
   // Fallback in-memory storage for test/sandboxed iframe restrictions
   private static memoryStorage: Record<string, SaveSlot> = {};
 
+  static resetForTests(): void {
+    this.db = null;
+    this.useFallback = false;
+    this.memoryStorage = {};
+  }
+
   static init(): Promise<boolean> {
     return new Promise((resolve) => {
       try {

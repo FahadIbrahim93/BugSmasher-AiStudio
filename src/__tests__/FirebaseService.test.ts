@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ChecksumSystem } from '../lib/checksum';
 
 const mocks = vi.hoisted(() => ({
   currentUser: { uid: 'user-1' } as { uid: string } | null,
@@ -95,5 +96,93 @@ describe('FirebaseService server-authoritative writes', () => {
 
     expect(result).toBe(false);
     expect(mocks.callable).not.toHaveBeenCalled();
+  });
+
+  it('returns false when upload callable rejects the save', async () => {
+    mocks.callable.mockRejectedValueOnce(new Error('permission-denied'));
+
+    const result = await FirebaseService.uploadSave('user-1', {
+      score: 100,
+      wave: 2,
+      health: 90,
+      maxHealth: 100,
+      clickRadiusMultiplier: 1,
+      autoTurretLevel: 0,
+      timestamp: 123,
+    });
+
+    expect(result).toBe(false);
+  });
+
+  it('returns null when cloud save document is missing', async () => {
+    mocks.getDoc.mockResolvedValueOnce({ exists: () => false });
+
+    const result = await FirebaseService.downloadSave('user-1');
+    expect(result).toBeNull();
+  });
+
+  it('rejects cloud save when client checksum fails verification', async () => {
+    mocks.getDoc.mockResolvedValueOnce({
+      exists: () => true,
+      data: () => ({
+        data: {
+          score: 100,
+          wave: 2,
+          health: 90,
+          maxHealth: 100,
+          clickRadiusMultiplier: 1,
+          autoTurretLevel: 0,
+          timestamp: 123,
+        },
+        clientChecksum: 'bad-checksum',
+      }),
+    });
+
+    const result = await FirebaseService.downloadSave('user-1');
+    expect(result).toBeNull();
+  });
+
+  it('returns parsed cloud save when checksum verifies', async () => {
+    const payload = {
+      score: 500,
+      wave: 4,
+      health: 80,
+      maxHealth: 100,
+      clickRadiusMultiplier: 1,
+      autoTurretLevel: 1,
+      timestamp: 456,
+    };
+    const checksum = await ChecksumSystem.generate(payload);
+
+    mocks.getDoc.mockResolvedValueOnce({
+      exists: () => true,
+      data: () => ({
+        data: payload,
+        clientChecksum: checksum,
+      }),
+    });
+
+    const result = await FirebaseService.downloadSave('user-1');
+    expect(result).toMatchObject({ ...payload, checksum });
+  });
+
+  it('returns leaderboard entries from Firestore', async () => {
+    mocks.getDocs.mockResolvedValueOnce({
+      docs: [
+        { data: () => ({ userId: 'a', username: 'A', score: 900, wave: 3, updatedAt: 1 }) },
+        { data: () => ({ userId: 'b', username: 'B', score: 800, wave: 2, updatedAt: 2 }) },
+      ],
+    });
+
+    const scores = await FirebaseService.getTopScores(2);
+    expect(scores).toHaveLength(2);
+    expect(scores[0].score).toBe(900);
+  });
+
+  it('returns empty leaderboard list when query fails', async () => {
+    mocks.getDocs.mockRejectedValueOnce(new Error('offline'));
+
+    const scores = await FirebaseService.getTopScores();
+    expect(scores).toEqual([]);
   });
 });

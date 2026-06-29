@@ -8,17 +8,19 @@
 
 ## Repository Map
 
-| Repository | URL | Role |
-|--------|-----|------|
+| Repository  | URL                                                       | Role                                    |
+| ----------- | --------------------------------------------------------- | --------------------------------------- |
 | **Primary** | `https://github.com/FahadIbrahim93/BugSmasher-HopeTheory` | Main source of truth; deployment origin |
 
 ### Branch Strategy
 
-| Branch | Purpose |
-|--------|---------|
-| `main` | Production-ready; CI must pass; deploys to Firebase Hosting |
-| `develop` | Optional integration branch |
-| `feat/*` / `fix/*` | Feature work; PR into `main` |
+| Branch                                   | Purpose                                                     |
+| ---------------------------------------- | ----------------------------------------------------------- |
+| `main`                                   | Production-ready; CI must pass; deploys to Firebase Hosting |
+| `develop`                                | Optional integration branch                                 |
+| `feat/*` / `fix/*` / `docs/*` / `test/*` | Feature work; **PR into `main` only**                       |
+
+See [docs/AGENTIC_WORKFLOW.md](./docs/AGENTIC_WORKFLOW.md) for naming, commits, SemVer, and multi-agent rules.
 
 ---
 
@@ -46,7 +48,7 @@ Open `http://localhost:3000`.
 
 ```bash
 npm run lint    # TypeScript strict check
-npm test        # 409+ Vitest unit tests
+npm test        # 507 Vitest unit tests (+ 21 functions/emulator tests via npm run ci)
 npm run build   # Vite production bundle → dist/
 ```
 
@@ -56,16 +58,16 @@ npm run build   # Vite production bundle → dist/
 
 Copy `.env.example` → `.env` for local overrides.
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `VITE_FIREBASE_API_KEY` | Required for Firebase auth/cloud features | Public Firebase web API key from Firebase Console |
-| `VITE_FIREBASE_AUTH_DOMAIN` | Required for Firebase auth/cloud features | Firebase auth domain |
-| `VITE_FIREBASE_PROJECT_ID` | Required for Firebase auth/cloud features | Firebase project ID |
-| `VITE_FIREBASE_APP_ID` | Required for Firebase auth/cloud features | Firebase app ID |
-| `VITE_FIREBASE_DATABASE_ID` | Optional | Named Firestore database ID, if used |
-| `CHECKSUM_SALT` | Required for functions deploy | Server-only Cloud Functions checksum salt; never expose through `VITE_` |
-| `GEMINI_API_KEY` | Optional | AI Studio / image generation features |
-| `DISABLE_HMR` | Optional | Set `true` in agent environments to reduce flicker |
+| Variable                    | Required                                  | Description                                                             |
+| --------------------------- | ----------------------------------------- | ----------------------------------------------------------------------- |
+| `VITE_FIREBASE_API_KEY`     | Required for Firebase auth/cloud features | Public Firebase web API key from Firebase Console                       |
+| `VITE_FIREBASE_AUTH_DOMAIN` | Required for Firebase auth/cloud features | Firebase auth domain                                                    |
+| `VITE_FIREBASE_PROJECT_ID`  | Required for Firebase auth/cloud features | Firebase project ID                                                     |
+| `VITE_FIREBASE_APP_ID`      | Required for Firebase auth/cloud features | Firebase app ID                                                         |
+| `VITE_FIREBASE_DATABASE_ID` | Optional                                  | Named Firestore database ID, if used                                    |
+| `CHECKSUM_SALT`             | Required for functions deploy             | Server-only Cloud Functions checksum salt; never expose through `VITE_` |
+| `GEMINI_API_KEY`            | Optional                                  | AI Studio / image generation features                                   |
+| `DISABLE_HMR`               | Optional                                  | Set `true` in agent environments to reduce flicker                      |
 
 Firebase client configuration is loaded from `VITE_FIREBASE_*` environment variables. `firebase-applet-config.json` is intentionally ignored and must not be committed. Cloud Functions secrets such as `CHECKSUM_SALT` must be configured in the deploy environment, not shipped to the browser.
 
@@ -78,11 +80,15 @@ Workflow: [`.github/workflows/ci.yml`](./.github/workflows/ci.yml)
 ### On every push / PR to `main`, `develop`, `feat/*`, `fix/*`:
 
 1. `npm ci`
-2. `npm run lint`
-3. `npm run validate:functions`
-4. `npm test -- --coverage`
-5. `npm run build`
-6. Upload `dist/` artifact (7-day retention)
+2. `npm run lint` — TypeScript (`tsc --noEmit`)
+3. `cd functions && npm ci && npm run build`
+4. `npm run test:coverage` — 507 frontend tests + engine/lib coverage thresholds
+5. Setup Java 21
+6. `npm run test:emulator` — Firestore rules + callable integration tests
+7. `npm run build`
+8. Upload `dist/` artifact (7-day retention)
+
+Local full gate: `npm run ci` (same steps, includes `validate:functions` unit tests).
 
 ### On push to `main` (optional auto-deploy):
 
@@ -124,15 +130,15 @@ Rules file: [`firestore.rules`](./firestore.rules)
 ## Release Checklist (10/10 bar)
 
 - [ ] `npm run lint` — 0 TypeScript errors
-- [ ] `npm run validate:functions` — Cloud Functions compile
-- [ ] `npm test` — 0 failures
-- [ ] `npm test -- --coverage` — configured thresholds met
+- [ ] `npm run validate:functions` — Cloud Functions compile + schema unit tests
+- [ ] `npm run test:coverage` — 507 tests, engine/lib thresholds met (~78% lines today)
+- [ ] `npm run test:emulator` — rules + callable tests pass (Java 21+)
 - [ ] `npm run build` — succeeds, bundle reviewed
 - [ ] Firestore rules deployed and smoke-tested for denied direct save/leaderboard writes
 - [ ] `TASKBOARD.md` P0 items for this release marked `[x]`
-- [ ] `CTO_AUDIT_2026-06-29.md` and `PERFECT_10_REMEDIATION_PLAN.md` updated with current evidence
+- [ ] `docs/VERIFICATION_2026-06-30.md` updated with fresh command output
 - [ ] Version bumped in `package.json`
-- [ ] Tag: `git tag -a v2.5.0 -m "10/10 enterprise elevation milestone"` (done via feat merge to main)
+- [ ] Tag: `git tag -a v2.5.0 -m "10/10 enterprise elevation milestone"`
 - [ ] Push branch + open PR to `main`
 - [ ] After merge: verify Firebase Hosting + smoke test auth/saves
 
@@ -156,12 +162,14 @@ firebase deploy --only hosting
 
 ## Troubleshooting
 
-| Issue | Fix |
-|-------|-----|
-| Detached HEAD in worktrees | `git checkout main && git pull` |
-| `vitest: not found` | Run `npm install` |
-| Firebase auth fails locally | Check `VITE_FIREBASE_*` values in `.env` and authorized domains in Firebase Console |
-| Large bundle warning | Expected (~1.2MB); code-split in TASKBOARD P4 |
+| Issue                                     | Fix                                                                                 |
+| ----------------------------------------- | ----------------------------------------------------------------------------------- |
+| Detached HEAD in worktrees                | `git checkout main && git pull`                                                     |
+| `vitest: not found`                       | Run `npm install`                                                                   |
+| Emulator tests fail (Java)                | Install JDK 21+; see `docs/EMULATOR_TESTING.md`                                     |
+| `functions/node_modules` EPERM on Windows | Close locking processes; `cd functions && rm -rf node_modules && npm ci`            |
+| Firebase auth fails locally               | Check `VITE_FIREBASE_*` values in `.env` and authorized domains in Firebase Console |
+| Large bundle warning                      | Expected (~1.2MB); code-split in TASKBOARD P4                                       |
 
 ---
 
