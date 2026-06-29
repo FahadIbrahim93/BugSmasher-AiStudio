@@ -124,4 +124,36 @@ describe('WaveManager', () => {
     // Combined spawn pattern triggered geometric spawns, pushing multiple bugs onto the field
     expect(engine.bugs.length).toBeGreaterThanOrEqual(1);
   });
+
+  it('flags boss waves on the configured interval', () => {
+    engine.wave = 10;
+    waveManager.startWave();
+
+    expect(waveManager.isBossWave).toBe(true);
+    expect(waveManager.bossIntroActive).toBe(true);
+    expect(waveManager.bugsToSpawn).toBeGreaterThan(0);
+  });
+
+  it('spawns a boss after the intro timer elapses', () => {
+    engine.wave = 10;
+    waveManager.startWave();
+    waveManager.bossIntroActive = false;
+    waveManager.bossIntroTimer = 0;
+    waveManager.bossWarningSounded = true;
+
+    waveManager.update(0.2);
+
+    expect(waveManager.bossSpawned).toBe(true);
+    expect(engine.bugs.some((bug) => bug.type === 'boss')).toBe(true);
+  });
+
+  it('advances biome tiers as waves progress', () => {
+    engine.wave = 15;
+    waveManager.startWave();
+    expect(engine.currentBiome).toBe('ember_depths');
+
+    engine.wave = 40;
+    waveManager.startWave();
+    expect(engine.currentBiome).toBe('void_abyss');
+  });
 });

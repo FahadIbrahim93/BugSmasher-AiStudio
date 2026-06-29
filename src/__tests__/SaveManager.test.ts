@@ -1,10 +1,40 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SaveManager } from '../game/SaveManager';
 
+const firebaseMocks = vi.hoisted(() => ({
+  currentUser: null as { uid: string; displayName: string } | null,
+  submitScore: vi.fn(() => Promise.resolve(true)),
+  getDoc: vi.fn(async () => ({
+    exists: () => false as boolean,
+    data: () => ({}) as Record<string, unknown>,
+  })),
+}));
+
+vi.mock('../lib/firebase', () => ({
+  auth: {
+    get currentUser() {
+      return firebaseMocks.currentUser;
+    },
+  },
+  db: {},
+}));
+
+vi.mock('../lib/firebaseService', () => ({
+  FirebaseService: {
+    submitScore: firebaseMocks.submitScore,
+  },
+}));
+
+vi.mock('firebase/firestore', () => ({
+  doc: vi.fn((...parts: string[]) => parts.join('/')),
+  getDoc: firebaseMocks.getDoc,
+}));
+
 describe('SaveManager', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
+    firebaseMocks.currentUser = null;
   });
 
   it('should save and load game data', async () => {
@@ -58,5 +88,39 @@ describe('SaveManager', () => {
     });
     
     expect(SaveManager.hasSave()).toBe(true);
+  });
+
+  it('notifies sync listeners when save status changes', async () => {
+    const statuses: string[] = [];
+    const unsubscribe = SaveManager.addSyncListener((status) => statuses.push(status));
+
+    await SaveManager.save({
+      score: 10,
+      wave: 1,
+      health: 100,
+      maxHealth: 100,
+      clickRadiusMultiplier: 1,
+      autoTurretLevel: 0,
+      timestamp: Date.now(),
+    });
+
+    unsubscribe();
+    expect(statuses).toContain('syncing');
+    expect(statuses).toContain('synced');
+  });
+
+  it('submits high scores through Firebase when authenticated', async () => {
+    firebaseMocks.currentUser = { uid: 'user-1', displayName: 'Operator' };
+    firebaseMocks.getDoc.mockImplementationOnce(() =>
+      Promise.resolve({
+        exists: () => true,
+        data: () => ({ username: 'Operator' }),
+      })
+    );
+
+    await SaveManager.setHighScore(5000, 12);
+
+    expect(SaveManager.getHighScore()).toBe(5000);
+    expect(firebaseMocks.submitScore).toHaveBeenCalledWith('user-1', 'Operator', 5000, 12);
   });
 });

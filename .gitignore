@@ -13,4 +13,6 @@ nul
 # Firebase client config (even if keys are "public", do not commit raw for best practice + quota protection)
 firebase-applet-config.json
 firebase-debug.log
+.firestore-debug.log
+functions/lib/
 .firebase/

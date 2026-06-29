@@ -12,9 +12,12 @@ npm run dev              # Vite dev server on 0.0.0.0:3000
 npm run build            # production build
 npm run preview          # preview production build
 npm run lint             # TypeScript check (tsc --noEmit)
-npm test                 # run Vitest once
+npm test                 # run Vitest once (507 tests)
+npm run test:coverage    # engine/lib coverage gate
+npm run test:emulator    # Firestore rules + callable tests (Java 21+)
+npm run validate:functions # Cloud Functions build + schema unit tests
 npm run test:watch       # run Vitest in watch mode
-npm run ci               # lint + functions build + tests + frontend build
+npm run ci               # lint + validate:functions + test:coverage + test:emulator + build
 npm run deploy:hosting   # build and deploy Firebase Hosting
 npm run deploy:rules     # deploy Firestore rules only
 ```
@@ -30,6 +33,8 @@ Firebase Functions live in `functions/`:
 
 ```bash
 cd functions && npm ci && npm run build
+cd functions && npm run test:unit    # schema unit tests (no emulator)
+cd functions && npm run test:emulator # requires Firestore emulator on :8080
 cd functions && npm run serve
 ```
 
@@ -63,13 +68,28 @@ High-level flow:
 
 - Vitest uses `jsdom` and `src/__tests__/setup.ts` via `vitest.config.ts`.
 - Main test coverage lives in `src/__tests__/` plus `src/game/GameEngine.test.ts`.
-- CI is represented by `npm run ci`, which also validates Firebase Functions with `cd functions && npm ci && npm run build`.
+- CI is represented by `npm run ci`, which also validates Firebase Functions and emulator tests.
 - Vite aliases `@` to the repository root and uses `vite-plugin-pwa` with audio asset caching.
+
+## Agent & git workflow
+
+**All contributors and AI agents:** read [docs/AGENTIC_WORKFLOW.md](docs/AGENTIC_WORKFLOW.md) before coding.
+
+- One TASKBOARD ID per branch/PR
+- Branch from `main`: `feat/<task-id>-<description>`
+- Merge via PR only; run `npm run ci` before push
+- Version bumps on release PRs only (SemVer in `package.json`)
 
 ## Existing docs to consult
 
-- `AGENTS.md` — current agent-specific standards and audit status.
-- `docs/ARCHITECTURE.md` — system diagram and module boundary table.
+| Doc                        | Use when                             |
+| -------------------------- | ------------------------------------ |
+| `docs/AGENTIC_WORKFLOW.md` | Git, PR, parallel work, verification |
+| `AGENTS.md`                | Architecture and coding standards    |
+| `TASKBOARD.md`             | 10/10 task backlog                   |
+| `CONTRIBUTING.md`          | PR and commit conventions            |
+| `docs/ARCHITECTURE.md`     | System diagram and module boundaries |
+
 - `DESIGN_DOC.md` — creative vision and core loop.
 - `DEPLOYMENT.md` — Firebase deployment and release checklist.
 - `CONTRIBUTING.md` — PR and contribution workflow.
