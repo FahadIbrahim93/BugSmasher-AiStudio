@@ -4,11 +4,11 @@ An ultra-minimalist, high-intensity AI-themed base defense game with Brutalist O
 
 **Live:** [https://studio-1155838266-56095.web.app](https://studio-1155838266-56095.web.app)  
 **Repo:** [FahadIbrahim93/BugSmasher-HopeTheory](https://github.com/FahadIbrahim93/BugSmasher-HopeTheory)  
-**Version:** 2.5.0 | **Audit:** 10/10 (Honest CTO audit June 2026 - all issues resolved, see AUDIT_HONEST.md and FINAL_AUDIT_RESOLUTION_REPORT.md). Tests 448/448, security fixed, docs accurate, build clean.
+**Version:** 2.5.0 | **Audit:** 7.2/10 after the June 29, 2026 remediation pass. The normal unit suite passes and cloud save/leaderboard writes now use server callables, but coverage, emulator proof, full anti-cheat telemetry, real linting, and production stubs remain active release gates. See CTO_AUDIT_2026-06-29.md and PERFECT_10_REMEDIATION_PLAN.md.
 
 ## 📚 Documentation Index
-- [COMPREHENSIVE_AUDIT_2026.md](./COMPREHENSIVE_AUDIT_2026.md) — Principal engineer review
-- [docs/10-10-ROADMAP.md](./docs/10-10-ROADMAP.md) — Actionable path to 10/10
+- [CTO_AUDIT_2026-06-29.md](./CTO_AUDIT_2026-06-29.md) — Principal engineer review
+- [PERFECT_10_REMEDIATION_PLAN.md](./PERFECT_10_REMEDIATION_PLAN.md) — Actionable path to a verified 10/10
 - [DEPLOYMENT.md](./DEPLOYMENT.md) — CI/CD + Firebase
 - [TASKBOARD.md](./TASKBOARD.md) — Backlog
 - [AGENTS.md](./AGENTS.md) — AI coding standards
@@ -39,4 +39,4 @@ npm run ci  # lint + test + build
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for full pipeline and production deploy.
 
-**Next Focus**: Phase 2 — Professional audio, security hardening, analytics. Track in [TASKBOARD.md](./TASKBOARD.md) and [docs/10-10-ROADMAP.md](./docs/10-10-ROADMAP.md).
+**Next Focus**: server-authoritative security, coverage recovery, real linting, and production-stub de-scoping. Track in [TASKBOARD.md](./TASKBOARD.md) and [PERFECT_10_REMEDIATION_PLAN.md](./PERFECT_10_REMEDIATION_PLAN.md).

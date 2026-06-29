@@ -19,7 +19,7 @@
 ## 4. Audit-Driven Feature Roadmap
 
 ### Current Status (June 2026)
-**Overall Rating: 7.4/10** — Pre-production. See [`AUDIT_REPORT.md`](./AUDIT_REPORT.md) and [`TASKBOARD.md`](./TASKBOARD.md).
+**Overall Rating: see current audit** — Pre-production gates are tracked in [`CTO_AUDIT_2026-06-29.md`](./CTO_AUDIT_2026-06-29.md), [`PERFECT_10_REMEDIATION_PLAN.md`](./PERFECT_10_REMEDIATION_PLAN.md), and [`TASKBOARD.md`](./TASKBOARD.md).
 
 ### Phase 1 — Production Readiness ✅
 - [x] Split GameEngine.ts into: CollisionSystem, BossSystem, PowerupSystem, HazardSystem

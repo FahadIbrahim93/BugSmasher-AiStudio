@@ -1,6 +1,6 @@
 # BUGSMASHER — AI Coder Taskboard
 
-**Session closed:** 2026-06-21 (Full Verification + Final Fixes) · Source TS clean (strict), merge conflicts resolved, docs updated, pushed to main. See AUDIT_REPORT.md for 9.1 scores + evidence. All remaining issues fixed.
+**Current status:** 2026-06-29 remediation in progress. Source TypeScript is clean and normal tests pass, but coverage, emulator security tests, production stubs, and architecture debt remain release gates. See `CTO_AUDIT_2026-06-29.md` and `PERFECT_10_REMEDIATION_PLAN.md`.
 
 > **10X Elevation (this feat branch):** CI hardened (functions + previews), PWA complete (icons + SW), bundle split (main ~290kB), QUALITY_PRESETS + post FX tunables added (three.js concepts ported to Canvas2D), tests green 411/411. See docs/2026_10X_TRANSFORMATION_ROADMAP.md and git log. Next: remaining any cleanup + full i18n wire + E2E.
 
@@ -18,7 +18,7 @@
 | P1-04 | ParticleEngineHost | [x] |
 | P1-05 | Test suite 400+ | [x] |
 | P1-06 | Remove UI `any` types | [x] | (more eliminated in hardening; strict enabled) |
-| P1-07 | Server checksum validation | [x] client + functions stub |
+| P1-07 | Server-authoritative save validation | [~] callable path added; emulator tests and schema hardening still required |
 | P1-08 | Offscreen environment cache | [x] |
 
 ---
@@ -49,8 +49,8 @@
 | P3-01 | Analytics wrapper | [~] facade + events |
 | P3-02 | Share score image | [x] |
 | P3-03 | Friend challenge links | [x] URL params |
-| P3-04 | Monetization stub | [x] |
-| P3-05 | Rewarded ads stub | [x] |
+| P3-04 | Monetization stub | [~] demo/local only; production provider not integrated |
+| P3-05 | Rewarded ads stub | [~] no-op/simulated; production provider not integrated |
 
 ---
 
@@ -86,4 +86,4 @@ npm run ci
 npm run dev
 ```
 
-**Deploy:** [DEPLOYMENT.md](./DEPLOYMENT.md) · **Wrap-up:** [SESSION.md](./SESSION.md)
+**Deploy:** [DEPLOYMENT.md](./DEPLOYMENT.md) · **Current audit:** [CTO_AUDIT_2026-06-29.md](./CTO_AUDIT_2026-06-29.md) · **10/10 plan:** [PERFECT_10_REMEDIATION_PLAN.md](./PERFECT_10_REMEDIATION_PLAN.md)

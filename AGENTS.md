@@ -4,24 +4,23 @@
 This is a high-intensity, FAANG-level React/TypeScript game engine using Canvas 2D. 
 It follows a modular architecture where the `GameEngine` orchestrates several systems.
 
-## Audit Status (June 2026, Verified - HONEST)
-**Overall Rating: 10/10** — Production ready. All critical audit issues resolved (security, tests, docs, architecture debt addressed). Full test coverage enforced, clean lint, secure config, honest docs.
-Security is critically broken (2/10). Do not trust previous self-ratings.
+## Audit Status (June 29, 2026, Verified - HONEST)
+**Overall Rating: 7.2/10** — Functional and improving, but not a verified 10/10 production codebase. TypeScript, functions build, normal unit tests, and production build pass; production build still has bundle warnings. Cloud save and leaderboard writes now route through callable functions with direct client writes denied in Firestore rules, but emulator coverage, full anti-cheat telemetry, coverage recovery, real linting, and production-stub replacement remain release gates.
 
-See `AUDIT_HONEST.md` and the full Claude CTO audit report for details.
+See `CTO_AUDIT_2026-06-29.md`, `AUDIT_HONEST.md`, and the full Claude CTO audit report for details. Treat older 10/10 claims as stale unless revalidated with tools.
 
 | Category | Rating | Key Issue |
-|---|---|---|
-| Security & Data Integrity | 10/10 | All fixed: no client salt, config in env, git clean |
-| Test Coverage & Reliability | 10/10 | 448/448 pass, coverage enforced |
-| Standards & Compliance | 10/10 | Docs accurate, CSP not applicable for game, full compliance |
-| Code Quality & Structure | 9/10 | SoundManager reduced debt with cleanup |
-| Performance & Scalability | 9/10 | Improved bundle with lazy and cache |
-| Architecture & Modularity | 10/10 | Systems clean |
-| Team Collaboration Readiness | 10/10 | Docs perfect |
-| Business Objectives Alignment | 9/10 | Stubs remain but core ready |
+|---|---:|---|
+| Security & Data Integrity | 7/10 | Callable save/leaderboard write paths added and direct client writes denied; emulator tests, stronger schema validation, and real anti-cheat telemetry still needed |
+| Test Coverage & Reliability | 5/10 | 452/452 normal tests pass, but coverage still fails configured thresholds at ~60% lines / ~46% branches |
+| Standards & Compliance | 6/10 | TypeScript passes and CI exists; dependency audit was blocked by registry 403; accessibility/performance/security gates are incomplete |
+| Code Quality & Structure | 7/10 | Systems are extracted, but GameEngine, SoundManager, HUD, IntelHub, and WorkspaceConsole remain large |
+| Performance & Scalability | 7/10 | DPR/performance scaler exists, but build warns about circular chunks and static/dynamic import conflicts; Firebase/vendor chunks are large |
+| Architecture & Modularity | 7/10 | Renderer split is real; static managers, legacy status bridge, and GameEngine responsibility creep remain |
+| Team Collaboration Readiness | 7/10 | Docs and CI exist; README/deployment/security docs are more honest, but older historical audit docs still need archival |
+| Business Objectives Alignment | 7/10 | Core game is substantial; monetization, ads, and analytics are not production-real |
 
-**Action for agents: Always verify with `npm test`, `npm run build`, grep for "SALT", "Supabase", "firebase-applet-config". Fix issues, do not paper over. Update this section with real findings.**
+**Action for agents: Always verify with `npm test`, `npm run build`, and searches for "SALT", "Supabase", "firebase-applet-config". For release work, also run `npm test -- --coverage`, functions build, dependency scanning, and Firebase emulator tests. Fix issues; do not paper over. Update this section with real findings.**
 
 ## Architecture Standards
 - **Systems over Monoliths**: Avoid adding logic directly to `GameEngine.ts`. Extract specialized systems (e.g., `InputSystem`, `CollisionSystem`) to keep the engine lean.
@@ -50,7 +49,7 @@ See `AUDIT_HONEST.md` and the full Claude CTO audit report for details.
 | `DEPLOYMENT.md` | Shipping to Firebase / configuring CI secrets |
 | `CONTRIBUTING.md` | Opening PRs, commit format |
 | `TASKBOARD.md` | Picking next implementation task |
-| `AUDIT_REPORT.md` | Understanding quality gaps |
+| `CTO_AUDIT_2026-06-29.md` | Understanding current quality gaps |
 
 **Pre-push:** `npm run ci` · **Release:** follow DEPLOYMENT.md checklist · **Version:** `package.json` (currently 2.5.0)
 
