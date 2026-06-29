@@ -6,8 +6,8 @@ Thank you for contributing. This project uses strict architecture rules so human
 
 ## Before You Start
 
-1. Read [AGENTS.md](./AGENTS.md) — architecture and coding standards  
-2. Read [TASKBOARD.md](./TASKBOARD.md) — pick an open task by ID  
+1. Read [AGENTS.md](./AGENTS.md) — architecture and coding standards
+2. Read [TASKBOARD.md](./TASKBOARD.md) — pick an open task by ID
 3. Read [AUDIT_HONEST.md](./AUDIT_HONEST.md) — understand current quality bar (honest 5.6/10 per CTO audit, many fixed)
 
 ---
@@ -31,7 +31,7 @@ npm test
 ```
 
 ## Branch Protection (per audit)
-Direct pushes to main are not allowed. All changes via PR + CI pass required. 
+Direct pushes to main are not allowed. All changes via PR + CI pass required.
 Set up in GitHub repo settings: Require PR reviews, status checks (lint, test, build).
 
 See AGENTS.md for full standards.
@@ -44,12 +44,12 @@ npm run build
 
 ## Pull Request Guidelines
 
-- One task per PR (reference TASKBOARD ID in description, e.g. `P2-01`)  
-- Include tests for new game systems  
-- No `any` in `src/game/` — use `GameTypes.ts`  
-- No `(window as any)` for game state — use `GameEngineStatusBus`  
-- Do not add logic directly to `GameEngine.ts` — extract systems  
-- Update `TASKBOARD.md` checkbox when complete  
+- One task per PR (reference TASKBOARD ID in description, e.g. `P2-01`)
+- Include tests for new game systems
+- No `any` in `src/game/` — use `GameTypes.ts`
+- No `(window as any)` for game state — use `GameEngineStatusBus`
+- Do not add logic directly to `GameEngine.ts` — extract systems
+- Update `TASKBOARD.md` checkbox when complete
 
 ### PR title format
 
@@ -80,19 +80,19 @@ Types: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`, `ci`
 
 If you are an AI coder:
 
-1. Claim a task in `TASKBOARD.md` by noting it in `SESSION.md`  
-2. Follow acceptance criteria in the task row exactly  
-3. Run full test suite before marking `[x]`  
-4. Update `AUDIT_REPORT.md` ratings only when dimensions materially change  
+1. Claim a task in `TASKBOARD.md` or the PR description
+2. Follow acceptance criteria in the task row exactly
+3. Run full test suite before marking `[x]`
+4. Update `CTO_AUDIT_2026-06-29.md` / `AGENTS.md` ratings only when dimensions materially change
 
 ---
 
 ## Code Review Focus
 
-- Delta-time (`dt`) only — no `setTimeout` / `setInterval` for gameplay  
-- Renderer changes go in `src/game/rendering/`, not a growing monolith  
-- Accessibility settings via `AccessibilitySettings.ts`  
-- Firebase changes must update `firestore.rules` and `security_spec.md`  
+- Delta-time (`dt`) only — no `setTimeout` / `setInterval` for gameplay
+- Renderer changes go in `src/game/rendering/`, not a growing monolith
+- Accessibility settings via `AccessibilitySettings.ts`
+- Firebase changes must update `firestore.rules` and `security_spec.md`
 
 ---
 

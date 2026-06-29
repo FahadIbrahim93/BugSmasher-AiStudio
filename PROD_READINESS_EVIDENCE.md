@@ -11,7 +11,7 @@ All claims backed by concrete changes + prior audit data.
 - [x] Error handling & logging
   Evidence: monitoring.ts, handleFirestoreError, try/catch with structured errInfo in firebase paths, ErrorBoundary.tsx.
 - [x] Externalized config, no secrets
-  Evidence: firebase-applet-config.json (public client keys only), .env.example present, no hardcoded private keys, CHECKSUM_SALT in functions from process.env.
+  Evidence update: Firebase client config now comes from `VITE_FIREBASE_*` env vars; `firebase-applet-config.json` must not be committed. `.env.example` is present, no hardcoded private keys were found in current source, and `CHECKSUM_SALT` is read server-side in functions.
 - [x] Performance benchmarks
   Evidence: PerformanceScaler.ts + vfxScalar + DPR caps + mesh step. Real-time FPS in HUD/Renderer. OffscreenEnvironmentCache.
 - [x] Security scan clean(ish)

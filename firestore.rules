@@ -18,14 +18,17 @@ service cloud.firestore {
 
       // 2. Private subcollection (progression, story, saves)
       match /private/{document} {
-        allow read, write: if isSignedIn() && request.auth.uid == userId;
+        allow read: if isSignedIn() && request.auth.uid == userId;
+        // Cloud saves must be written by the uploadSave callable function so
+        // the server computes the secret-bearing checksum with Admin SDK.
+        allow write: if isSignedIn() && request.auth.uid == userId && document != 'saves';
       }
     }
 
-    // 3. Leaderboard entries: Publicly readable, but owner-writable
+    // 3. Leaderboard entries: Publicly readable, server-writable only
     match /leaderboard/{userId} {
       allow read: if true;
-      allow write: if isSignedIn() && request.auth.uid == userId;
+      allow write: if false;
     }
 
     // 4. Test connection fallback check
@@ -34,4 +37,3 @@ service cloud.firestore {
     }
   }
 }
-

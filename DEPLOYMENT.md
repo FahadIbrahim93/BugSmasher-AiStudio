@@ -1,7 +1,7 @@
 # BUGSMASHER — Deployment Guide
 
-**Last updated:** 2026-06-09  
-**Target environments:** Local dev · CI (GitHub Actions) · Firebase Hosting · Firebase Firestore  
+**Last updated:** 2026-06-29
+**Target environments:** Local dev · CI (GitHub Actions) · Firebase Hosting · Firebase Firestore
 **Live URL:** https://studio-1155838266-56095.web.app
 
 ---
@@ -27,7 +27,7 @@
 - **Node.js** 20+ (CI uses 22)
 - **npm** 10+
 - **Firebase CLI** (for manual deploys): `npm install -g firebase-tools`
-- Firebase project: `studio-1155838266-56095` (see `firebase-applet-config.json`)
+- Firebase project: `studio-1155838266-56095` (configure client values via `VITE_FIREBASE_*` env vars; do not commit `firebase-applet-config.json`)
 
 ---
 
@@ -58,10 +58,16 @@ Copy `.env.example` → `.env` for local overrides.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
+| `VITE_FIREBASE_API_KEY` | Required for Firebase auth/cloud features | Public Firebase web API key from Firebase Console |
+| `VITE_FIREBASE_AUTH_DOMAIN` | Required for Firebase auth/cloud features | Firebase auth domain |
+| `VITE_FIREBASE_PROJECT_ID` | Required for Firebase auth/cloud features | Firebase project ID |
+| `VITE_FIREBASE_APP_ID` | Required for Firebase auth/cloud features | Firebase app ID |
+| `VITE_FIREBASE_DATABASE_ID` | Optional | Named Firestore database ID, if used |
+| `CHECKSUM_SALT` | Required for functions deploy | Server-only Cloud Functions checksum salt; never expose through `VITE_` |
 | `GEMINI_API_KEY` | Optional | AI Studio / image generation features |
 | `DISABLE_HMR` | Optional | Set `true` in agent environments to reduce flicker |
 
-Firebase credentials are loaded from **`firebase-applet-config.json`** (checked into repo for this AI Studio applet). For a standalone production fork, move secrets to CI secrets and inject at build time.
+Firebase client configuration is loaded from `VITE_FIREBASE_*` environment variables. `firebase-applet-config.json` is intentionally ignored and must not be committed. Cloud Functions secrets such as `CHECKSUM_SALT` must be configured in the deploy environment, not shipped to the browser.
 
 ---
 
@@ -73,9 +79,10 @@ Workflow: [`.github/workflows/ci.yml`](./.github/workflows/ci.yml)
 
 1. `npm ci`
 2. `npm run lint`
-3. `npm test`
-4. `npm run build`
-5. Upload `dist/` artifact (7-day retention)
+3. `npm run validate:functions`
+4. `npm test -- --coverage`
+5. `npm run build`
+6. Upload `dist/` artifact (7-day retention)
 
 ### On push to `main` (optional auto-deploy):
 
@@ -83,8 +90,8 @@ Deploys to **Firebase Hosting** when `FIREBASE_SERVICE_ACCOUNT` secret is config
 
 #### Setup Firebase deploy secret
 
-1. Firebase Console → Project Settings → Service accounts → Generate new private key  
-2. GitHub repo → Settings → Secrets → Actions → New secret: `FIREBASE_SERVICE_ACCOUNT` (paste JSON)  
+1. Firebase Console → Project Settings → Service accounts → Generate new private key
+2. GitHub repo → Settings → Secrets → Actions → New secret: `FIREBASE_SERVICE_ACCOUNT` (paste JSON)
 3. Push to `main` — workflow deploys `dist/` to channel `live`
 
 If the secret is missing, CI still passes; deploy step is skipped (`continue-on-error: true`).
@@ -116,15 +123,18 @@ Rules file: [`firestore.rules`](./firestore.rules)
 
 ## Release Checklist (10/10 bar)
 
-- [ ] `npm test` — 0 failures  
-- [ ] `npm run lint` — 0 errors  
-- [ ] `npm run build` — succeeds, bundle reviewed  
-- [ ] `TASKBOARD.md` P0 items for this release marked `[x]`  
-- [ ] `SESSION.md` date and rating updated  
-- [ ] Version bumped in `package.json`  
-- [ ] Tag: `git tag -a v2.5.0 -m "10/10 enterprise elevation milestone"` (done via feat merge to main)  
-- [ ] Push branch + open PR to `main`  
-- [ ] After merge: verify Firebase Hosting + smoke test auth/saves  
+- [ ] `npm run lint` — 0 TypeScript errors
+- [ ] `npm run validate:functions` — Cloud Functions compile
+- [ ] `npm test` — 0 failures
+- [ ] `npm test -- --coverage` — configured thresholds met
+- [ ] `npm run build` — succeeds, bundle reviewed
+- [ ] Firestore rules deployed and smoke-tested for denied direct save/leaderboard writes
+- [ ] `TASKBOARD.md` P0 items for this release marked `[x]`
+- [ ] `CTO_AUDIT_2026-06-29.md` and `PERFECT_10_REMEDIATION_PLAN.md` updated with current evidence
+- [ ] Version bumped in `package.json`
+- [ ] Tag: `git tag -a v2.5.0 -m "10/10 enterprise elevation milestone"` (done via feat merge to main)
+- [ ] Push branch + open PR to `main`
+- [ ] After merge: verify Firebase Hosting + smoke test auth/saves
 
 ---
 
@@ -150,15 +160,16 @@ firebase deploy --only hosting
 |-------|-----|
 | Detached HEAD in worktrees | `git checkout main && git pull` |
 | `vitest: not found` | Run `npm install` |
-| Firebase auth fails locally | Check `firebase-applet-config.json` and authorized domains in console |
+| Firebase auth fails locally | Check `VITE_FIREBASE_*` values in `.env` and authorized domains in Firebase Console |
 | Large bundle warning | Expected (~1.2MB); code-split in TASKBOARD P4 |
 
 ---
 
 ## Related Documentation
 
-- [README.md](./README.md) — Overview & quick start  
-- [AUDIT_REPORT.md](./AUDIT_REPORT.md) — Quality ratings  
-- [TASKBOARD.md](./TASKBOARD.md) — AI/human task backlog  
-- [AGENTS.md](./AGENTS.md) — Coding standards for agents  
+- [README.md](./README.md) — Overview & quick start
+- [CTO_AUDIT_2026-06-29.md](./CTO_AUDIT_2026-06-29.md) — Quality ratings
+- [PERFECT_10_REMEDIATION_PLAN.md](./PERFECT_10_REMEDIATION_PLAN.md) — Roadmap to verified 10/10
+- [TASKBOARD.md](./TASKBOARD.md) — AI/human task backlog
+- [AGENTS.md](./AGENTS.md) — Coding standards for agents
 - [security_spec.md](./security_spec.md) — Firestore security model

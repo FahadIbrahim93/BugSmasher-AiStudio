@@ -3,14 +3,13 @@ import {
   doc, 
   getDoc, 
   getDocs, 
-  setDoc, 
   updateDoc, 
   query, 
   orderBy, 
   limit, 
-  serverTimestamp
 } from 'firebase/firestore';
-import { db, auth } from './firebase';
+import { httpsCallable } from 'firebase/functions';
+import { db, auth, functions } from './firebase';
 import { ChecksumSystem } from './checksum';
 import type { GameSaveData } from '../game/SaveManager';
 
@@ -37,8 +36,6 @@ interface FirestoreErrorInfo {
   path: string | null;
   authInfo: {
     userId?: string | null;
-    email?: string | null;
-    emailVerified?: boolean | null;
   }
 }
 
@@ -47,8 +44,6 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
       userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
     },
     operationType,
     path
@@ -83,17 +78,21 @@ export class FirebaseService {
   static async uploadSave(userId: string, data: GameSaveData) {
     try {
       const { checksum, ...pure } = data;
-      const computed = checksum ?? (await ChecksumSystem.generate(pure));
-      const saveRef = doc(db, 'users', userId, 'private', 'saves');
-      await setDoc(saveRef, {
-        userId,
-        data: pure,
-        checksum: computed,
-        updatedAt: new Date().toISOString(),
-      });
+      if (auth.currentUser?.uid !== userId) {
+        throw new Error('Cannot upload a cloud save for a different user.');
+      }
+      const upload = httpsCallable<{ data: Record<string, unknown> }, { ok: boolean; checksum?: string }>(
+        functions,
+        'uploadSave'
+      );
+      const result = await upload({ data: pure });
+      if (!result.data.ok) throw new Error('Cloud save upload was rejected by the server.');
+      if (result.data.checksum && checksum && result.data.checksum !== checksum) {
+        console.warn('[FirebaseService] Server accepted save but returned a different client checksum.');
+      }
       return true;
     } catch (error: unknown) {
-      handleFirestoreError(error, OperationType.WRITE, `users/${userId}/private/saves`);
+      handleFirestoreError(error, OperationType.WRITE, `users/${userId}/private/saves`, false);
       return false;
     }
   }
@@ -105,15 +104,15 @@ export class FirebaseService {
       if (!snap.exists()) return null;
       const docData = snap.data();
       const payload = docData.data as Record<string, unknown>;
-      const checksum = docData.checksum as string | undefined;
-      if (checksum) {
-        const valid = await ChecksumSystem.verify(payload, checksum);
+      const clientChecksum = docData.clientChecksum as string | undefined;
+      if (clientChecksum) {
+        const valid = await ChecksumSystem.verify(payload, clientChecksum);
         if (!valid) {
           console.error('[FirebaseService] Cloud save checksum invalid — rejected');
           return null;
         }
       }
-      return { ...payload, checksum } as GameSaveData;
+      return { ...payload, checksum: clientChecksum } as GameSaveData;
     } catch (error: unknown) {
       handleFirestoreError(error, OperationType.GET, `users/${userId}/private/saves`);
       return null;
@@ -125,23 +124,18 @@ export class FirebaseService {
    */
   static async submitScore(userId: string, username: string, score: number, wave: number) {
     try {
-      const leaderboardRef = doc(db, 'leaderboard', userId);
-      const existing = await getDoc(leaderboardRef);
-      
-      if (existing.exists() && existing.data().score >= score) {
-        return true;
+      if (auth.currentUser?.uid !== userId) {
+        throw new Error('Cannot submit a leaderboard score for a different user.');
       }
-
-      await setDoc(leaderboardRef, {
-        userId,
-        username: username || 'Anonymous User',
-        score,
-        wave,
-        updatedAt: serverTimestamp()
-      });
+      const submit = httpsCallable<
+        { username: string; score: number; wave: number },
+        { ok: boolean }
+      >(functions, 'submitScore');
+      const result = await submit({ username, score, wave });
+      if (!result.data.ok) throw new Error('Leaderboard submission was rejected by the server.');
       return true;
     } catch (error: unknown) {
-      handleFirestoreError(error, OperationType.WRITE, `leaderboard/${userId}`);
+      handleFirestoreError(error, OperationType.WRITE, `leaderboard/${userId}`, false);
       return false;
     }
   }

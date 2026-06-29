@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { getFunctions } from 'firebase/functions';
 import { 
   getFirestore, 
   initializeFirestore, 
@@ -18,7 +19,7 @@ const firebaseConfig = {
   // Add other fields from the json as needed (messagingSenderId, etc.)
 };
 
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 
 let db: any; // Firestore instance, typed loosely for multi-db init
 try {
@@ -34,6 +35,7 @@ try {
 }
 
 export { db };
+export const functions = getFunctions(app);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 // SECURITY: Only request minimal OIDC scopes required for auth/profile.
@@ -57,4 +59,3 @@ async function testConnection() {
 testConnection();
 
 export { signInWithPopup, signOut };
-

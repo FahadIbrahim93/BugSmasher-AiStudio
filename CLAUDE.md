@@ -73,5 +73,5 @@ High-level flow:
 - `DESIGN_DOC.md` — creative vision and core loop.
 - `DEPLOYMENT.md` — Firebase deployment and release checklist.
 - `CONTRIBUTING.md` — PR and contribution workflow.
-- `AUDIT_REPORT.md` / `TASKBOARD.md` — quality gaps and implementation backlog.
+- `CTO_AUDIT_2026-06-29.md` / `PERFECT_10_REMEDIATION_PLAN.md` / `TASKBOARD.md` — quality gaps and implementation backlog.
 - `security_spec.md` — Firestore security model.

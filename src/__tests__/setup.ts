@@ -102,9 +102,15 @@ vi.mock('../lib/firebase', () => ({
       cb(null);
       return vi.fn();
     }),
-  },
-  db: {},
-  googleProvider: {},
+	  },
+	  db: {},
+	  functions: {},
+	  googleProvider: {},
+	}));
+
+vi.mock('firebase/functions', () => ({
+  getFunctions: vi.fn(() => ({})),
+  httpsCallable: vi.fn(() => vi.fn(() => Promise.resolve({ data: { ok: true } }))),
 }));
 
 vi.mock('firebase/firestore', () => ({
@@ -124,4 +130,3 @@ vi.mock('firebase/firestore', () => ({
 beforeEach(() => {
   localStorage.clear();
 });
-
