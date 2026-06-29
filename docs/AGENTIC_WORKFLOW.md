@@ -193,6 +193,10 @@ Tests: npm run ci (507 + emulator) | Scope: engine only
 npm run lint && npm run validate:functions && npm run test:coverage && npm run test:emulator && npm run build
 ```
 
+Optional (not in CI until ST-01 complete): `npm run lint:eslint`
+
+**Note:** `.npmrc` sets `legacy-peer-deps=true` so ESLint 10 scaffolding installs cleanly alongside jsx-a11y until peer ranges align.
+
 ---
 
 ## Agent task lifecycle

@@ -1,6 +1,6 @@
 # BUGSMASHER — Production Readiness Evidence
 
-**Last verified:** 2026-06-30 (local Windows + CI-aligned commands)
+**Last verified:** 2026-06-30 (local Windows + CI-aligned commands; merged via PR #8)
 
 **Status: IMPROVED toward 10/10** — Security boundary and coverage recovery materially advanced this session. Not yet verified 10/10.
 
