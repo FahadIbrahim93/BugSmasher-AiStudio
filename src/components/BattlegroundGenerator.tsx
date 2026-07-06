@@ -78,7 +78,7 @@ export function BattlegroundGenerator({
   const handleCopySeedCode = () => {
     soundManager.skillUpgrade();
     const challengeCode = `BUGSMASHER-PCG-SEED://${pcgTheme}::${pcgSeed}`;
-    navigator.clipboard.writeText(challengeCode);
+    void navigator.clipboard.writeText(challengeCode);
     setCopiedNotification(true);
     setTimeout(() => { setCopiedNotification(false); }, 1500);
   };

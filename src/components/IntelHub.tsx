@@ -107,7 +107,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
   // Load Spreadsheet performance points on opening dashboard
   useEffect(() => {
     if (activeTab === 'dashboard' && accessToken) {
-      loadChartData();
+      void loadChartData();
     }
   }, [activeTab, accessToken]);
 
@@ -741,7 +741,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
                         </div>
 
                         <button
-                          onClick={() => { soundManager.uiClick(); signIn(); }}
+                          onClick={() => { soundManager.uiClick(); void signIn(); }}
                           className="w-full mt-6 py-3 bg-rose-600 text-white font-mono font-bold text-xs uppercase rounded-xl hover:bg-rose-500 transition-all shadow-[0_0_15px_rgba(244,63,94,0.3)] active:scale-95 cursor-pointer"
                         >
                           Establish Workspace Portal
@@ -764,7 +764,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
                       </div>
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => { soundManager.uiClick(); loadChartData(); }}
+                          onClick={() => { soundManager.uiClick(); void loadChartData(); }}
                           className="px-4 py-2 bg-cyan-950/45 hover:bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 font-mono text-xs uppercase rounded-lg transition-all flex items-center gap-1.5 active:scale-95 disabled:opacity-50 cursor-pointer"
                           disabled={isLoadingChart || isActionLoading}
                         >
@@ -811,7 +811,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
                           <h4 className="text-sm font-bold uppercase text-white mb-2 leading-none">Database Frame Fetch Interrupted</h4>
                           <p className="text-xs text-zinc-400 max-w-sm mx-auto mb-4 leading-normal">{dashboardError}</p>
                           <button
-                            onClick={() => { soundManager.uiClick(); loadChartData(); }}
+                            onClick={() => { soundManager.uiClick(); void loadChartData(); }}
                             className="px-4 py-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono text-[10px] uppercase rounded hover:bg-amber-500/20"
                           >
                             Recalibrate Connection

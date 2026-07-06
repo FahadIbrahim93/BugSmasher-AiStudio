@@ -274,7 +274,7 @@ export function Game({
       const detail = (e as CustomEvent).detail;
       if (detail.type === 'resources') {
         // Defer to ProgressionManager via dynamic import to avoid circular deps
-        import('../game/ProgressionManager').then(({ ProgressionManager }) => {
+        void import('../game/ProgressionManager').then(({ ProgressionManager }) => {
           ProgressionManager.addResource(detail.id as ResourceType, detail.id === 'crystals' ? 25 : 500);
         });
       }

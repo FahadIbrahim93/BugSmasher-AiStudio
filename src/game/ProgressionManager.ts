@@ -197,7 +197,7 @@ export class ProgressionManager {
 
   private static save() {
     this.saveLocal();
-    this.saveCloud();
+    void this.saveCloud();
   }
 
   private static saveLocal() {

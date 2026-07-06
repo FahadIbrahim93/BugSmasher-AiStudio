@@ -49,7 +49,7 @@ export const StoryCutscene = ({ lines, onComplete }: StoryCutsceneProps) => {
   useEffect(() => {
     if (!isTyping && !voicePlayedRef.current && voiceEnabled) {
       voicePlayedRef.current = true;
-      soundManager.speak({
+      void soundManager.speak({
         text: currentLine.text,
         speaker: currentLine.speaker,
         mood: currentLine.mood,

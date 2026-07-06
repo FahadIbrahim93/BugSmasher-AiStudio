@@ -10,7 +10,7 @@ export class StoryManager {
 
   static init() {
     this.loadLocal();
-    this.initCloudSync();
+    void this.initCloudSync();
   }
 
   private static loadLocal() {
@@ -103,7 +103,7 @@ export class StoryManager {
 
   private static save() {
     this.saveLocal();
-    this.saveCloud();
+    void this.saveCloud();
   }
 
   private static saveLocal() {

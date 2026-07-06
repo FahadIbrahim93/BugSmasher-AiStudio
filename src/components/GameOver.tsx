@@ -49,7 +49,7 @@ export function GameOver({ score, wave, onRetry, onMainMenu }: { score: number, 
 
       setIsSyncing(false);
     };
-    trackHigh();
+    void trackHigh();
   }, [score, wave]);
 
   return (

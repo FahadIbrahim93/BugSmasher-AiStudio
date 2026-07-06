@@ -44,7 +44,7 @@ if (typeof window !== 'undefined') {
   }, true);
 }
 
-ProgressionManager.initCloudSync();
+void ProgressionManager.initCloudSync();
 StoryManager.init();
 
 createRoot(document.getElementById('root')!).render(

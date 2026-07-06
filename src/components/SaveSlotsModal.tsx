@@ -45,7 +45,7 @@ export function SaveSlotsModal({
   };
 
   useEffect(() => {
-    fetchSlots();
+    void fetchSlots();
   }, []);
 
   const handleSaveToSlot = async (slotId: string) => {
@@ -248,7 +248,7 @@ export function SaveSlotsModal({
                           className="bg-zinc-900 border border-zinc-700 text-white font-mono text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-cyan-500 w-full"
                           autoFocus
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter') submitRename(slotId);
+                            if (e.key === 'Enter') { void submitRename(slotId); }
                             if (e.key === 'Escape') setEditingSlotId(null);
                           }}
                         />

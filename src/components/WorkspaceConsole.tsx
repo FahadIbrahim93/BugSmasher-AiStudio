@@ -412,7 +412,7 @@ export function WorkspaceConsole({ onClose }: WorkspaceConsoleProps) {
             <div className="flex items-center space-x-2 w-full sm:w-auto">
               {!accessToken ? (
                 <button 
-                  onClick={() => { soundManager.uiClick(); signIn(); }}
+                  onClick={() => { soundManager.uiClick(); void signIn(); }}
                   className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-mono font-bold text-[10px] uppercase rounded-lg shadow-lg active:scale-95 transition-all flex items-center justify-center space-x-1.5"
                 >
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -425,7 +425,7 @@ export function WorkspaceConsole({ onClose }: WorkspaceConsoleProps) {
                 </span>
               )}
               <button 
-                onClick={() => { soundManager.uiClick(); logOut(); }}
+                onClick={() => { soundManager.uiClick(); void logOut(); }}
                 className="w-full sm:w-auto px-3 py-1.5 border border-zinc-800 text-zinc-500 hover:text-white rounded-lg text-[9px] font-mono tracking-widest uppercase transition-all"
               >
                 Terminate
@@ -433,7 +433,7 @@ export function WorkspaceConsole({ onClose }: WorkspaceConsoleProps) {
             </div>
           ) : (
             <button
-              onClick={() => { soundManager.uiClick(); signIn(); }}
+              onClick={() => { soundManager.uiClick(); void signIn(); }}
               className="w-full sm:w-auto px-5 py-2.5 bg-white hover:bg-zinc-200 text-black font-black uppercase text-[10px] tracking-wider rounded-xl transition-all shadow-lg shadow-cyan-950/20 flex items-center justify-center space-x-2"
             >
               <UserPlus className="w-4 h-4 fill-black" />

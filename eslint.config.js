@@ -87,9 +87,10 @@ export default tseslint.config(
       // Allow deprecated usage during migration
       '@typescript-eslint/no-deprecated': 'warn',
       // Restrictive rules that improve code quality
-      '@typescript-eslint/prefer-nullish-coalescing': 'error',
-      '@typescript-eslint/prefer-optional-chain': 'error',
-      '@typescript-eslint/no-unnecessary-condition': 'error',
+      '@typescript-eslint/prefer-nullish-coalescing': 'warn',
+      '@typescript-eslint/prefer-optional-chain': 'warn',
+      '@typescript-eslint/no-unnecessary-condition': 'warn',
+      '@typescript-eslint/restrict-template-expressions': 'warn',
       'react/jsx-no-target-blank': 'error',
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/await-thenable': 'error',

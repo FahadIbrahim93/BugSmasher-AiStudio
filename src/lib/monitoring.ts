@@ -254,7 +254,7 @@ class MonitoringService {
     consoleTransport(entry);
 
     // Remote sending (fire-and-forget)
-    remoteTransport(entry, this.config);
+    void remoteTransport(entry, this.config);
   }
 
   debug(message: string, context?: Record<string, unknown>): void {

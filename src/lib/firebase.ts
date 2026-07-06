@@ -56,6 +56,6 @@ async function testConnection() {
     console.warn("Firestore connection check: operating in offline mode.", error instanceof Error ? error.message : error);
   }
 }
-testConnection();
+void testConnection();
 
 export { signInWithPopup, signOut };

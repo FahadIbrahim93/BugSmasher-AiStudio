@@ -74,7 +74,7 @@ export function MainMenu({
           onStart={() => {
             setIsDailyChallengeOpen(false);
             // Import daily challenge manager to get modifiers and pass them to game start
-            import('../game/DailyChallengeManager').then(({ generateDailyChallenge }) => {
+            void import('../game/DailyChallengeManager').then(({ generateDailyChallenge }) => {
               const challenge = generateDailyChallenge();
               onStart(challenge.modifiers);
             });

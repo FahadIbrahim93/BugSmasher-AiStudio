@@ -30,7 +30,7 @@ export function Leaderboard({ onClose }: LeaderboardProps) {
         }
       }
     }
-    loadGlobal();
+    void loadGlobal();
   }, [tab]);
 
   useEffect(() => {

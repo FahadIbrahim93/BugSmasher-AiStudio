@@ -343,11 +343,11 @@ export class SoundManager {
 
   constructor() {
     this.loadSettings();
-    this.preloadVoices();
+    void this.preloadVoices();
   }
 
   private async preloadVoices() {
-    VoiceSynthesizer.preloadVoices();
+    void VoiceSynthesizer.preloadVoices();
   }
 
   private loadSettings() {
@@ -515,7 +515,7 @@ export class SoundManager {
     }
 
     if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      void this.ctx.resume();
     }
   }
 
@@ -1519,7 +1519,7 @@ export class SoundManager {
     this.stopMusic();
     this.stopSpeaking();
     if (this.ctx) {
-      this.ctx.close();
+      void this.ctx.close();
     }
     this.ctx = null;
     this.enabled = false;

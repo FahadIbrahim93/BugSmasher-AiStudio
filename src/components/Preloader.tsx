@@ -28,7 +28,7 @@ export function Preloader({ onComplete }: { onComplete: () => void }) {
         });
     }, 400);
 
-    assetManager.preloadAll((p) => {
+    void assetManager.preloadAll((p) => {
       if (mounted) setProgress(p);
     }).then(() => {
       if (mounted) {
