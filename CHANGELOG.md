@@ -1,90 +1,129 @@
 # Changelog
 
-All notable changes to BUGSMASHER are documented here. Format based on [Keep a Changelog](https://keepachangelog.com/).
+All notable changes to **BugSmasher** are documented in this file.
 
-## [2.5.0] - 2026-06 (feat/enterprise-10x-elevation)
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-### Added
-- Full 10/10 enterprise elevation (see docs/2026_10X_TRANSFORMATION_ROADMAP.md + 10X_ELEVATION_FINAL_REPORT.md)
-- `vite-plugin-pwa` + brutalist PWA icons (192/512) + SW precache + offline audio cache (true installable + 2026 PWA)
-- `QUALITY_PRESETS` (Ultra/High/Balanced/Mobile) + crt/heat/emissive/glow tunables in PerformanceScaler (ported concepts from pro three.js adaptive example; no direct import possible — Canvas 2D stack)
-- PR preview channels (Firebase `pr-N`) + functions validation in CI
-- `validate:functions` + full `npm run ci` gate
-- Bundle manualChunks (main app now ~290kB from 1.19MB; react/motion/firebase/vendor)
-
-### Changed
-- CI: root lint + functions + tests + build; deploy job supports previews + live
-- tsconfig excludes functions/; functions import v1 for tsc + lock committed
-- Renderer/Environment/BugRenderer wired to new preset scalars
-- Tests fixed + 411/411 green; git hygiene (gitignore functions/lib, conventional on feat branch)
-- PWA manifest now sourced in vite config (removed dupe public/)
-
-## [Unreleased / 2026-06-21 Verification]
-### Fixed
-- All remaining merge conflicts (server.ts, checksum.ts, HUD.tsx)
-- Strict TS source errors (unused imports, prop mismatches, indexing, returns)
-- Dead code removed (intensity props, preview vars, slop imports)
-- missionEvents module restored for MissionPanel
-- Analytics event types, casts, useEffect paths cleaned
-
-### Verified
-- `npx tsc --noEmit` (source): 0 errors
-- No bad setTimeout / any in non-test src
-- Scopes removed, docs refreshed, pushed to main (670b443)
-
-### Changed
-- vercel.json: buildCommand → "vite build" for reliable deploy
-- .gitignore: nul + junk
-- AUDIT/TASKBOARD/README/AGENTS/PROD updated with 9.1 scores + evidence
-- index.html cleaned for plugin injection
-- Composite: ~9.3/10 (perf/ops/docs strong gains; see final report)
-
-### Fixed
-- InputSystem dash Space test (code + start consistency)
-- Root tsc on functions (exclude + CI step)
-- Large chunk warnings (splits + limit 600)
-
-## [2.4.1] - 2026-06-03
+## [2.5.0] — 2026-06-30
 
 ### Added
-- Enterprise docs: `docs/ENTERPRISE_TRANSFORMATION.md`, `ARCHITECTURE.md`, `PLAYER_GUIDE.md`, ADRs
-- Analytics facade (`src/lib/analytics.ts`) with game event wiring
-- Colorblind CSS filters on game canvas wrapper
-- PWA `manifest.webmanifest` + meta tags
-- GitHub PR template, `src/vite-env.d.ts`
+
+- Cloud Functions: `saveGameData` and `submitScore` callables with Zod schema validation
+- Firebase Emulator test suite: 17 integration tests (7 rules + 10 callables)
+- Server-side checksum + monotonic high-score enforcement
+- Rate limiting (10 saves/min, 5 score submits/min per user)
+- `docs/VERIFICATION_2026-06-30.md` with command evidence
 
 ### Changed
-- Composite readiness: 7.6/10 audit · 8.3/10 enterprise operations
 
-## [2.4.0] - 2026-06-03
-
-### Added
-- Comprehensive audit docs: `AUDIT_REPORT.md`, `TASKBOARD.md`, `DEPLOYMENT.md`, `CONTRIBUTING.md`
-- GitHub Actions CI (lint, test, build, optional Firebase deploy)
-- Firebase Hosting config (`firebase.json`, `.firebaserc`)
-- `GameEngineStatusBus` — typed HUD/cursor state sync
-- `AccessibilitySettings` — difficulty, reduced motion, gamepad, enemy shapes
-- Engine systems: `CollisionSystem`, `BossSystem`, `PowerupSystem`, `HazardSystem`
-- Renderer sub-modules under `src/game/rendering/`
-- Daily challenges, Armory cosmetics UI
-- 409 unit tests (16 test files)
-- `npm run ci`, `npm run deploy:hosting`, `npm run deploy:rules`
-
-### Changed
-- Overall quality rating: 6.1 → **7.4/10** (pre-production)
-- `package.json` name `bugsmasher`, version `2.4.0`
-- `CustomCursor` uses event bus instead of window global
-- `ParticleSystem` uses `ParticleEngineHost` interface
-- Settings menu: accessibility section
+- Firestore rules: deny direct client writes to `private/saves` and `leaderboard`
+- Server-authoritative save/score paths (no more client-trusted leaderboard)
+- Coverage thresholds: engine/lib at 77/61/75/76 (interim, Phase 2b target: 80/70/75/80)
 
 ### Fixed
-- Flaky `PowerupSystem` tank resource test (deterministic RNG)
-- React hooks ordering in `CustomCursor`
 
-### Deployment
-- Branch: `release/v2.4.0-preproduction`
-- Tag: `v2.4.0`
-- Remote: https://github.com/HopeTheoory/BugSmasher-ApZz
+- 507/507 frontend tests passing
+- Security: hardcoded client SALT removed; OAuth scopes minimized
 
-## [2.3.0] - Prior milestone
-- Initial BugSmasher NextGen with Firebase auth and PWA support
+## [2.4.0] — 2026-06-22
+
+### Added
+
+- GitHub Actions CI: lint, functions build, coverage, build
+- `@vitest/coverage-v8` — coverage enforcement in CI
+- `.env.example` — Firebase config env vars
+- PWA: vite-plugin-pwa with Service Worker + runtime caching
+- Accessibility: difficulty presets, reduced motion, colorblind filter, gamepad
+
+### Changed
+
+- `AGENTS.md` — honest rating (5.6/10 → 7.2/10), warnings for AI agents
+- `src/lib/firebase.ts` — migrated from JSON import to VITE_ env vars
+- `vite.config.ts` — runtime caching, PNG icons, chunk optimization
+
+### Fixed
+
+- Firebase config removed from git (`firebase-applet-config.json` gitignored)
+- Hardcoded SALT removed from client `checksum.ts`
+- 448/448 tests passing (was failing per audit)
+- `InputSystem.ts` — added missing `GameConfig` import
+
+### Security
+
+- Env-vars only for Firebase config (no committed secrets)
+- Client checksum no longer uses secret salt
+
+## [2.3.0] — 2026-06-15
+
+### Added
+
+- `ParticleEngineHost` — typed particle engine abstraction (no `any`)
+- `GameEngineStatusBus` — typed event bus for engine → UI sync
+- `AccessibilitySettings` — dedicated module for a11y configuration
+- Daily Challenge system with modifiers + cosmetic rewards
+- `docs/ARCHITECTURE.md` — mermaid diagrams, module boundaries
+
+### Changed
+
+- Renderer split into 5 sub-modules: `EnvironmentRenderer`, `BugRenderer`,
+  `ParticleRenderer`, `UIRenderer`, `PerformanceScaler`
+- Systems extracted from `GameEngine`: `CollisionSystem`, `BossSystem`,
+  `PowerupSystem`, `HazardSystem`, `InputSystem`
+- Cloud Functions modularized into schema, validation, rate limiting, handlers
+
+### Fixed
+
+- Global state bridge deprecated: `(window as any).__gameEngineStatus` → `GameEngineStatusBus`
+- Remaining `setTimeout`/`setInterval` for game state → delta-time based
+
+## [2.2.0] — 2026-06-08
+
+### Added
+
+- Armory: cursor skins + core theme customization
+- IntelHub: telemetry dashboard with Google Sheets integration
+- WorkspaceConsole: real-time system status log
+- BiomeBackgroundGallery: visual biome showcase
+
+### Changed
+
+- HUD redesign with real-time FPS monitor
+- Improved wave pacing and boss mechanics
+
+## [2.1.0] — 2026-06-01
+
+### Added
+
+- Progression Center: skill tree + resource crafting
+- Save/Load system with IndexedDB persistence + cloud save
+- Firebase auth with Google Sign-In
+
+### Changed
+
+- Game loop optimization for 60+ FPS target
+
+## [2.0.0] — 2026-05-25
+
+### Added
+
+- Complete game engine rewrite in React 19 + TypeScript + Canvas 2D
+- Wave-based base defense with multiple enemy types (scout, tank, healer)
+- Boss fights every 10 waves
+- Powerup system (hover, collect, burst)
+- Particle system with 2D canvas rendering
+- Procedural Content Generation (PCG) for resources + hazards
+- Sound system with procedural audio generation
+- Firebase integration (auth, Firestore, hosting)
+- Daily challenges with modifiers
+- Achievement system
+- i18n support (English + Spanish)
+- Accessibility (difficulty, reduced motion, colorblind modes)
+- Custom cursor with trail effects
+
+[2.5.0]: https://github.com/FahadIbrahim93/BugSmasher-HopeTheory/releases/tag/v2.5.0
+[2.4.0]: https://github.com/FahadIbrahim93/BugSmasher-HopeTheory/releases/tag/v2.4.0
+[2.3.0]: https://github.com/FahadIbrahim93/BugSmasher-HopeTheory/releases/tag/v2.3.0
+[2.2.0]: https://github.com/FahadIbrahim93/BugSmasher-HopeTheory/releases/tag/v2.2.0
+[2.1.0]: https://github.com/FahadIbrahim93/BugSmasher-HopeTheory/releases/tag/v2.1.0
+[2.0.0]: https://github.com/FahadIbrahim93/BugSmasher-HopeTheory/releases/tag/v2.0.0

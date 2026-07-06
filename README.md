@@ -4,20 +4,23 @@ An ultra-minimalist, high-intensity AI-themed base defense game with Brutalist O
 
 **Live:** [https://studio-1155838266-56095.web.app](https://studio-1155838266-56095.web.app)  
 **Repo:** [FahadIbrahim93/BugSmasher-HopeTheory](https://github.com/FahadIbrahim93/BugSmasher-HopeTheory)  
-**Version:** 2.5.0 | **Audit:** ~7.5/10 after the June 30, 2026 session. **507** frontend tests pass with engine/lib coverage gates; **21** Firebase emulator + functions unit tests prove the security boundary. Session-token anti-cheat, real ESLint, and production stubs remain release gates. See [VERIFICATION_2026-06-30.md](./docs/VERIFICATION_2026-06-30.md), [CTO_AUDIT_2026-06-29.md](./CTO_AUDIT_2026-06-29.md), and [PERFECT_10_REMEDIATION_PLAN.md](./PERFECT_10_REMEDIATION_PLAN.md).
+**Version:** 2.5.0 | **Audit:** ~7.1/10 (as of July 2026). **507** frontend tests pass with engine/lib coverage gates; **21** Firebase emulator + functions unit tests prove the security boundary. See [BLUEPRINT_10_10.md](./docs/BLUEPRINT_10_10.md), [VERIFICATION_2026-06-30.md](./docs/VERIFICATION_2026-06-30.md), and [AGENTS.md](./AGENTS.md).
 
 ## 📚 Documentation Index
 
+- **[docs/BLUEPRINT_10_10.md](./docs/BLUEPRINT_10_10.md)** — SINGLE SOURCE OF TRUTH — 10/10 roadmap
 - **[docs/AGENTIC_WORKFLOW.md](./docs/AGENTIC_WORKFLOW.md)** — Git, PR, multi-agent parallel work, SemVer
+- [AGENTS.md](./AGENTS.md) — AI coding standards & architecture rules
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — Contributor & agent entry point
-- [docs/VERIFICATION_2026-06-30.md](./docs/VERIFICATION_2026-06-30.md) — Session verification evidence
-- [docs/EMULATOR_TESTING.md](./docs/EMULATOR_TESTING.md) — Firebase emulator setup
-- [CTO_AUDIT_2026-06-29.md](./CTO_AUDIT_2026-06-29.md) — Principal engineer review
-- [PERFECT_10_REMEDIATION_PLAN.md](./PERFECT_10_REMEDIATION_PLAN.md) — Actionable path to a verified 10/10
+- [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) — Community standards
+- [SECURITY.md](./SECURITY.md) — Vulnerability disclosure & security model
+- [CHANGELOG.md](./CHANGELOG.md) — Version history
 - [DEPLOYMENT.md](./DEPLOYMENT.md) — CI/CD + Firebase
-- [TASKBOARD.md](./TASKBOARD.md) — Backlog
-- [AGENTS.md](./AGENTS.md) — AI coding standards
-- Full suite in `/docs/`
+- [TASKBOARD.md](./TASKBOARD.md) — All work items to 10/10
+- [docs/VERIFICATION_2026-06-30.md](./docs/VERIFICATION_2026-06-30.md) — Session verification evidence
+- [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) — System design & module boundaries
+- [docs/EMULATOR_TESTING.md](./docs/EMULATOR_TESTING.md) — Firebase emulator setup
+- [security_spec.md](./security_spec.md) — Firestore security model
 
 ## 🏆 Recent Wins (Verified 2026-06-30)
 
@@ -42,14 +45,16 @@ npm run dev
 ### Quality & CI
 
 ```bash
-npm run lint              # TypeScript check (tsc --noEmit)
-npm test                  # 507 frontend unit tests
+npm run typecheck          # TypeScript check (tsc --noEmit)
+npm run lint:eslint        # ESLint (TS + React + a11y rules)
+npm run lint:all           # Both typecheck + ESLint
+npm test                   # 507 frontend unit tests
 npm run test:coverage     # engine/lib coverage gate
 npm run test:emulator     # Firestore rules + callable tests (requires Java 21+)
 npm run validate:functions # Cloud Functions build + schema unit tests
-npm run ci                # all, functions, coverage, emulator, build
+npm run ci                # typecheck + ESLint + functions + coverage + emulator + build
 ```
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for full pipeline and production deploy.
 
-**Next Focus**: server-authoritative security, coverage recovery, real linting, and production-stub de-scoping. Track in [TASKBOARD.md](./TASKBOARD.md) and [PERFECT_10_REMEDIATION_PLAN.md](./PERFECT_10_REMEDIATION_PLAN.md).
+**Next Focus**: See [docs/BLUEPRINT_10_10.md](./docs/BLUEPRINT_10_10.md) for the complete 12-week roadmap to a verified 10/10. Track sprint execution in [TASKBOARD.md](./TASKBOARD.md).
