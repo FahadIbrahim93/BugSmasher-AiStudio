@@ -46,7 +46,7 @@ export function BattlegroundGenerator({
     setActiveMapId(id);
     
     setPreviewFlash(true);
-    setTimeout(() => setPreviewFlash(false), 200);
+    setTimeout(() => { setPreviewFlash(false); }, 200);
   };
 
   const handleToggleRotation = () => {
@@ -57,7 +57,7 @@ export function BattlegroundGenerator({
   };
 
   const updateConfig = (key: keyof CustomMapConfig, value: string | number | boolean) => {
-    const updated = { ...mapConfig, [key]: value } as CustomMapConfig;
+    const updated = { ...mapConfig, [key]: value };
     setMapConfig(updated);
     CustomMapManager.saveCustomMap(updated);
   };
@@ -72,7 +72,7 @@ export function BattlegroundGenerator({
     setPcgSeed(newSeed);
 
     setPreviewFlash(true);
-    setTimeout(() => setPreviewFlash(false), 200);
+    setTimeout(() => { setPreviewFlash(false); }, 200);
   };
 
   const handleCopySeedCode = () => {
@@ -80,7 +80,7 @@ export function BattlegroundGenerator({
     const challengeCode = `BUGSMASHER-PCG-SEED://${pcgTheme}::${pcgSeed}`;
     navigator.clipboard.writeText(challengeCode);
     setCopiedNotification(true);
-    setTimeout(() => setCopiedNotification(false), 1500);
+    setTimeout(() => { setCopiedNotification(false); }, 1500);
   };
 
   const handleLaunch = () => {
@@ -183,7 +183,7 @@ export function BattlegroundGenerator({
                       return (
                         <button
                           key={map.id}
-                          onClick={() => handleSelectMap(map.id)}
+                          onClick={() => { handleSelectMap(map.id); }}
                           disabled={rotationEnabled}
                           className={`relative p-3.5 text-left border rounded-2xl transition-all group overflow-hidden ${
                             isSelected 

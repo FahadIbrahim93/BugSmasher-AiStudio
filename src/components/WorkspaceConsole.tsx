@@ -42,8 +42,8 @@ export function WorkspaceConsole({ onClose }: WorkspaceConsoleProps) {
 
   useEffect(() => {
     if (feedback) {
-      const timer = setTimeout(() => setFeedback(null), 10000);
-      return () => clearTimeout(timer);
+      const timer = setTimeout(() => { setFeedback(null); }, 10000);
+      return () => { clearTimeout(timer); };
     }
     return;
   }, [feedback]);
@@ -444,10 +444,10 @@ export function WorkspaceConsole({ onClose }: WorkspaceConsoleProps) {
 
         {/* Console tab selectors */}
         <div className="flex bg-[#030508] border-b border-cyan-500/10 p-2 gap-1.5">
-          <TabBtn active={activeTab === 'tasks'} onClick={() => setActiveTab('tasks')} icon={<ClipboardList size={14} />} label="TASKS" status={syncStatus.tasks} />
-          <TabBtn active={activeTab === 'sheets'} onClick={() => setActiveTab('sheets')} icon={<FileSpreadsheet size={14} />} label="STAT BOOK" status={syncStatus.sheets} />
-          <TabBtn active={activeTab === 'calendar'} onClick={() => setActiveTab('calendar')} icon={<CalendarIcon size={14} />} label="SCHEDULER" status={syncStatus.calendar} />
-          <TabBtn active={activeTab === 'docs'} onClick={() => setActiveTab('docs')} icon={<FileText size={14} />} label="WAR LOGS" status={syncStatus.docs} />
+          <TabBtn active={activeTab === 'tasks'} onClick={() => { setActiveTab('tasks'); }} icon={<ClipboardList size={14} />} label="TASKS" status={syncStatus.tasks} />
+          <TabBtn active={activeTab === 'sheets'} onClick={() => { setActiveTab('sheets'); }} icon={<FileSpreadsheet size={14} />} label="STAT BOOK" status={syncStatus.sheets} />
+          <TabBtn active={activeTab === 'calendar'} onClick={() => { setActiveTab('calendar'); }} icon={<CalendarIcon size={14} />} label="SCHEDULER" status={syncStatus.calendar} />
+          <TabBtn active={activeTab === 'docs'} onClick={() => { setActiveTab('docs'); }} icon={<FileText size={14} />} label="WAR LOGS" status={syncStatus.docs} />
         </div>
 
         {/* Content body */}

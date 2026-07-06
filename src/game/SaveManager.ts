@@ -29,7 +29,7 @@ export class SaveManager {
   private static STORAGE_KEY = 'bugsmasher_save_data';
   private static HIGH_SCORE_KEY = 'bugsmasher_all_time_high';
 
-  private static syncListeners: Set<SaveSyncListener> = new Set();
+  private static syncListeners = new Set<SaveSyncListener>();
   private static currentStatus: SaveSyncStatus = 'idle';
 
   static addSyncListener(listener: SaveSyncListener) {
@@ -122,12 +122,12 @@ export class SaveManager {
       }
 
       this.notifySync('synced');
-      setTimeout(() => this.notifySync('idle'), 3000);
+      setTimeout(() => { this.notifySync('idle'); }, 3000);
       return true;
     } catch (e) {
       console.error(`Failed to save to slot ${slotId}`, e);
       this.notifySync('error');
-      setTimeout(() => this.notifySync('idle'), 3000);
+      setTimeout(() => { this.notifySync('idle'); }, 3000);
       return false;
     }
   }
@@ -219,12 +219,12 @@ export class SaveManager {
       }
       
       // Auto return to idle after some delay
-      setTimeout(() => this.notifySync('idle'), 3000);
+      setTimeout(() => { this.notifySync('idle'); }, 3000);
       return true;
     } catch (e) {
       console.error('Failed to save game data', e);
       this.notifySync('error');
-      setTimeout(() => this.notifySync('idle'), 3000);
+      setTimeout(() => { this.notifySync('idle'); }, 3000);
       return false;
     }
   }

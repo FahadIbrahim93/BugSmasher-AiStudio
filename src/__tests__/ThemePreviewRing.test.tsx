@@ -203,7 +203,7 @@ describe('ThemePreviewRing', () => {
   });
 
   it('should render correctly for all 3 themes', () => {
-    const themeIds: Array<keyof typeof CORE_THEMES> = ['theme_void', 'theme_magma', 'theme_frost'];
+    const themeIds: (keyof typeof CORE_THEMES)[] = ['theme_void', 'theme_magma', 'theme_frost'];
     for (const id of themeIds) {
       const r = renderComponent(
         React.createElement(ThemePreviewRing, { themeId: id, unlocked: true, active: false })

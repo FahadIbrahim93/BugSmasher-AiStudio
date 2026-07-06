@@ -1024,7 +1024,7 @@ export class BugRenderer {
       ctx.lineWidth = 3;
       
       // Mandibles
-      for (let side of [-1, 1]) {
+      for (const side of [-1, 1]) {
         ctx.save();
         ctx.rotate(side * angle + vibrato * 0.01);
         

@@ -21,8 +21,8 @@ export async function handleUploadSave(
   const db = getFirestore();
   await checkRateLimit(db, uid, 'uploadSave');
 
-  const serverChecksum = generateChecksum(data as Record<string, unknown>);
-  const clientChecksum = generateClientChecksum(data as Record<string, unknown>);
+  const serverChecksum = generateChecksum(data);
+  const clientChecksum = generateClientChecksum(data);
 
   await db.doc(`users/${uid}/private/saves`).set({
     userId: uid,

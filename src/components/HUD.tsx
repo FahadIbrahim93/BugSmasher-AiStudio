@@ -55,7 +55,7 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
     };
 
     window.addEventListener('nexus_bug_smashed', handleSmashedEvent);
-    return () => window.removeEventListener('nexus_bug_smashed', handleSmashedEvent);
+    return () => { window.removeEventListener('nexus_bug_smashed', handleSmashedEvent); };
   }, []);
 
   useEffect(() => {
@@ -64,7 +64,7 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
       const now = Date.now();
       setKillLogs((prev) => prev.filter((log) => now - log.time < 2200));
     }, 200);
-    return () => clearInterval(interval);
+    return () => { clearInterval(interval); };
   }, [killLogs]);
 
   const [showPerf, setShowPerf] = useState(() => {
@@ -300,7 +300,7 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
     };
 
     updateHUD();
-    return () => cancelAnimationFrame(animationFrameId);
+    return () => { cancelAnimationFrame(animationFrameId); };
   }, [engineRef]);
 
   return (
@@ -683,7 +683,7 @@ function ConsumableBar({ engineRef }: { engineRef: React.RefObject<GameEngine | 
             {consumables.map(c => (
                 <button 
                     key={c.id}
-                    onClick={() => handleUse(c.id)}
+                    onClick={() => { handleUse(c.id); }}
                     className={`relative p-3 rounded-2xl border transition-all flex flex-col items-center group ${
                         (counts[c.id] || 0) > 0 
                             ? 'bg-black/80 border-white/20 hover:border-blue-500/50 hover:scale-105 active:scale-95 shadow-xl' 
@@ -727,7 +727,7 @@ function ActivePowerups({ engineRef }: { engineRef: React.RefObject<GameEngine |
             
             setActiveTypes(active);
         }, 100);
-        return () => clearInterval(interval);
+        return () => { clearInterval(interval); };
     }, [engineRef]);
 
     if (activeTypes.length === 0) return null;
@@ -797,14 +797,14 @@ function ActiveSkillsBar({ engineRef }: { engineRef: React.RefObject<any> }) {
       setSkills(items);
     }, 100);
 
-    return () => clearInterval(interval);
+    return () => { clearInterval(interval); };
   }, [engineRef]);
 
   // Handle hotkeys (keyboard triggering)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const engine = engineRef.current;
-      if (!engine || !engine.isRunning || engine.isPaused) return;
+      if (!engine?.isRunning || engine.isPaused) return;
 
       if (e.key === '1') {
         engine.triggerActiveAbility('nanite_bioshield');
@@ -816,7 +816,7 @@ function ActiveSkillsBar({ engineRef }: { engineRef: React.RefObject<any> }) {
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => { window.removeEventListener('keydown', handleKeyDown); };
   }, [engineRef]);
 
   const handleTrigger = (id: string) => {
@@ -837,7 +837,7 @@ function ActiveSkillsBar({ engineRef }: { engineRef: React.RefObject<any> }) {
         return (
           <button
             key={s.id}
-            onClick={() => handleTrigger(s.id)}
+            onClick={() => { handleTrigger(s.id); }}
             disabled={isCooldown}
             className={`relative p-3 rounded-2xl border transition-all flex flex-col items-center group select-none ${
               isActive

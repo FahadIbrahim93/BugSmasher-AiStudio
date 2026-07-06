@@ -72,19 +72,19 @@ export function ProgressionCenter({ onClose }: ProgressionCenterProps) {
         <div className="flex space-x-2 mb-8 border-b border-white/10 pb-4">
           <TabButton 
             active={activeTab === 'crafting'} 
-            onClick={() => setActiveTab('crafting')}
+            onClick={() => { setActiveTab('crafting'); }}
             icon={<Hammer className="w-4 h-4" />}
             label="Assembly"
           />
           <TabButton 
             active={activeTab === 'skills'} 
-            onClick={() => setActiveTab('skills')}
+            onClick={() => { setActiveTab('skills'); }}
             icon={<BrainCircuit className="w-4 h-4" />}
             label="Neural Upgrades"
           />
           <TabButton 
             active={activeTab === 'inventory'} 
-            onClick={() => setActiveTab('inventory')}
+            onClick={() => { setActiveTab('inventory'); }}
             icon={<Box className="w-4 h-4" />}
             label="Storage"
           />
@@ -107,7 +107,7 @@ export function ProgressionCenter({ onClose }: ProgressionCenterProps) {
                     recipe={recipe}
                     inventory={data.inventory}
                     count={data.consumables[recipe.id] || 0}
-                    onCraft={() => handleCraft(recipe.id, recipe.ingredients)}
+                    onCraft={() => { handleCraft(recipe.id, recipe.ingredients); }}
                    />
                 ))}
               </motion.div>
@@ -127,7 +127,7 @@ export function ProgressionCenter({ onClose }: ProgressionCenterProps) {
                     skill={skill}
                     inventory={data.inventory}
                     level={data.skills[skill.id] || 0}
-                    onUpgrade={() => handleUpgradeSkill(skill.id)}
+                    onUpgrade={() => { handleUpgradeSkill(skill.id); }}
                   />
                 ))}
               </motion.div>
@@ -198,7 +198,7 @@ function TabButton({ active, icon, label, onClick }: { active: boolean, icon: Re
 }
 
 function CraftCard({ recipe, inventory, count, onCraft }: { recipe: Recipe, inventory: Record<ResourceType, number>, count: number, onCraft: () => void }) {
-  const canCraft = Object.entries(recipe.ingredients).every(([res, amount]) => ((inventory as Record<string, number>)[res] || 0) >= (amount as number));
+  const canCraft = Object.entries(recipe.ingredients).every(([res, amount]) => ((inventory as Record<string, number>)[res] || 0) >= (amount));
 
   return (
     <div className="p-6 bg-white/5 rounded-3xl border border-white/5 flex flex-col hover:border-white/20 transition-all group">
@@ -220,7 +220,7 @@ function CraftCard({ recipe, inventory, count, onCraft }: { recipe: Recipe, inve
         {Object.entries(recipe.ingredients).map(([res, amount]) => {
           const resDef = RESOURCES[res as ResourceType];
           const has = (inventory as Record<string, number>)[res] || 0;
-          const needed = amount as number;
+          const needed = amount;
           return (
             <div key={res} className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
@@ -252,7 +252,7 @@ function CraftCard({ recipe, inventory, count, onCraft }: { recipe: Recipe, inve
 
 function SkillCard({ skill, inventory, level, onUpgrade }: { skill: Skill, inventory: Record<ResourceType, number>, level: number, onUpgrade: () => void }) {
   const cost = skill.costPerLevel(level);
-  const canUpgrade = Object.entries(cost).every(([res, amount]) => ((inventory as Record<string, number>)[res] || 0) >= (amount as number)) && level < skill.maxLevel;
+  const canUpgrade = Object.entries(cost).every(([res, amount]) => ((inventory as Record<string, number>)[res] || 0) >= (amount)) && level < skill.maxLevel;
 
   return (
     <div className="p-8 bg-white/5 rounded-3xl border border-white/5 flex flex-col hover:border-white/20 transition-all group">
@@ -272,7 +272,7 @@ function SkillCard({ skill, inventory, level, onUpgrade }: { skill: Skill, inven
             if (!amount) return null;
             const resDef = RESOURCES[res as ResourceType];
             const has = (inventory as Record<string, number>)[res] || 0;
-            const needed = amount as number;
+            const needed = amount;
             return (
               <div key={res} className="flex flex-col space-y-1">
                 <span className="text-[9px] font-mono text-zinc-500 uppercase">{resDef.name}</span>

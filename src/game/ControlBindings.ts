@@ -40,7 +40,7 @@ export function subscribeControlBindings(listener: (b: ControlBindings) => void)
   };
   window.addEventListener(CHANGE_EVENT, handler);
   listener(loadControlBindings());
-  return () => window.removeEventListener(CHANGE_EVENT, handler);
+  return () => { window.removeEventListener(CHANGE_EVENT, handler); };
 }
 
 export function matchesBinding(code: string, binding: string): boolean {

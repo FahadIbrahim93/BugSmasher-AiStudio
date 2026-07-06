@@ -56,13 +56,13 @@ export function MainMenu({
         <div className="absolute inset-0 bg-gradient-to-b from-[#030303]/40 via-transparent to-[#030303]" />
       </div>
 
-      {isArmoryOpen && <Armory onClose={() => setIsArmoryOpen(false)} />}
-      {isAchievementsOpen && <AchievementGallery onClose={() => setIsAchievementsOpen(false)} />}
-      {isAccountOpen && <AccountMenu onClose={() => setIsAccountOpen(false)} />}
-      {isLeaderboardOpen && <Leaderboard onClose={() => setIsLeaderboardOpen(false)} />}
+      {isArmoryOpen && <Armory onClose={() => { setIsArmoryOpen(false); }} />}
+      {isAchievementsOpen && <AchievementGallery onClose={() => { setIsAchievementsOpen(false); }} />}
+      {isAccountOpen && <AccountMenu onClose={() => { setIsAccountOpen(false); }} />}
+      {isLeaderboardOpen && <Leaderboard onClose={() => { setIsLeaderboardOpen(false); }} />}
       {isGeneratorOpen && (
         <BattlegroundGenerator
-          onClose={() => setIsGeneratorOpen(false)}
+          onClose={() => { setIsGeneratorOpen(false); }}
           onLaunch={() => {
             setIsGeneratorOpen(false);
             onStart(undefined, 'standard', 'custom_map');
@@ -79,7 +79,7 @@ export function MainMenu({
               onStart(challenge.modifiers);
             });
           }}
-          onClose={() => setIsDailyChallengeOpen(false)}
+          onClose={() => { setIsDailyChallengeOpen(false); }}
         />
       )}
 
@@ -267,7 +267,7 @@ export function MainMenu({
       {isSaveSlotsOpen && (
         <SaveSlotsModal
           mode="load"
-          onClose={() => setIsSaveSlotsOpen(false)}
+          onClose={() => { setIsSaveSlotsOpen(false); }}
           onSlotLoaded={() => {
             setIsSaveSlotsOpen(false);
             onStart();
@@ -276,7 +276,7 @@ export function MainMenu({
       )}
       {isWorkspaceOpen && (
         <WorkspaceConsole 
-          onClose={() => setIsWorkspaceOpen(false)}
+          onClose={() => { setIsWorkspaceOpen(false); }}
         />
       )}
     </div>

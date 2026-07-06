@@ -56,7 +56,7 @@ export async function generateShareCardImage(data: ShareCardData): Promise<Blob>
   ctx.fillText('bugsmasher — defend the core', 48, h - 48);
 
   return new Promise((resolve, reject) => {
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('blob failed'))), 'image/png');
+    canvas.toBlob((b) => { b ? resolve(b) : reject(new Error('blob failed')); }, 'image/png');
   });
 }
 

@@ -68,7 +68,7 @@ export function AccountMenu({ onClose }: { onClose: () => void }) {
         <div className="flex border-b border-white/5">
           <TabButton 
             active={activeTab === 'auth' || activeTab === 'profile'} 
-            onClick={() => setActiveTab(user ? 'profile' : 'auth')}
+            onClick={() => { setActiveTab(user ? 'profile' : 'auth'); }}
             icon={<LucideUser className="w-4 h-4" />}
             label="Profile"
           />

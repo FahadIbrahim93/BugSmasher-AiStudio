@@ -124,7 +124,7 @@ export function DifficultySelector({ onSelect }: DifficultySelectorProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.12, duration: 0.5 }}
                 className="group relative flex flex-col h-full"
-                onMouseEnter={() => handleHover(opt.id)}
+                onMouseEnter={() => { handleHover(opt.id); }}
                 onMouseLeave={handleMouseLeave}
               >
                 {/* Background glow wave matching theme style */}
@@ -150,7 +150,7 @@ export function DifficultySelector({ onSelect }: DifficultySelectorProps) {
                 </AnimatePresence>
 
                 <button
-                  onClick={() => handleSelect(opt.id)}
+                  onClick={() => { handleSelect(opt.id); }}
                   className={`w-full text-left bg-zinc-900/60 border-2 ${opt.borderColor} rounded-2xl p-5 relative overflow-hidden transition-all duration-300 flex flex-col h-full hover:-translate-y-1 z-10`}
                 >
                   {/* Category Card Header */}

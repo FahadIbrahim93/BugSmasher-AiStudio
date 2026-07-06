@@ -32,7 +32,7 @@ const INITIAL_PROGRESSION: ProgressionData = {
 
 export class ProgressionManager {
   private static data: ProgressionData = ProgressionManager.loadLocal();
-  private static listeners: Set<() => void> = new Set();
+  private static listeners = new Set<() => void>();
   private static isSyncing = false;
 
   private static loadLocal(): ProgressionData {
@@ -96,7 +96,7 @@ export class ProgressionManager {
   }
 
   private static notify() {
-    this.listeners.forEach(l => l());
+    this.listeners.forEach(l => { l(); });
   }
 
   static setData(newData: ProgressionData) {

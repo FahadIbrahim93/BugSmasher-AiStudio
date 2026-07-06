@@ -1,5 +1,5 @@
 export class AssetManager {
-  private images: Map<string, HTMLImageElement> = new Map();
+  private images = new Map<string, HTMLImageElement>();
   // audioContextInitialized removed (unused)
   
   // Default backgrounds to preload for instant switching

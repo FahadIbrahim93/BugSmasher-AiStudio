@@ -254,7 +254,7 @@ describe('PowerupSystem', () => {
 
     it('should handle empty powerups array', () => {
       engine.powerups = [];
-      expect(() => powerupSystem.updatePowerups(0.016)).not.toThrow();
+      expect(() => { powerupSystem.updatePowerups(0.016); }).not.toThrow();
     });
   });
 
@@ -317,7 +317,7 @@ describe('PowerupSystem', () => {
 
     it('should handle empty resources array', () => {
       engine.resources = [];
-      expect(() => powerupSystem.updateResources(0.016)).not.toThrow();
+      expect(() => { powerupSystem.updateResources(0.016); }).not.toThrow();
     });
   });
 });

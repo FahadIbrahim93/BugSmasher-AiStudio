@@ -50,7 +50,7 @@ export class GameEngineStatusBus {
     window.addEventListener(STATUS_EVENT, handler);
     listener(this.current);
 
-    return () => window.removeEventListener(STATUS_EVENT, handler);
+    return () => { window.removeEventListener(STATUS_EVENT, handler); };
   }
 
   /** @deprecated Use subscribe() — kept for one release to ease migration */

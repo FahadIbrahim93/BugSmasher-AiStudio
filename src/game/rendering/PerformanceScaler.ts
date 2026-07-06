@@ -19,23 +19,23 @@ export type QualityPresetName = keyof typeof QUALITY_PRESETS;
 
 export class PerformanceScaler {
   private engine: GameEngine;
-  lastFpsTime: number = 0;
-  frameCount: number = 0;
+  lastFpsTime = 0;
+  frameCount = 0;
   fpsBuffer: number[] = [];
-  currentFps: number = 60;
-  vfxScalar: number = 1.0;
-  meshComplexityStep: number = 10;
+  currentFps = 60;
+  vfxScalar = 1.0;
+  meshComplexityStep = 10;
 
   // New post-effect / material scalars (ported concepts; 0=off, 1=full)
-  crtIntensity: number = 0.16;
-  heatDistort: number = 0.006;
-  emissiveScale: number = 1.35;
-  glowScalar: number = 0.9;
+  crtIntensity = 0.16;
+  heatDistort = 0.006;
+  emissiveScale = 1.35;
+  glowScalar = 0.9;
 
   currentPreset: QualityPresetName = 'High';
 
   /** Force a full quality downgrade when FPS has been critically low for too long */
-  private emergencyDowngradeFps: number = 0;
+  private emergencyDowngradeFps = 0;
 
   constructor(engine: GameEngine) {
     this.engine = engine;
@@ -146,7 +146,7 @@ export class PerformanceScaler {
     // Every 5 seconds, check if we recovered enough to restore original preset
     if (this.currentPreset === 'Headless' && this.currentFps > 45) {
       const original = this.engine.isMobile ? 'Mobile' : 'Balanced';
-      this.applyPreset(original as QualityPresetName);
+      this.applyPreset(original);
       this.emergencyDowngradeFps = 0;
     }
   }

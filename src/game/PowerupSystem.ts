@@ -10,7 +10,7 @@ import { RESOURCES, ResourceType } from './ResourceTypes';
  */
 export class PowerupSystem {
   engine: GameEngine;
-  dropBonusMultiplier: number = 1;
+  dropBonusMultiplier = 1;
 
   constructor(engine: GameEngine) {
     this.engine = engine;
@@ -19,7 +19,7 @@ export class PowerupSystem {
   /**
    * Spawns a powerup at the given position (with optional force).
    */
-  spawn(x: number, y: number, force: boolean = false) {
+  spawn(x: number, y: number, force = false) {
     let dropChance = GameConfig.powerups.dropChance * this.dropBonusMultiplier;
     if (this.engine.wave >= 4) {
       dropChance += Math.min(0.20, (this.engine.wave - 3) * 0.05);
@@ -117,7 +117,7 @@ export class PowerupSystem {
     this.engine.renderer.powerupAlpha = 1.0;
     this.engine.totalPowerupsCollected++;
     StatsManager.updateStats({ totalPowerupsCollected: 1 });
-    import('./SoundManager').then(({ soundManager }) => soundManager.powerup(type));
+    import('./SoundManager').then(({ soundManager }) => { soundManager.powerup(type); });
     this.engine.particleSystem.spawnShockwave(
       this.engine.coreX,
       this.engine.coreY,
@@ -163,7 +163,7 @@ export class PowerupSystem {
         this.engine.spikeBurstTimer = GameConfig.powerups.duration;
         break;
       case 'nuke': {
-        import('./SoundManager').then(({ soundManager }) => soundManager.nuke());
+        import('./SoundManager').then(({ soundManager }) => { soundManager.nuke(); });
         this.engine.shake(1.5, 40, 0, 1);
         this.engine.renderer.chromaticOffset = 30;
         this.engine.triggerHitStop(0.15);
@@ -193,7 +193,7 @@ export class PowerupSystem {
           '#00ffaa',
           180
         );
-        import('./SoundManager').then(({ soundManager }) => soundManager.skillUpgrade());
+        import('./SoundManager').then(({ soundManager }) => { soundManager.skillUpgrade(); });
         break;
       }
     }
@@ -246,7 +246,7 @@ export class PowerupSystem {
       if (distSq < 900) {
         ProgressionManager.addResource(r.type, 1);
         r.active = false;
-        import('./SoundManager').then(({ soundManager }) => soundManager.resource(r.type));
+        import('./SoundManager').then(({ soundManager }) => { soundManager.resource(r.type); });
       }
     }
   }

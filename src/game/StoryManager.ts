@@ -4,8 +4,8 @@ import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../lib/firebaseService';
 
 export class StoryManager {
-  private static playedBeats: Set<string> = new Set();
-  private static unlockedLogs: Set<string> = new Set();
+  private static playedBeats = new Set<string>();
+  private static unlockedLogs = new Set<string>();
   private static isSyncing = false;
 
   static init() {

@@ -15,9 +15,7 @@ export type AnalyticsEvent =
   | 'achievement_unlocked'
   | 'mission_claimed';
 
-export interface AnalyticsPayload {
-  [key: string]: string | number | boolean | undefined;
-}
+export type AnalyticsPayload = Record<string, string | number | boolean | undefined>;
 
 type AnalyticsProvider = 'none' | 'console' | 'posthog' | 'mixpanel';
 

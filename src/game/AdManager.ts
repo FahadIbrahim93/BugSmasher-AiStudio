@@ -28,7 +28,7 @@ export class AdManager {
   private config: AdConfig;
   private state: AdState = 'idle';
   private callbacks: AdCallbacks = {};
-  private rewardAmount: number = 50;
+  private rewardAmount = 50;
 
   constructor(config: Partial<AdConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };

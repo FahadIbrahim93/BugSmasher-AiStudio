@@ -5,20 +5,20 @@ import { soundManager } from './SoundManager';
 
 export class WaveManager {
   engine: GameEngine;
-  bugsToSpawn: number = 0;
-  spawnTimer: number = 0;
-  waveActive: boolean = false;
-  intensity: number = 1;
-  intensityTimer: number = 0;
-  surgeActive: boolean = false;
-  surgeTimer: number = 0;
-  isBossWave: boolean = false;
-  bossSpawned: boolean = false;
-  bossWarningSounded: boolean = false;
-  bossIntroActive: boolean = false;
-  bossIntroTimer: number = 0;
-  difficultySpeedMultiplier: number = 1;
-  difficultyHpMultiplier: number = 1;
+  bugsToSpawn = 0;
+  spawnTimer = 0;
+  waveActive = false;
+  intensity = 1;
+  intensityTimer = 0;
+  surgeActive = false;
+  surgeTimer = 0;
+  isBossWave = false;
+  bossSpawned = false;
+  bossWarningSounded = false;
+  bossIntroActive = false;
+  bossIntroTimer = 0;
+  difficultySpeedMultiplier = 1;
+  difficultyHpMultiplier = 1;
 
   constructor(engine: GameEngine) {
     this.engine = engine;

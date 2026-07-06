@@ -21,8 +21,8 @@ export class UIRenderer {
   protected get meshComplexityStep() { return this.scaler.meshComplexityStep; }
 
   private cachedCoreLightGrad: CanvasGradient | null = null;
-  private lastLightW: number = 0;
-  private lastLightH: number = 0;
+  private lastLightW = 0;
+  private lastLightH = 0;
 
   drawLightingPass(width: number, height: number) {
     const ctx = this.engine.ctx;

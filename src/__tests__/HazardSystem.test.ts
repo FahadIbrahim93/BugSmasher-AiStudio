@@ -242,7 +242,7 @@ describe('HazardSystem', () => {
 
     it('should handle empty hazards array', () => {
       engine.hazards = [];
-      expect(() => hazardSystem.update(0.016)).not.toThrow();
+      expect(() => { hazardSystem.update(0.016); }).not.toThrow();
     });
   });
 

@@ -64,7 +64,7 @@ export function DailyChallengeModal({ onStart, onClose }: DailyChallengeModalPro
     const interval = setInterval(() => {
       setTimeLeft(getCountdown());
     }, 1000);
-    return () => clearInterval(interval);
+    return () => { clearInterval(interval); };
   }, []);
 
   const handleStart = useCallback(() => {
@@ -72,7 +72,7 @@ export function DailyChallengeModal({ onStart, onClose }: DailyChallengeModalPro
     soundManager.uiClick();
     setStarting(true);
     // Small delay for audio + visual feedback
-    setTimeout(() => onStart(), 300);
+    setTimeout(() => { onStart(); }, 300);
   }, [onStart]);
 
   const handleClose = useCallback(() => {

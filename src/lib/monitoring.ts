@@ -112,7 +112,7 @@ async function remoteTransport(entry: LogEntry, config: MonitoringConfig): Promi
 // ─── Performance Monitoring ─────────────────────────────────────────────
 
 class PerformanceMonitor {
-  private marks: Map<string, number> = new Map();
+  private marks = new Map<string, number>();
   private metrics: PerformanceMetric[] = [];
   private readonly maxMetrics = 100;
 

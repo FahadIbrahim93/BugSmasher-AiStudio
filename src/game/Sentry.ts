@@ -14,9 +14,9 @@ const MAX_SENTRIES = 6;
 
 export class SentryManager {
   sentries: Sentry[] = [];
-  activeCount: number = 0;
+  activeCount = 0;
   
-  addSentry(level: number = 1) {
+  addSentry(level = 1) {
     if (this.activeCount >= MAX_SENTRIES) return false;
     // Position sentries in a circle around the core
     const angle = (this.activeCount / MAX_SENTRIES) * Math.PI * 2;

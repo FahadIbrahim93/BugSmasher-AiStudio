@@ -89,7 +89,7 @@ class CompressorProcessor {
 class DistortionProcessor {
   private waveShaper: WaveShaperNode;
 
-  constructor(ctx: AudioContext, dest: AudioNode, amount: number = 0.3) {
+  constructor(ctx: AudioContext, dest: AudioNode, amount = 0.3) {
     this.waveShaper = ctx.createWaveShaper();
     this.waveShaper.curve = this.makeDistortionCurve(amount);
     this.waveShaper.connect(dest);
@@ -145,7 +145,7 @@ class VoiceSynthesizer {
     '???': { rate: 1.2, pitch: 0.2 },
   };
 
-  static speak(line: VoiceLine, volume: number = 1.0): Promise<void> {
+  static speak(line: VoiceLine, volume = 1.0): Promise<void> {
     return new Promise((resolve) => {
       if (!window.speechSynthesis) {
         resolve();
@@ -183,8 +183,8 @@ class VoiceSynthesizer {
         utterance.voice = preferredVoice;
       }
 
-      utterance.onend = () => resolve();
-      utterance.onerror = () => resolve();
+      utterance.onend = () => { resolve(); };
+      utterance.onerror = () => { resolve(); };
 
       // Chrome requires a small delay for SpeechSynthesis to work after page load
       window.speechSynthesis.speak(utterance);
@@ -305,7 +305,7 @@ export class SoundManager {
   sfxGain: GainNode | null = null;
   musicGain: GainNode | null = null;
   voiceGain: GainNode | null = null;
-  enabled: boolean = false;
+  enabled = false;
 
   // Audio processing chain
   private compressor: CompressorProcessor | null = null;
@@ -315,31 +315,31 @@ export class SoundManager {
   private musicUpdateTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   // Settings
-  masterVolume: number = 1.0;
-  sfxVolume: number = 0.8;
-  musicVolume: number = 0.6;
-  voiceVolume: number = 0.7;
-  isMuted: boolean = false;
-  sfxMuted: boolean = false;
-  musicMuted: boolean = false;
+  masterVolume = 1.0;
+  sfxVolume = 0.8;
+  musicVolume = 0.6;
+  voiceVolume = 0.7;
+  isMuted = false;
+  sfxMuted = false;
+  musicMuted = false;
 
   noiseBuffer: AudioBuffer | null = null;
 
   // Music system state
   private musicLayers: MusicLayer[] = [];
-  private currentBiome: string = 'neon_core';
-  private targetIntensity: number = 1.0;
-  private currentIntensity: number = 1.0;
-  private isBossActive: boolean = false;
-  private isLowHealth: boolean = false;
-  private musicUpdateTimer: number = 0;
-  private arpeggioTimer: number = 0;
-  private arpeggioIndex: number = 0;
-  private beatTimer: number = 0;
-  private _beatPhase: boolean = false;
+  private currentBiome = 'neon_core';
+  private targetIntensity = 1.0;
+  private currentIntensity = 1.0;
+  private isBossActive = false;
+  private isLowHealth = false;
+  private musicUpdateTimer = 0;
+  private arpeggioTimer = 0;
+  private arpeggioIndex = 0;
+  private beatTimer = 0;
+  private _beatPhase = false;
 
   // Voice state
-  private isSpeaking: boolean = false;
+  private isSpeaking = false;
 
   constructor() {
     this.loadSettings();
@@ -493,13 +493,13 @@ export class SoundManager {
       const reverbSend = this.ctx.createGain();
       reverbSend.gain.value = 0.25;
       this.sfxGain.connect(reverbSend);
-      reverbSend.connect(this.reverb!.getWetInput());
+      reverbSend.connect(this.reverb.getWetInput());
       
       // Reverb send from music (smaller)
       const musicReverb = this.ctx.createGain();
       musicReverb.gain.value = 0.15;
       this.musicGain.connect(musicReverb);
-      musicReverb.connect(this.reverb!.getWetInput());
+      musicReverb.connect(this.reverb.getWetInput());
 
       // Generate noise buffer
       const bufferSize = this.ctx.sampleRate * 2;
@@ -533,7 +533,7 @@ export class SoundManager {
       filterType?: BiquadFilterType;
       filterQ?: number;
     },
-    isMusic: boolean = false
+    isMusic = false
   ): { oscillators: OscillatorNode[] } {
     if (!this.enabled || !this.ctx || !this.sfxGain || !this.musicGain) return { oscillators: [] };
 
@@ -591,8 +591,8 @@ export class SoundManager {
   private playShapedNoise(
     duration: number,
     volume: number,
-    filterStart: number = 2000,
-    filterEnd: number = 20,
+    filterStart = 2000,
+    filterEnd = 20,
     filterType: BiquadFilterType = 'lowpass'
   ) {
     if (!this.enabled || !this.ctx || !this.sfxGain || !this.noiseBuffer) return;
@@ -633,7 +633,7 @@ export class SoundManager {
     modFreq: number,
     type: OscillatorType,
     duration: number,
-    volume: number = 0.1
+    volume = 0.1
   ) {
     if (!this.enabled || !this.ctx || !this.sfxGain) return;
 
@@ -669,10 +669,10 @@ export class SoundManager {
 
   /** Generate a subsonic bass hit with impact transient */
   private playImpact(
-    freq: number = 60,
-    duration: number = 0.5,
-    volume: number = 0.3,
-    punch: boolean = true
+    freq = 60,
+    duration = 0.5,
+    volume = 0.3,
+    punch = true
   ) {
     if (!this.enabled || !this.ctx || !this.sfxGain) return;
 
@@ -718,7 +718,7 @@ export class SoundManager {
     volume: number,
     harmonics: number[] = [1, 2, 3],
     harmonicVolumes: number[] = [1, 0.3, 0.15],
-    isMusic: boolean = false
+    isMusic = false
   ) {
     return this.playRichTone({
       frequencies: harmonics.map((h, _i) => baseFreq * h),
@@ -1483,7 +1483,7 @@ export class SoundManager {
 
     // Schedule next update if still playing
     if (this.musicLayers.length > 0) {
-      this.musicUpdateTimeoutId = setTimeout(() => this.scheduleMusicUpdate(), updateInterval * 1000);
+      this.musicUpdateTimeoutId = setTimeout(() => { this.scheduleMusicUpdate(); }, updateInterval * 1000);
     }
   }
 

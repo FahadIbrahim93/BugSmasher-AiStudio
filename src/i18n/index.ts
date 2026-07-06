@@ -33,7 +33,7 @@ export function t(key: TranslationKey): string {
 
 export function subscribeLocale(listener: (l: LocaleId) => void): () => void {
   if (typeof window === 'undefined') return () => {};
-  const handler = (e: Event) => listener((e as CustomEvent<LocaleId>).detail ?? locale);
+  const handler = (e: Event) => { listener((e as CustomEvent<LocaleId>).detail ?? locale); };
   window.addEventListener('bugsmasher:locale', handler);
-  return () => window.removeEventListener('bugsmasher:locale', handler);
+  return () => { window.removeEventListener('bugsmasher:locale', handler); };
 }

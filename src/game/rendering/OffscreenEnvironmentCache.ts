@@ -99,7 +99,7 @@ export class OffscreenEnvironmentCache {
       this.staticCacheKey = key;
     }
 
-    engine.ctx.drawImage(layer.canvas as CanvasImageSource, 0, 0);
+    engine.ctx.drawImage(layer.canvas, 0, 0);
     return true;
   }
 
@@ -124,7 +124,7 @@ export class OffscreenEnvironmentCache {
       layer.lastRedraw = now;
     }
 
-    engine.ctx.drawImage(layer.canvas as CanvasImageSource, 0, 0);
+    engine.ctx.drawImage(layer.canvas, 0, 0);
   }
 
   /**
@@ -141,7 +141,7 @@ export class OffscreenEnvironmentCache {
     const key = `${width}x${height}_s${lineSpacing}_${color}`;
 
     if (this.scanlineKey === key && this.scanlineCanvas) {
-      engine.ctx.drawImage(this.scanlineCanvas as CanvasImageSource, 0, 0);
+      engine.ctx.drawImage(this.scanlineCanvas, 0, 0);
       return true;
     }
 
@@ -167,7 +167,7 @@ export class OffscreenEnvironmentCache {
     }
 
     this.scanlineKey = key;
-    engine.ctx.drawImage(this.scanlineCanvas as CanvasImageSource, 0, 0);
+    engine.ctx.drawImage(this.scanlineCanvas, 0, 0);
     return true;
   }
 }

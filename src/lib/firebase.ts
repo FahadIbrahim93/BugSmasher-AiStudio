@@ -28,10 +28,10 @@ try {
     localCache: persistentLocalCache({
       tabManager: persistentMultipleTabManager()
     })
-  }, (import.meta.env.VITE_FIREBASE_DATABASE_ID || undefined) as any);
+  }, (import.meta.env.VITE_FIREBASE_DATABASE_ID || undefined));
 } catch (e: unknown) {
   console.warn('Failed to initialize Firestore with persistent multi-tab cache, falling back to default:', e);
-  db = getFirestore(app, (import.meta.env.VITE_FIREBASE_DATABASE_ID || undefined) as any);
+  db = getFirestore(app, (import.meta.env.VITE_FIREBASE_DATABASE_ID || undefined));
 }
 
 export { db };
@@ -49,7 +49,7 @@ async function testConnection() {
   try {
     // Wrap with a race-promise to prevent long-hanging operations on load
     const testPromise = getDocFromServer(doc(db, 'test', 'connection'));
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('connection timeout')), 2500));
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => { reject(new Error('connection timeout')); }, 2500));
     
     await Promise.race([testPromise, timeoutPromise]);
   } catch (error: unknown) {

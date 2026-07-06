@@ -13,12 +13,12 @@ import { UIRenderer } from './rendering/UIRenderer';
  */
 export class Renderer {
   engine: GameEngine;
-  isGlitching: boolean = false;
-  fireAlpha: number = 0;
-  clickFlash: number = 0;
-  impactFlash: number = 0;
-  powerupAlpha: number = 0;
-  chromaticOffset: number = 0;
+  isGlitching = false;
+  fireAlpha = 0;
+  clickFlash = 0;
+  impactFlash = 0;
+  powerupAlpha = 0;
+  chromaticOffset = 0;
 
   private scaler: PerformanceScaler;
   private environment: EnvironmentRenderer;
@@ -28,10 +28,10 @@ export class Renderer {
 
   // Cached gradients to avoid GC pressure (created once, invalidated on resize)
   private cachedVignette: CanvasGradient | null = null;
-  private lastVignetteWidth: number = 0;
-  private lastVignetteHeight: number = 0;
-  private lastCrisis: boolean = false;
-  private lastVOpacity: number = -1;
+  private lastVignetteWidth = 0;
+  private lastVignetteHeight = 0;
+  private lastCrisis = false;
+  private lastVOpacity = -1;
 
   constructor(engine: GameEngine) {
     this.engine = engine;
@@ -288,32 +288,32 @@ export class Renderer {
 
   // --- Delegation surface (preserves public API for tests & external callers) ---
 
-  drawBiomeBackground = () => this.environment.drawBiomeBackground();
-  drawGrid = (...args: Parameters<EnvironmentRenderer['drawGrid']>) => this.environment.drawGrid(...args);
+  drawBiomeBackground = () => { this.environment.drawBiomeBackground(); };
+  drawGrid = (...args: Parameters<EnvironmentRenderer['drawGrid']>) => { this.environment.drawGrid(...args); };
   drawStarfield = (...args: Parameters<EnvironmentRenderer['drawStarfield']>) =>
-    this.environment.drawStarfield(...args);
-  drawLavaBubbles = () => this.environment.drawLavaBubbles();
-  drawSnowflakes = () => this.environment.drawSnowflakes();
-  drawDynamicMesh = () => this.environment.drawDynamicMesh();
-  drawCRTOverlay = () => this.environment.drawCRTOverlay();
-  drawGlitchOverlay = () => this.environment.drawGlitchOverlay();
-  drawScanlines = () => this.environment.drawScanlines();
-  drawChromaticAberration = () => this.environment.drawChromaticAberration();
-  drawBossIntro = () => this.environment.drawBossIntro();
-  drawBossWarning = () => this.environment.drawBossWarning();
-  drawClouds = () => this.particles.drawClouds();
+    { this.environment.drawStarfield(...args); };
+  drawLavaBubbles = () => { this.environment.drawLavaBubbles(); };
+  drawSnowflakes = () => { this.environment.drawSnowflakes(); };
+  drawDynamicMesh = () => { this.environment.drawDynamicMesh(); };
+  drawCRTOverlay = () => { this.environment.drawCRTOverlay(); };
+  drawGlitchOverlay = () => { this.environment.drawGlitchOverlay(); };
+  drawScanlines = () => { this.environment.drawScanlines(); };
+  drawChromaticAberration = () => { this.environment.drawChromaticAberration(); };
+  drawBossIntro = () => { this.environment.drawBossIntro(); };
+  drawBossWarning = () => { this.environment.drawBossWarning(); };
+  drawClouds = () => { this.particles.drawClouds(); };
 
-  drawHazard = (h: Hazard) => this.bugs.drawHazard(h);
-  drawBase = () => this.bugs.drawBase();
-  drawBug = (bug: Bug) => this.bugs.drawBug(bug);
-  drawBugTrail = (bug: Bug) => this.bugs.drawBugTrail(bug);
-  drawBugBody = (bug: Bug, legSwing: number) => this.bugs.drawBugBody(bug, legSwing);
+  drawHazard = (h: Hazard) => { this.bugs.drawHazard(h); };
+  drawBase = () => { this.bugs.drawBase(); };
+  drawBug = (bug: Bug) => { this.bugs.drawBug(bug); };
+  drawBugTrail = (bug: Bug) => { this.bugs.drawBugTrail(bug); };
+  drawBugBody = (bug: Bug, legSwing: number) => { this.bugs.drawBugBody(bug, legSwing); };
 
-  drawPowerup = (p: Powerup) => this.particles.drawPowerup(p);
-  drawResource = (r: ResourcePickup) => this.particles.drawResource(r);
-  drawSplatter = (s: Splatter) => this.particles.drawSplatter(s);
-  drawParticle = (p: Particle) => this.particles.drawParticle(p);
-  drawShockwave = (sw: Shockwave) => this.particles.drawShockwave(sw);
-  drawLaser = (l: Laser) => this.particles.drawLaser(l);
-  drawMuzzleFlash = (f: MuzzleFlash) => this.particles.drawMuzzleFlash(f);
+  drawPowerup = (p: Powerup) => { this.particles.drawPowerup(p); };
+  drawResource = (r: ResourcePickup) => { this.particles.drawResource(r); };
+  drawSplatter = (s: Splatter) => { this.particles.drawSplatter(s); };
+  drawParticle = (p: Particle) => { this.particles.drawParticle(p); };
+  drawShockwave = (sw: Shockwave) => { this.particles.drawShockwave(sw); };
+  drawLaser = (l: Laser) => { this.particles.drawLaser(l); };
+  drawMuzzleFlash = (f: MuzzleFlash) => { this.particles.drawMuzzleFlash(f); };
 }

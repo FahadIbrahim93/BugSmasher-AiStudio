@@ -49,7 +49,7 @@ export function TutorialOverlay({ engineRef }: { engineRef: React.RefObject<Game
     if (isVisible) {
       animationFrameId = requestAnimationFrame(checkTutorialState);
     }
-    return () => cancelAnimationFrame(animationFrameId);
+    return () => { cancelAnimationFrame(animationFrameId); };
   }, [engineRef, step, isVisible]);
 
   if (!isVisible) return null;

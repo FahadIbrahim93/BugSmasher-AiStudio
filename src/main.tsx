@@ -10,7 +10,7 @@ import './index.css';
 if (typeof window !== 'undefined') {
   try {
     const desc = Object.getOwnPropertyDescriptor(window, 'fetch');
-    if (desc && desc.configurable) {
+    if (desc?.configurable) {
       let activeFetch = window.fetch;
       Object.defineProperty(window, 'fetch', {
         get() { return activeFetch; },

@@ -51,7 +51,7 @@ export function Armory({ onClose }: ArmoryProps) {
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => { window.removeEventListener('keydown', handleKeyDown); };
   }, []);
 
   // Restore original skin when Armory closes
@@ -198,8 +198,8 @@ export function Armory({ onClose }: ArmoryProps) {
                     </h3>
                     {activeThemeId && (
                       <button
-                        onClick={() => handleSelectTheme(null)}
-                        onMouseEnter={() => soundManager.uiHover()}
+                        onClick={() => { handleSelectTheme(null); }}
+                        onMouseEnter={() => { soundManager.uiHover(); }}
                         className="text-[10px] font-mono text-zinc-500 hover:text-white uppercase tracking-wider transition-colors"
                       >
                         Reset to Default
@@ -218,7 +218,7 @@ export function Armory({ onClose }: ArmoryProps) {
                             else soundManager.uiError();
                           }}
                           onMouseEnter={() => { soundManager.uiHover(); setHoveredThemeId(id); }}
-                          onMouseLeave={() => setHoveredThemeId(null)}
+                          onMouseLeave={() => { setHoveredThemeId(null); }}
                           disabled={!unlocked}
                           className={`relative p-6 rounded-2xl border text-left transition-all ${
                             active
@@ -264,7 +264,7 @@ export function Armory({ onClose }: ArmoryProps) {
                     {testDriveSkinId && (
                       <button
                         onClick={handleStopTestDrive}
-                        onMouseEnter={() => soundManager.uiHover()}
+                        onMouseEnter={() => { soundManager.uiHover(); }}
                         className="text-[10px] font-mono text-emerald-400 hover:text-emerald-300 uppercase tracking-wider transition-colors flex items-center space-x-1.5"
                       >
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -281,7 +281,7 @@ export function Armory({ onClose }: ArmoryProps) {
                         <div
                           key={skin.id}
                           onMouseEnter={() => { soundManager.uiHover(); setHoveredSkinId(skin.id); }}
-                          onMouseLeave={() => setHoveredSkinId(null)}
+                          onMouseLeave={() => { setHoveredSkinId(null); }}
                           className={`relative p-4 rounded-xl border text-left transition-all ${
                             isTestDriving
                               ? 'border-emerald-500/50 bg-emerald-500/10 shadow-[0_0_20px_rgba(34,197,94,0.1)]'
@@ -316,7 +316,7 @@ export function Armory({ onClose }: ArmoryProps) {
                           {unlocked && !isTestDriving && hoveredSkinId === skin.id && (
                             <button
                               onClick={(e) => { e.stopPropagation(); handleTestDrive(skin.id); }}
-                              onMouseEnter={() => soundManager.uiHover()}
+                              onMouseEnter={() => { soundManager.uiHover(); }}
                               className="w-full mt-2 py-1.5 px-2 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/20 hover:border-emerald-500/40 text-emerald-400 text-[9px] font-black uppercase tracking-widest transition-all"
                             >
                               ▶ Test Drive
@@ -411,7 +411,7 @@ export function Armory({ onClose }: ArmoryProps) {
                         <input
                           type="text"
                           value={keyInput}
-                          onChange={(e) => setKeyInput(e.target.value)}
+                          onChange={(e) => { setKeyInput(e.target.value); }}
                           onKeyDown={(e) => { if (e.key === 'Enter') handleRedeemKey(); }}
                           placeholder="Enter key code..."
                           className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm font-mono text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500/50 transition-colors uppercase tracking-widest"
@@ -731,7 +731,7 @@ function TabButton({ active, icon, label, onClick }: { active: boolean; icon: Re
   return (
     <button
       onClick={onClick}
-      onMouseEnter={() => soundManager.uiHover()}
+      onMouseEnter={() => { soundManager.uiHover(); }}
       className={`flex items-center space-x-3 px-6 py-3 rounded-xl transition-all ${
         active
           ? 'bg-white/10 text-white border border-white/10'

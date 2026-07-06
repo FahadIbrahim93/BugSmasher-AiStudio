@@ -93,5 +93,5 @@ export function subscribeAccessibility(
   };
   window.addEventListener(CHANGE_EVENT, handler);
   listener(loadAccessibilitySettings());
-  return () => window.removeEventListener(CHANGE_EVENT, handler);
+  return () => { window.removeEventListener(CHANGE_EVENT, handler); };
 }

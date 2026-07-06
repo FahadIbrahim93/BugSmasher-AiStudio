@@ -96,7 +96,7 @@ export function Game({
 
   useEffect(() => {
     analytics.track('session_start', { mode: challengeModifiers ? 'daily' : 'standard' });
-    return () => analytics.track('session_end');
+    return () => { analytics.track('session_end'); };
   }, [gameId, challengeModifiers]);
 
   useEffect(() => subscribeAccessibility(setA11y), []);
@@ -133,8 +133,8 @@ export function Game({
     // Auto-update spreadsheet in real-time if Google Sheets are connected
     if (accessToken) {
       pushPerformanceRow(accessToken, StatsManager.getStats())
-        .then(() => console.log('Real-time Google Sheets update complete on run end.'))
-        .catch(err => console.warn('Background spreadsheet sync failed:', err));
+        .then(() => { console.log('Real-time Google Sheets update complete on run end.'); })
+        .catch(err => { console.warn('Background spreadsheet sync failed:', err); });
     }
   }, [accessToken]);
 
@@ -250,7 +250,7 @@ export function Game({
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => { window.removeEventListener('keydown', handleKeyDown); };
   }, [togglePause, isSettingsOpen]);
 
   const handleStoryTrigger = useCallback((type: 'wave_start' | 'boss_kill' | 'game_start' | 'prestige', value: number) => {
@@ -280,7 +280,7 @@ export function Game({
       }
     };
     window.addEventListener('challenge_reward', handleReward);
-    return () => window.removeEventListener('challenge_reward', handleReward);
+    return () => { window.removeEventListener('challenge_reward', handleReward); };
   }, []);
 
   const canvasA11yStyle = getColorblindCanvasStyle(a11y.colorblindMode);
@@ -321,13 +321,13 @@ export function Game({
           onResume={togglePause}
           onSave={handleSave}
           onLoad={handleLoad}
-          onSettings={() => setIsSettingsOpen(true)}
+          onSettings={() => { setIsSettingsOpen(true); }}
           onMainMenu={onMainMenu}
         />
       )}
 
       {isSettingsOpen && (
-        <SettingsMenu onBack={() => setIsSettingsOpen(false)} />
+        <SettingsMenu onBack={() => { setIsSettingsOpen(false); }} />
       )}
       
       {isUpgrading && !isGameOver && (
@@ -339,7 +339,7 @@ export function Game({
             turret: engineRef.current?.autoTurretLevel || 0
           }}
           onUpgrade={handleUpgrade} 
-          onOpenProgression={() => setIsProgressionOpen(true)}
+          onOpenProgression={() => { setIsProgressionOpen(true); }}
           onNextWave={handleNextWave} 
           wave={currentWave} 
         />
@@ -390,8 +390,8 @@ export function Game({
         <SaveSlotsModal
           mode={saveSlotMode}
           gameStateToSave={gameStateToSave}
-          onClose={() => setSaveSlotMode(null)}
-          onSlotSaved={() => setSaveSlotMode(null)}
+          onClose={() => { setSaveSlotMode(null); }}
+          onSlotSaved={() => { setSaveSlotMode(null); }}
           onSlotLoaded={(data) => {
             if (engineRef.current) {
               engineRef.current.importState(data);

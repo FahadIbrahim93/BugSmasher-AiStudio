@@ -5,8 +5,8 @@ const firebaseMocks = vi.hoisted(() => ({
   currentUser: null as { uid: string; displayName: string } | null,
   submitScore: vi.fn(() => Promise.resolve(true)),
   getDoc: vi.fn(async () => ({
-    exists: () => false as boolean,
-    data: () => ({}) as Record<string, unknown>,
+    exists: () => false,
+    data: () => ({}),
   })),
 }));
 
@@ -111,12 +111,10 @@ describe('SaveManager', () => {
 
   it('submits high scores through Firebase when authenticated', async () => {
     firebaseMocks.currentUser = { uid: 'user-1', displayName: 'Operator' };
-    firebaseMocks.getDoc.mockImplementationOnce(() =>
-      Promise.resolve({
-        exists: () => true,
-        data: () => ({ username: 'Operator' }),
-      })
-    );
+    (firebaseMocks.getDoc as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      exists: () => true,
+      data: () => ({ username: 'Operator' }),
+    });
 
     await SaveManager.setHighScore(5000, 12);
 

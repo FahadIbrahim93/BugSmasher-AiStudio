@@ -114,9 +114,9 @@ export class ParticleSystem {
   }
 
   // Public flag so renderer can skip passes when nothing to draw
-  hasActiveEffects: boolean = false;
+  hasActiveEffects = false;
 
-  spawnMuzzleFlash(x: number, y: number, size: number = 40) {
+  spawnMuzzleFlash(x: number, y: number, size = 40) {
     const f = this.muzzleFlashes[this.muzzleFlashIdx];
     f.active = true;
     f.x = x;
@@ -164,7 +164,7 @@ export class ParticleSystem {
     this.splatterIdx = (this.splatterIdx + 1) % MAX_SPLATTERS;
   }
   
-  spawnGibs(x: number, y: number, color: string, count: number = 15) {
+  spawnGibs(x: number, y: number, color: string, count = 15) {
     const isLowQuality = this.engine && (this.engine.isMobile || !this.engine.highFidelityVFX);
     let finalCount = isLowQuality ? Math.max(1, Math.round(count * 0.4)) : count;
     finalCount = Math.max(1, Math.round(finalCount * this.vfxCountMultiplier));
@@ -293,7 +293,7 @@ export class ParticleSystem {
     this.shockwaveIdx = (this.shockwaveIdx + 1) % MAX_SHOCKWAVES;
   }
 
-  spawnLaser(x1: number, y1: number, x2: number, y2: number, color: string, width: number = 2) {
+  spawnLaser(x1: number, y1: number, x2: number, y2: number, color: string, width = 2) {
     const l = this.lasers[this.laserIdx];
     l.active = true;
     l.x1 = x1;
@@ -359,7 +359,7 @@ export class ParticleSystem {
     }
   }
 
-  spawnSmoke(x: number, y: number, color: string = 'rgba(100, 100, 100, 0.5)') {
+  spawnSmoke(x: number, y: number, color = 'rgba(100, 100, 100, 0.5)') {
     const isLowQuality = this.engine && (this.engine.isMobile || !this.engine.highFidelityVFX);
     let count = isLowQuality ? 2 : 5;
     count = Math.max(1, Math.round(count * this.vfxCountMultiplier));
@@ -384,7 +384,7 @@ export class ParticleSystem {
     }
   }
 
-  spawnParticle(x: number, y: number, color: string, size: number = 5, life: number = 0.5) {
+  spawnParticle(x: number, y: number, color: string, size = 5, life = 0.5) {
     const p = this.particles[this.particleIdx];
     const angle = Math.random() * Math.PI * 2;
     const speed = Math.random() * 200 + 50;

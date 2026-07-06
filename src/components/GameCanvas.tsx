@@ -27,7 +27,7 @@ export const GameCanvas = forwardRef<GameEngine | null, GameCanvasProps>(({
         if (!engineRef.current) return undefined;
         const value = (engineRef.current as unknown as Record<string, unknown>)[prop as string];
         if (typeof value === 'function') {
-          return (value as Function).bind(engineRef.current);
+          return (value).bind(engineRef.current);
         }
         return value;
       },

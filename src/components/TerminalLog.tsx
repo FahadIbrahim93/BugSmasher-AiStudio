@@ -27,7 +27,7 @@ export const TerminalLog = ({ unlockedLogs }: TerminalLogProps) => {
       const timer = setTimeout(() => {
         setShowNotification(false);
       }, 5000);
-      return () => clearTimeout(timer);
+      return () => { clearTimeout(timer); };
     }
     return;
   }, [unlockedLogs, lastUnlocked]);
@@ -42,7 +42,7 @@ export const TerminalLog = ({ unlockedLogs }: TerminalLogProps) => {
             initial={{ x: 300, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 300, opacity: 0 }}
-            onClick={() => setIsExpanded(true)}
+            onClick={() => { setIsExpanded(true); }}
             className="pointer-events-auto bg-zinc-900 border-2 border-emerald-500 p-3 rounded-lg shadow-[0_0_20px_rgba(16,185,129,0.3)] cursor-pointer hover:bg-zinc-800 flex items-center space-x-3 group"
           >
             <div className="w-8 h-8 rounded bg-emerald-500/20 flex items-center justify-center">

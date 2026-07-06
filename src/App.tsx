@@ -35,7 +35,7 @@ export default function App() {
         <CustomCursor />
         <AchievementToast />
         {gameState === 'preloading' && (
-          <Preloader onComplete={() => setGameState('menu')} />
+          <Preloader onComplete={() => { setGameState('menu'); }} />
         )}
         {gameState === 'menu' && (
           <>
@@ -47,20 +47,20 @@ export default function App() {
                 setCustomBiome(biome);
                 setGameState('playing');
               }}
-              onSettings={() => setIsSettingsOpen(true)}
-              onIntel={() => setIsIntelOpen(true)}
+              onSettings={() => { setIsSettingsOpen(true); }}
+              onIntel={() => { setIsIntelOpen(true); }}
             />
             <Suspense fallback={null}>
               {isSettingsOpen && (
                 <SettingsMenu 
-                  onBack={() => setIsSettingsOpen(false)} 
+                  onBack={() => { setIsSettingsOpen(false); }} 
                   onOpenArmory={() => {
                     setIsSettingsOpen(false);
                   }}
                 />
               )}
               {isIntelOpen && (
-                <IntelHub onBack={() => setIsIntelOpen(false)} />
+                <IntelHub onBack={() => { setIsIntelOpen(false); }} />
               )}
             </Suspense>
           </>

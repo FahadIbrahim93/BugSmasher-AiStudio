@@ -124,7 +124,7 @@ export class IndexedDBSaveSystem {
         const store = transaction.objectStore(STORE_NAME);
         const request = store.put(slot);
 
-        request.onsuccess = () => resolve(true);
+        request.onsuccess = () => { resolve(true); };
         request.onerror = () => {
           console.error('Error saving slot to IndexedDB', request.error);
           resolve(false);
@@ -210,7 +210,7 @@ export class IndexedDBSaveSystem {
         const store = transaction.objectStore(STORE_NAME);
         const request = store.delete(id);
 
-        request.onsuccess = () => resolve(true);
+        request.onsuccess = () => { resolve(true); };
         request.onerror = () => {
           console.error('Error deleting slot from IndexedDB', request.error);
           resolve(false);

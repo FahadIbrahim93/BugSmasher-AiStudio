@@ -99,7 +99,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
       setSomaticVoltage(Math.floor(Math.random() * 30) + 35);
       setDopamineRate(Math.floor(Math.random() * 20) + 78);
     }, 4000);
-    return () => clearInterval(interval);
+    return () => { clearInterval(interval); };
   }, [activeTab]);
 
   const stats = StatsManager.getStats();
@@ -149,7 +149,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
   const upgradeCost = selectedSkill?.costPerLevel(currentRank) || {};
 
   const canAffordNode = selectedSkill && Object.entries(upgradeCost).every(([res, amt]) => {
-    return (progData.inventory[res as ResourceType] || 0) >= (amt as number);
+    return (progData.inventory[res as ResourceType] || 0) >= (amt);
   });
 
   // Helper to check if node dependencies are met
@@ -475,7 +475,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
                               if (!amt) return null;
                               const resDef = RESOURCES[res as ResourceType];
                               const has = progData.inventory[res as ResourceType] || 0;
-                              const needed = amt as number;
+                              const needed = amt;
                               return (
                                 <div key={res} className="p-2.5 bg-black/40 border border-white/5 rounded-lg flex flex-col justify-center">
                                   <div className="flex items-center space-x-1.5 mb-1">
@@ -494,7 +494,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
 
                       {/* Action trigger button */}
                       <button
-                        onClick={() => handleUpgradeNode(selectedNodeId)}
+                        onClick={() => { handleUpgradeNode(selectedNodeId); }}
                         disabled={!canAffordNode || currentRank >= maxRank}
                         className={`w-full py-4 rounded-xl font-mono text-xs font-bold uppercase tracking-widest transition-all text-center ${
                           currentRank >= maxRank
@@ -970,7 +970,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
                           <input
                             type="email"
                             value={recipientEmail}
-                            onChange={(e) => setRecipientEmail(e.target.value)}
+                            onChange={(e) => { setRecipientEmail(e.target.value); }}
                             className="w-full bg-[#030508] border border-cyan-500/20 rounded-lg px-3 py-2 text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-400 transition-colors"
                             placeholder="Enter recipient email..."
                           />

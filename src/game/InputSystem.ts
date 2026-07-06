@@ -7,10 +7,10 @@ import { GameConfig } from './GameConfig';  // Fixed: added missing import per a
 
 export class InputSystem {
   private engine: GameEngine;
-  public lastMouseX: number = 0;
-  public lastMouseY: number = 0;
-  private rapidClickCount: number = 0;
-  private rapidClickWindow: number = 0;
+  public lastMouseX = 0;
+  public lastMouseY = 0;
+  private rapidClickCount = 0;
+  private rapidClickWindow = 0;
 
   private get isClickThrottled(): boolean {
     const now = performance.now();

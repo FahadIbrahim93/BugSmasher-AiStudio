@@ -25,8 +25,8 @@ export function PauseMenu({
 
   return (
     <div className="absolute inset-0 bg-black/60 backdrop-blur-xl flex flex-col items-center justify-center z-50 p-4">
-      {isAccountOpen && <AccountMenu onClose={() => setIsAccountOpen(false)} />}
-      {isIntelOpen && <IntelHub onBack={() => setIsIntelOpen(false)} />}
+      {isAccountOpen && <AccountMenu onClose={() => { setIsAccountOpen(false); }} />}
+      {isIntelOpen && <IntelHub onBack={() => { setIsIntelOpen(false); }} />}
       
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
@@ -48,7 +48,7 @@ export function PauseMenu({
         <div className="w-full flex flex-col space-y-4">
           <button 
             onClick={() => { soundManager.uiClick(); onResume(); }}
-            onMouseEnter={() => soundManager.uiHover()}
+            onMouseEnter={() => { soundManager.uiHover(); }}
             className="w-full py-4 bg-white text-black hover:bg-zinc-200 rounded-full font-bold text-sm uppercase tracking-widest transition-all shadow-lg"
           >
             <span className="flex items-center justify-center">
@@ -60,7 +60,7 @@ export function PauseMenu({
           <div className="grid grid-cols-2 gap-4">
             <button 
               onClick={() => { soundManager.uiClick(); onSave(); }}
-              onMouseEnter={() => soundManager.uiHover()}
+              onMouseEnter={() => { soundManager.uiHover(); }}
               className="py-3 bg-zinc-800/80 border border-white/10 hover:bg-zinc-700/80 text-zinc-300 rounded-2xl font-mono text-xs uppercase tracking-widest transition-colors flex items-center justify-center"
             >
               <Save className="w-4 h-4 mr-2 opacity-70" />
@@ -68,7 +68,7 @@ export function PauseMenu({
             </button>
             <button 
               onClick={() => { soundManager.uiClick(); onLoad(); }}
-              onMouseEnter={() => soundManager.uiHover()}
+              onMouseEnter={() => { soundManager.uiHover(); }}
               disabled={!hasSave}
               className="py-3 bg-zinc-800/80 border border-white/10 hover:bg-zinc-700/80 text-zinc-300 rounded-2xl font-mono text-xs uppercase tracking-widest transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
             >
@@ -80,7 +80,7 @@ export function PauseMenu({
           <div className="grid grid-cols-2 gap-4">
             <button 
               onClick={() => { soundManager.uiClick(); setIsAccountOpen(true); }}
-              onMouseEnter={() => soundManager.uiHover()}
+              onMouseEnter={() => { soundManager.uiHover(); }}
               className="py-3 bg-zinc-800/50 border border-white/10 hover:bg-white/5 text-zinc-400 rounded-2xl font-mono text-[10px] uppercase tracking-widest transition-colors flex items-center justify-center"
             >
               <Trophy className="w-3.5 h-3.5 mr-2 opacity-70" />
@@ -88,7 +88,7 @@ export function PauseMenu({
             </button>
             <button 
               onClick={() => { soundManager.uiClick(); setIsIntelOpen(true); }}
-              onMouseEnter={() => soundManager.uiHover()}
+              onMouseEnter={() => { soundManager.uiHover(); }}
               className="py-3 bg-zinc-800/50 border border-white/10 hover:bg-white/5 text-zinc-400 rounded-2xl font-mono text-[10px] uppercase tracking-widest transition-colors flex items-center justify-center"
             >
               <BookOpen className="w-3.5 h-3.5 mr-2 opacity-70" />
@@ -98,7 +98,7 @@ export function PauseMenu({
 
           <button 
             onClick={() => { soundManager.uiClick(); onSettings(); }}
-            onMouseEnter={() => soundManager.uiHover()}
+            onMouseEnter={() => { soundManager.uiHover(); }}
             className="w-full py-3 bg-zinc-800/50 border border-white/10 hover:bg-white/5 text-zinc-400 rounded-2xl font-mono text-xs uppercase tracking-widest transition-colors flex items-center justify-center"
           >
             <Settings2 className="w-4 h-4 mr-2 opacity-70" />
@@ -107,7 +107,7 @@ export function PauseMenu({
           
           <button 
             onClick={() => { soundManager.uiClick(); onMainMenu(); }}
-            onMouseEnter={() => soundManager.uiHover()}
+            onMouseEnter={() => { soundManager.uiHover(); }}
             className="w-full py-3 bg-transparent hover:text-red-400 text-zinc-500 rounded-full font-medium text-xs font-mono uppercase tracking-widest transition-colors flex items-center justify-center"
           >
             <Home className="w-4 h-4 mr-3 opacity-50" />

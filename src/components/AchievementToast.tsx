@@ -9,11 +9,11 @@ export function AchievementToast() {
   useEffect(() => {
     const handleAchievement = (e: CustomEvent<Achievement>) => {
       setAchievement(e.detail);
-      setTimeout(() => setAchievement(null), 5000);
+      setTimeout(() => { setAchievement(null); }, 5000);
     };
 
     window.addEventListener('achievement_unlocked', handleAchievement as EventListener);
-    return () => window.removeEventListener('achievement_unlocked', handleAchievement as EventListener);
+    return () => { window.removeEventListener('achievement_unlocked', handleAchievement as EventListener); };
   }, []);
 
   return (
@@ -34,7 +34,7 @@ export function AchievementToast() {
             <p className="text-zinc-400 text-xs">{achievement.description}</p>
           </div>
           <button 
-            onClick={() => setAchievement(null)}
+            onClick={() => { setAchievement(null); }}
             className="text-zinc-500 hover:text-white"
           >
             <X className="w-4 h-4" />

@@ -364,7 +364,7 @@ describe('ParticleSystem', () => {
     });
 
     it('should not throw when updating with empty pools', () => {
-      expect(() => ps.update(0.1)).not.toThrow();
+      expect(() => { ps.update(0.1); }).not.toThrow();
     });
   });
 

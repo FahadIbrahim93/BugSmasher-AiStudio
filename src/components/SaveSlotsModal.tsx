@@ -204,7 +204,7 @@ export function SaveSlotsModal({
                     {mode === 'save' ? (
                       <button
                         onClick={() => handleSaveToSlot(slotId)}
-                        onMouseEnter={() => soundManager.uiHover()}
+                        onMouseEnter={() => { soundManager.uiHover(); }}
                         className="py-2.5 px-6 bg-zinc-900 hover:bg-white hover:text-black hover:scale-[1.02] border border-zinc-800 hover:border-white rounded-xl text-xs font-mono font-bold uppercase tracking-widest text-zinc-400 transition-all flex items-center justify-center"
                       >
                         <Save className="w-4 h-4 mr-2" />
@@ -243,7 +243,7 @@ export function SaveSlotsModal({
                         <input
                           type="text"
                           value={tempName}
-                          onChange={(e) => setTempName(e.target.value)}
+                          onChange={(e) => { setTempName(e.target.value); }}
                           maxLength={32}
                           className="bg-zinc-900 border border-zinc-700 text-white font-mono text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-cyan-500 w-full"
                           autoFocus
@@ -259,7 +259,7 @@ export function SaveSlotsModal({
                           <Check className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => setEditingSlotId(null)}
+                          onClick={() => { setEditingSlotId(null); }}
                           className="p-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 border border-zinc-800 rounded-lg text-xs"
                         >
                           <X className="w-4 h-4" />
@@ -276,7 +276,7 @@ export function SaveSlotsModal({
                               {slot.name}
                             </span>
                             <button
-                              onClick={(e) => startRenameSlot(slotId, slot.name, e)}
+                              onClick={(e) => { startRenameSlot(slotId, slot.name, e); }}
                               className="text-zinc-500 hover:text-white transition-colors"
                               title="Rename memory core node"
                             >
@@ -327,7 +327,7 @@ export function SaveSlotsModal({
                     {/* Deletion control */}
                     <button
                       onClick={(e) => handleDeleteSlot(slotId, e)}
-                      onMouseEnter={() => soundManager.uiHover()}
+                      onMouseEnter={() => { soundManager.uiHover(); }}
                       className="text-zinc-500 hover:text-red-400 text-xs font-mono flex items-center transition-colors px-2 py-1 rounded-lg hover:bg-red-500/5"
                     >
                       <Trash2 className="w-3.5 h-3.5 mr-1.5" />
@@ -338,7 +338,7 @@ export function SaveSlotsModal({
                     {mode === 'save' ? (
                       <button
                         onClick={() => handleSaveToSlot(slotId)}
-                        onMouseEnter={() => soundManager.uiHover()}
+                        onMouseEnter={() => { soundManager.uiHover(); }}
                         className="py-2 px-5 bg-zinc-900 text-zinc-400 hover:bg-white hover:text-black border border-zinc-800 hover:border-white text-xs font-mono font-bold uppercase tracking-widest rounded-xl transition-all flex items-center"
                       >
                         <Save className="w-3.5 h-3.5 mr-2" />
@@ -347,7 +347,7 @@ export function SaveSlotsModal({
                     ) : (
                       <button
                         onClick={() => handleLoadFromSlot(slotId)}
-                        onMouseEnter={() => soundManager.uiHover()}
+                        onMouseEnter={() => { soundManager.uiHover(); }}
                         className="py-2 px-5 bg-zinc-900 text-zinc-400 hover:bg-emerald-500 hover:text-black border border-zinc-800 hover:border-emerald-500 text-xs font-mono font-bold uppercase tracking-widest rounded-xl transition-all flex items-center shadow-lg"
                       >
                         <Download className="w-3.5 h-3.5 mr-2" />

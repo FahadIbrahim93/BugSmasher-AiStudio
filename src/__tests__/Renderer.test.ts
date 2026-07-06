@@ -238,7 +238,7 @@ describe('Renderer', () => {
     });
 
     it('should not throw when drawing', () => {
-      expect(() => renderer.draw()).not.toThrow();
+      expect(() => { renderer.draw(); }).not.toThrow();
     });
 
     it('should set background fill', () => {
@@ -264,7 +264,7 @@ describe('Renderer', () => {
       engine.startWave();
       (engine as any).waveManager.spawnBug();
       const bug = engine.bugs[0];
-      expect(() => renderer.drawBug(bug)).not.toThrow();
+      expect(() => { renderer.drawBug(bug); }).not.toThrow();
     });
 
     it('should draw boss bug without throwing', () => {
@@ -287,7 +287,7 @@ describe('Renderer', () => {
         armor: 1.0,
         webTimer: 0,
       };
-      expect(() => renderer.drawBug(bug as any)).not.toThrow();
+      expect(() => { renderer.drawBug(bug as any); }).not.toThrow();
     });
 
     it('should skip ghost bugs when flickering', () => {
@@ -311,49 +311,49 @@ describe('Renderer', () => {
         webTimer: 0,
       };
       // Should not throw
-      expect(() => renderer.drawBug(bug as any)).not.toThrow();
+      expect(() => { renderer.drawBug(bug as any); }).not.toThrow();
     });
   });
 
   describe('drawBugBody variants', () => {
     it('should draw scout body', () => {
       const bug = { type: 'scout', color: '#00ff00', size: 15, walkCycle: 0, rotation: 0 } as any;
-      expect(() => renderer.drawBugBody(bug, 0)).not.toThrow();
+      expect(() => { renderer.drawBugBody(bug, 0); }).not.toThrow();
     });
 
     it('should draw tank body', () => {
       const bug = { type: 'tank', color: '#ff6600', size: 25, walkCycle: 0, rotation: 0 } as any;
-      expect(() => renderer.drawBugBody(bug, 0)).not.toThrow();
+      expect(() => { renderer.drawBugBody(bug, 0); }).not.toThrow();
     });
 
     it('should draw healer body', () => {
       const bug = { type: 'healer', color: '#00ff88', size: 15, walkCycle: 0, rotation: 0, isHealing: false } as any;
-      expect(() => renderer.drawBugBody(bug, 0)).not.toThrow();
+      expect(() => { renderer.drawBugBody(bug, 0); }).not.toThrow();
     });
 
     it('should draw swarmer body', () => {
       const bug = { type: 'swarmer', color: '#ffff00', size: 10, walkCycle: 0, rotation: 0 } as any;
-      expect(() => renderer.drawBugBody(bug, 0)).not.toThrow();
+      expect(() => { renderer.drawBugBody(bug, 0); }).not.toThrow();
     });
 
     it('should draw phase body', () => {
       const bug = { type: 'phase', color: '#00ffff', size: 15, walkCycle: 0, rotation: 0 } as any;
-      expect(() => renderer.drawBugBody(bug, 0)).not.toThrow();
+      expect(() => { renderer.drawBugBody(bug, 0); }).not.toThrow();
     });
 
     it('should draw ember body', () => {
       const bug = { type: 'ember', color: '#ff4400', size: 15, walkCycle: 0, rotation: 0 } as any;
-      expect(() => renderer.drawBugBody(bug, 0)).not.toThrow();
+      expect(() => { renderer.drawBugBody(bug, 0); }).not.toThrow();
     });
 
     it('should draw frost body', () => {
       const bug = { type: 'frost', color: '#00ccff', size: 15, walkCycle: 0, rotation: 0 } as any;
-      expect(() => renderer.drawBugBody(bug, 0)).not.toThrow();
+      expect(() => { renderer.drawBugBody(bug, 0); }).not.toThrow();
     });
 
     it('should draw default beetle body for unknown types', () => {
       const bug = { type: 'unknown', color: '#ff00ff', size: 15, walkCycle: 0, rotation: 0 } as any;
-      expect(() => renderer.drawBugBody(bug, 0)).not.toThrow();
+      expect(() => { renderer.drawBugBody(bug, 0); }).not.toThrow();
     });
   });
 
@@ -368,7 +368,7 @@ describe('Renderer', () => {
         life: 8, maxLife: 8, size: 15,
         collection: 'click',
       };
-      expect(() => renderer.drawPowerup(p as any)).not.toThrow();
+      expect(() => { renderer.drawPowerup(p); }).not.toThrow();
     });
 
     it('should draw hover-type powerup without throwing', () => {
@@ -381,7 +381,7 @@ describe('Renderer', () => {
         life: 8, maxLife: 8, size: 15,
         collection: 'hover',
       };
-      expect(() => renderer.drawPowerup(p as any)).not.toThrow();
+      expect(() => { renderer.drawPowerup(p); }).not.toThrow();
     });
 
     it('should flicker powerup with low life', () => {
@@ -394,7 +394,7 @@ describe('Renderer', () => {
         life: 1.5, maxLife: 8, size: 15,
         collection: 'click',
       };
-      expect(() => renderer.drawPowerup(p as any)).not.toThrow();
+      expect(() => { renderer.drawPowerup(p); }).not.toThrow();
     });
   });
 
@@ -407,7 +407,7 @@ describe('Renderer', () => {
         color: '#aaaaaa',
         life: 15, maxLife: 20, size: 8,
       };
-      expect(() => renderer.drawResource(r as import('../game/GameTypes').ResourcePickup)).not.toThrow();
+      expect(() => { renderer.drawResource(r as import('../game/GameTypes').ResourcePickup); }).not.toThrow();
     });
 
     it('should skip inactive resources', () => {
@@ -418,7 +418,7 @@ describe('Renderer', () => {
         color: '#aaaaaa',
         life: 0, maxLife: 20, size: 8,
       };
-      expect(() => renderer.drawResource(r as import('../game/GameTypes').ResourcePickup)).not.toThrow();
+      expect(() => { renderer.drawResource(r as import('../game/GameTypes').ResourcePickup); }).not.toThrow();
     });
   });
 
@@ -438,7 +438,7 @@ describe('Renderer', () => {
           active: true,
         })),
       };
-      expect(() => renderer.drawSplatter(s as any)).not.toThrow();
+      expect(() => { renderer.drawSplatter(s); }).not.toThrow();
     });
   });
 
@@ -452,7 +452,7 @@ describe('Renderer', () => {
         timer: 1,
         duration: 3,
       };
-      expect(() => renderer.drawHazard(h as any)).not.toThrow();
+      expect(() => { renderer.drawHazard(h as any); }).not.toThrow();
     });
 
     it('should draw a web hazard', () => {
@@ -464,24 +464,24 @@ describe('Renderer', () => {
         timer: 2,
         duration: 8,
       };
-      expect(() => renderer.drawHazard(h as any)).not.toThrow();
+      expect(() => { renderer.drawHazard(h as any); }).not.toThrow();
     });
   });
 
   describe('drawBase', () => {
     it('should draw the base/core', () => {
       engine.start();
-      expect(() => renderer.drawBase()).not.toThrow();
+      expect(() => { renderer.drawBase(); }).not.toThrow();
     });
 
     it('should show shield when shieldTimer is active', () => {
       engine.shieldTimer = 5;
-      expect(() => renderer.drawBase()).not.toThrow();
+      expect(() => { renderer.drawBase(); }).not.toThrow();
     });
 
     it('should show upgrade flash when upgradeFlash is set', () => {
       engine.upgradeFlash = 1.0;
-      expect(() => renderer.drawBase()).not.toThrow();
+      expect(() => { renderer.drawBase(); }).not.toThrow();
     });
   });
 
@@ -490,7 +490,7 @@ describe('Renderer', () => {
       const biomes = ['quantum_void', 'ember_depths', 'frostbyte', 'void_abyss', 'golden_cache', 'golden_spire'];
       for (const biome of biomes) {
         engine.currentBiome = biome;
-        expect(() => renderer.drawBiomeBackground()).not.toThrow();
+        expect(() => { renderer.drawBiomeBackground(); }).not.toThrow();
       }
     });
   });
@@ -498,32 +498,32 @@ describe('Renderer', () => {
   describe('visual effect draw methods', () => {
     it('should draw shockwave', () => {
       const sw = { x: 200, y: 200, radius: 50, color: '#ffffff', life: 0.2, maxLife: 0.3 } as any;
-      expect(() => renderer.drawShockwave(sw)).not.toThrow();
+      expect(() => { renderer.drawShockwave(sw); }).not.toThrow();
     });
 
     it('should draw laser', () => {
       const l = { x1: 0, y1: 0, x2: 100, y2: 100, color: '#ff0000', width: 3, life: 0.1, maxLife: 0.15 } as any;
-      expect(() => renderer.drawLaser(l)).not.toThrow();
+      expect(() => { renderer.drawLaser(l); }).not.toThrow();
     });
 
     it('should draw spark particle', () => {
       const p = { x: 100, y: 100, type: 'spark', color: '#ffff00', size: 5, life: 0.5, maxLife: 1.0, rotation: 0 } as any;
-      expect(() => renderer.drawParticle(p)).not.toThrow();
+      expect(() => { renderer.drawParticle(p); }).not.toThrow();
     });
 
     it('should draw smoke particle', () => {
       const p = { x: 100, y: 100, type: 'smoke', color: 'rgba(100,100,100,0.5)', size: 10, life: 0.5, maxLife: 1.0, rotation: 0 } as any;
-      expect(() => renderer.drawParticle(p)).not.toThrow();
+      expect(() => { renderer.drawParticle(p); }).not.toThrow();
     });
 
     it('should draw regular particle', () => {
       const p = { x: 100, y: 100, type: 'regular', color: '#ffffff', size: 5, life: 0.5, maxLife: 1.0, rotation: 0 } as any;
-      expect(() => renderer.drawParticle(p)).not.toThrow();
+      expect(() => { renderer.drawParticle(p); }).not.toThrow();
     });
 
     it('should draw muzzle flash', () => {
       const f = { x: 100, y: 100, size: 40, life: 0.03, maxLife: 0.05 } as any;
-      expect(() => renderer.drawMuzzleFlash(f)).not.toThrow();
+      expect(() => { renderer.drawMuzzleFlash(f); }).not.toThrow();
     });
   });
 
@@ -535,7 +535,7 @@ describe('Renderer', () => {
     });
 
     it('should draw boss warning', () => {
-      expect(() => renderer.drawBossWarning()).not.toThrow();
+      expect(() => { renderer.drawBossWarning(); }).not.toThrow();
     });
 
     it('should draw boss health bar when boss exists', () => {
@@ -560,38 +560,38 @@ describe('Renderer', () => {
         webTimer: 0,
       };
       engine.bugs.push(boss as any);
-      expect(() => renderer.drawBossHealthBar(800, 600)).not.toThrow();
+      expect(() => { renderer.drawBossHealthBar(800, 600); }).not.toThrow();
     });
   });
 
   describe('post-processing effects', () => {
     it('should draw scanlines', () => {
-      expect(() => renderer.drawScanlines()).not.toThrow();
+      expect(() => { renderer.drawScanlines(); }).not.toThrow();
     });
 
     it('should draw CRT overlay', () => {
-      expect(() => renderer.drawCRTOverlay()).not.toThrow();
+      expect(() => { renderer.drawCRTOverlay(); }).not.toThrow();
     });
 
     it('should draw glitch overlay', () => {
       engine.waveManager.isBossWave = true;
-      expect(() => renderer.drawGlitchOverlay()).not.toThrow();
+      expect(() => { renderer.drawGlitchOverlay(); }).not.toThrow();
     });
 
     it('should draw chromatic aberration', () => {
       renderer.chromaticOffset = 10;
-      expect(() => renderer.drawChromaticAberration()).not.toThrow();
+      expect(() => { renderer.drawChromaticAberration(); }).not.toThrow();
     });
   });
 
   describe('drawLightingPass', () => {
     it('should draw lighting pass', () => {
-      expect(() => renderer.drawLightingPass(800, 600)).not.toThrow();
+      expect(() => { renderer.drawLightingPass(800, 600); }).not.toThrow();
     });
 
     it('should skip detailed lighting on low FPS', () => {
       renderer.currentFps = 25;
-      expect(() => renderer.drawLightingPass(800, 600)).not.toThrow();
+      expect(() => { renderer.drawLightingPass(800, 600); }).not.toThrow();
     });
   });
 
@@ -599,7 +599,7 @@ describe('Renderer', () => {
     it('should show active powerup timers', () => {
       engine.multiplierTimer = 5;
       engine.rapidFireTimer = 10;
-      expect(() => renderer.drawActivePowerupUI(800, 600)).not.toThrow();
+      expect(() => { renderer.drawActivePowerupUI(800, 600); }).not.toThrow();
     });
 
     it('should show nothing when no timers active', () => {
@@ -607,46 +607,46 @@ describe('Renderer', () => {
       engine.rapidFireTimer = 0;
       engine.slowMoTimer = 0;
       engine.overdriveTimer = 0;
-      expect(() => renderer.drawActivePowerupUI(800, 600)).not.toThrow();
+      expect(() => { renderer.drawActivePowerupUI(800, 600); }).not.toThrow();
     });
   });
 
   describe('drawBossHealthBar', () => {
     it('should not draw when no boss exists', () => {
       engine.bugs = [];
-      expect(() => renderer.drawBossHealthBar(800, 600)).not.toThrow();
+      expect(() => { renderer.drawBossHealthBar(800, 600); }).not.toThrow();
     });
   });
 
   describe('environmental draws', () => {
     it('should draw grid', () => {
-      expect(() => renderer.drawGrid(200, 'rgba(255,255,255,0.01)')).not.toThrow();
+      expect(() => { renderer.drawGrid(200, 'rgba(255,255,255,0.01)'); }).not.toThrow();
     });
 
     it('should draw starfield', () => {
-      expect(() => renderer.drawStarfield(50)).not.toThrow();
+      expect(() => { renderer.drawStarfield(50); }).not.toThrow();
     });
 
     it('should draw lava bubbles', () => {
-      expect(() => renderer.drawLavaBubbles()).not.toThrow();
+      expect(() => { renderer.drawLavaBubbles(); }).not.toThrow();
     });
 
     it('should draw snowflakes', () => {
-      expect(() => renderer.drawSnowflakes()).not.toThrow();
+      expect(() => { renderer.drawSnowflakes(); }).not.toThrow();
     });
 
     it('should draw dynamic mesh', () => {
       renderer.currentFps = 60;
-      expect(() => renderer.drawDynamicMesh()).not.toThrow();
+      expect(() => { renderer.drawDynamicMesh(); }).not.toThrow();
     });
 
     it('should skip dynamic mesh on very low FPS', () => {
       renderer.currentFps = 15;
-      expect(() => renderer.drawDynamicMesh()).not.toThrow();
+      expect(() => { renderer.drawDynamicMesh(); }).not.toThrow();
     });
 
     it('should draw clouds', () => {
-      expect(() => renderer.drawClouds()).not.toThrow();
+      expect(() => { renderer.drawClouds(); }).not.toThrow();
     });
   });
 
@@ -664,7 +664,7 @@ describe('Renderer', () => {
       renderer.impactFlash = 0.3;
       renderer.powerupAlpha = 0.5;
 
-      expect(() => renderer.draw()).not.toThrow();
+      expect(() => { renderer.draw(); }).not.toThrow();
     });
 
     it('should handle multiple frames without error', () => {
@@ -681,7 +681,7 @@ describe('Renderer', () => {
     it('should handle low-end mode without errors', () => {
       engine.isMobile = true;
       renderer.currentFps = 20;
-      expect(() => renderer.draw()).not.toThrow();
+      expect(() => { renderer.draw(); }).not.toThrow();
     });
   });
 });

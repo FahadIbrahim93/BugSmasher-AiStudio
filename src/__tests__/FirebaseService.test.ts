@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChecksumSystem } from '../lib/checksum';
 
 const mocks = vi.hoisted(() => ({
-  currentUser: { uid: 'user-1' } as { uid: string } | null,
+  currentUser: { uid: 'user-1' },
   callable: vi.fn(),
   httpsCallable: vi.fn(),
   getDoc: vi.fn(),

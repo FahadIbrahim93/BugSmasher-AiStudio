@@ -300,7 +300,7 @@ export class MissionManager {
     return this.getState().weekly;
   }
 
-  static updateProgress(type: MissionType, amount: number = 1): Mission[] {
+  static updateProgress(type: MissionType, amount = 1): Mission[] {
     const state = this.getState();
     const completedMissions: Mission[] = [];
 

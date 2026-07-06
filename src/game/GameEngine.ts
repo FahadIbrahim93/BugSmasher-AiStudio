@@ -29,9 +29,9 @@ export class GameEngine {
   ctx: CanvasRenderingContext2D;
   width: number;
   height: number;
-  dpr: number = 1;
-  isMobile: boolean = false;
-  highFidelityVFX: boolean = true;
+  dpr = 1;
+  isMobile = false;
+  highFidelityVFX = true;
 
   bugs: Bug[] = [];
   hazards: Hazard[] = [];
@@ -49,120 +49,120 @@ export class GameEngine {
   powerups: Powerup[] = [];
   resources: ResourcePickup[] = [];
 
-  score: number = 0;
+  score = 0;
   health: number = GameConfig.player.maxHealth;
   maxHealth: number = GameConfig.player.maxHealth;
-  wave: number = 1;
-  waveCrystalWeb: boolean = false;
-  waveLastStand: boolean = false;
+  wave = 1;
+  waveCrystalWeb = false;
+  waveLastStand = false;
 
-  lastTime: number = 0;
-  globalTime: number = 0;
-  animationFrameId: number = 0;
+  lastTime = 0;
+  globalTime = 0;
+  animationFrameId = 0;
 
-  shakeTime: number = 0;
-  shakeMagnitude: number = 0;
-  shakeX: number = 0;
-  shakeY: number = 0;
+  shakeTime = 0;
+  shakeMagnitude = 0;
+  shakeX = 0;
+  shakeY = 0;
 
-  hitStopTimer: number = 0;
+  hitStopTimer = 0;
 
-  isRunning: boolean = false;
-  isPaused: boolean = false;
+  isRunning = false;
+  isPaused = false;
 
-  currentBiome: string = 'neon_core';
-  prestigeLevel: number = 0;
+  currentBiome = 'neon_core';
+  prestigeLevel = 0;
 
   // Upgrades
-  clickRadiusMultiplier: number = 1;
-  autoTurretLevel: number = 0;
-  healthLevel: number = 0;
-  radiusLevel: number = 0;
+  clickRadiusMultiplier = 1;
+  autoTurretLevel = 0;
+  healthLevel = 0;
+  radiusLevel = 0;
 
-  damageMultiplier: number = 1.0;
+  damageMultiplier = 1.0;
 
-  clickCooldown: number = 0;
-  weaponHeat: number = 0;
-  isOverheated: boolean = false;
+  clickCooldown = 0;
+  weaponHeat = 0;
+  isOverheated = false;
 
   // Powerups (timers maintained here for external access)
-  shieldTimer: number = 0;
-  multiplierTimer: number = 0;
-  rapidFireTimer: number = 0;
-  autoTurretTimer: number = 0;
-  slowMoTimer: number = 0;
-  overdriveTimer: number = 0;
-  freezeTimer: number = 0;
-  magnetTimer: number = 0;
-  spikeBurstTimer: number = 0;
-  controlDistortionTimer: number = 0;
-  hazardSlowdown: number = 1.0;
+  shieldTimer = 0;
+  multiplierTimer = 0;
+  rapidFireTimer = 0;
+  autoTurretTimer = 0;
+  slowMoTimer = 0;
+  overdriveTimer = 0;
+  freezeTimer = 0;
+  magnetTimer = 0;
+  spikeBurstTimer = 0;
+  controlDistortionTimer = 0;
+  hazardSlowdown = 1.0;
 
   // Active abilities cooldowns and durations (Progression Skill Tree)
-  bioshieldCooldown: number = 0;
-  bioshieldActiveTime: number = 0;
-  overdriveCooldown: number = 0;
-  overdriveActiveTime: number = 0;
-  empShatterCooldown: number = 0;
-  empShatterActiveTime: number = 0;
-  missileSentryTimer: number = 0;
+  bioshieldCooldown = 0;
+  bioshieldActiveTime = 0;
+  overdriveCooldown = 0;
+  overdriveActiveTime = 0;
+  empShatterCooldown = 0;
+  empShatterActiveTime = 0;
+  missileSentryTimer = 0;
 
   isInvulnerable(): boolean {
     return this.shieldTimer > 0 || this.bioshieldActiveTime > 0;
   }
 
   // Session Stats for Achievements
-  swarmerKills: number = 0;
-  healerKills: number = 0;
-  killsInSubwave: number = 0;
-  missedClicksInSubwave: number = 0;
+  swarmerKills = 0;
+  healerKills = 0;
+  killsInSubwave = 0;
+  missedClicksInSubwave = 0;
 
   // Performance Scaling Metrics
-  streakCount: number = 0;
-  streakTimer: number = 0;
-  lastHitTime: number = 0;
-  performanceFactor: number = 1.0;
+  streakCount = 0;
+  streakTimer = 0;
+  lastHitTime = 0;
+  performanceFactor = 1.0;
 
-  playTimeAccumulator: number = 0;
+  playTimeAccumulator = 0;
   accessibility: AccessibilitySettings = loadAccessibilitySettings();
   private unsubscribeAccessibility?: () => void;
   gameMode: GameModeId = 'standard';
   gameModeConfig: GameModeConfig = getGameModeConfig('standard');
 
-  baseScale: number = 1.0;
-  baseRecoil: number = 0;
-  baseRecoilAngle: number = 0;
+  baseScale = 1.0;
+  baseRecoil = 0;
+  baseRecoilAngle = 0;
 
-  glitchTimer: number = 0;
-  waveTransitionTimer: number = 0;
+  glitchTimer = 0;
+  waveTransitionTimer = 0;
   readonly waveTransitionDuration: number = 1.5;
-  upgradeFlash: number = 0;
-  impactFrame: number = 0;
+  upgradeFlash = 0;
+  impactFrame = 0;
 
   // Core Position
-  coreX: number = 0;
-  coreY: number = 0;
+  coreX = 0;
+  coreY = 0;
 
   // Dash Mechanics
-  dashTimer: number = 0;
-  dashCooldownTimer: number = 0;
+  dashTimer = 0;
+  dashCooldownTimer = 0;
   readonly dashDuration: number = 0.15;
   readonly dashCooldown: number = GameConfig.abilities.dashCooldown;
   readonly dashDistance: number = GameConfig.abilities.dashDistance;
-  dashStartX: number = 0;
-  dashStartY: number = 0;
-  dashTargetX: number = 0;
-  dashTargetY: number = 0;
+  dashStartX = 0;
+  dashStartY = 0;
+  dashTargetX = 0;
+  dashTargetY = 0;
 
   // Tutorial tracking
-  totalKills: number = 0;
-  totalPowerupsCollected: number = 0;
-  forceNextPowerup: boolean = false;
+  totalKills = 0;
+  totalPowerupsCollected = 0;
+  forceNextPowerup = false;
 
   // Challenge Mode
-  isChallengeMode: boolean = false;
+  isChallengeMode = false;
   challengeModifiers: ChallengeModifierState | null = null;
-  challengeBugSpeedBonus: number = 0; // For speed_demon modifier
+  challengeBugSpeedBonus = 0; // For speed_demon modifier
 
   renderer: Renderer;
   inputSystem: InputSystem;
@@ -199,7 +199,7 @@ export class GameEngine {
     this.hazardSystem = new HazardSystem(this);
     this.pcgSystem = new PCGSystem(this);
     const activeCustom: any = CustomMapManager.getActiveConfiguration();
-    if (activeCustom && activeCustom.obstacles && activeCustom.seed) {
+    if (activeCustom?.obstacles && activeCustom.seed) {
       this.pcgSystem.activeMap = activeCustom;
     }
     this.applyAccessibility();
@@ -354,7 +354,7 @@ export class GameEngine {
     this.unsubscribeAccessibility?.();
   }
 
-  shake(duration: number, magnitude: number, dx: number = 0, dy: number = 0) {
+  shake(duration: number, magnitude: number, dx = 0, dy = 0) {
     this.shakeTime = duration;
     this.shakeMagnitude = magnitude;
     this.shakeX = dx;
@@ -414,7 +414,7 @@ export class GameEngine {
   }
 
   /** Delegates to PowerupSystem. */
-  spawnPowerup(x: number, y: number, force: boolean = false) {
+  spawnPowerup(x: number, y: number, force = false) {
     this.powerupSystem.spawn(x, y, force);
   }
 
@@ -423,7 +423,7 @@ export class GameEngine {
     this.powerupSystem.spawnResource(x, y, bugType);
   }
 
-  private musicUpdateTimer: number = 0;
+  private musicUpdateTimer = 0;
 
   update(dt: number) {
     if (this.health <= 0) {
@@ -471,7 +471,7 @@ export class GameEngine {
     }
   }
 
-  fireAutoTurret(isRapidFire: boolean = false) {
+  fireAutoTurret(isRapidFire = false) {
     let closest = null;
     let minDistSq = Infinity;
     const cx = this.coreX;

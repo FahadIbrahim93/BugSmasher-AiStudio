@@ -11,11 +11,11 @@ export class EnvironmentRenderer {
   
   // Cached background gradient — recreated only on dimension/biome change
   private cachedBgGradient: CanvasGradient | null = null;
-  private lastBgWidth: number = 0;
-  private lastBgHeight: number = 0;
-  private lastBiomeId: string = '';
-  private lastHealthRatio: number = -1;
-  private lastCustomMapId: string = '';
+  private lastBgWidth = 0;
+  private lastBgHeight = 0;
+  private lastBiomeId = '';
+  private lastHealthRatio = -1;
+  private lastCustomMapId = '';
 
   constructor(
     protected engine: GameEngine,
@@ -141,7 +141,7 @@ export class EnvironmentRenderer {
       if (this.currentFps >= 30) {
         this.staticLayerCache.blitPeriodicLayer(
           this.engine, `lava_${biomeId}`, 100,
-          (c) => this.paintLavaBubbles(c as CanvasRenderingContext2D)
+          (c) => { this.paintLavaBubbles(c as CanvasRenderingContext2D); }
         );
       }
     } else if (biomeId === 'frostbyte') {
@@ -154,7 +154,7 @@ export class EnvironmentRenderer {
       if (this.currentFps >= 30) {
         this.staticLayerCache.blitPeriodicLayer(
           this.engine, `snow_${biomeId}`, 100,
-          (c) => this.paintSnowflakes(c as CanvasRenderingContext2D)
+          (c) => { this.paintSnowflakes(c as CanvasRenderingContext2D); }
         );
       }
     } else if (biomeId === 'golden_cache' || biomeId === 'golden_spire') {

@@ -172,7 +172,7 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
   useEffect(() => {
     if (!listeningFor) return;
     window.addEventListener('keydown', handleKeyCapture, true);
-    return () => window.removeEventListener('keydown', handleKeyCapture, true);
+    return () => { window.removeEventListener('keydown', handleKeyCapture, true); };
   }, [listeningFor, handleKeyCapture]);
 
   const [showPerformance, setShowPerformance] = useState(() => {
@@ -313,7 +313,7 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
                 </div>
                 <div className="flex items-center space-x-3">
                   <button 
-                    onClick={() => adjustVolume('master', -0.05)}
+                    onClick={() => { adjustVolume('master', -0.05); }}
                     className="p-1.5 rounded-lg border border-white/5 bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
                   >
                     <Minus className="w-3 h-3" />
@@ -325,7 +325,7 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
                     className="flex-1 accent-white opacity-80 hover:opacity-100 transition-opacity"
                   />
                   <button 
-                    onClick={() => adjustVolume('master', 0.05)}
+                    onClick={() => { adjustVolume('master', 0.05); }}
                     className="p-1.5 rounded-lg border border-white/5 bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
                   >
                     <Plus className="w-3 h-3" />
@@ -348,7 +348,7 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
                 </div>
                 <div className={`flex items-center space-x-3 transition-opacity ${sfxMuted ? 'opacity-40' : 'opacity-100'}`}>
                   <button 
-                    onClick={() => adjustVolume('sfx', -0.05)}
+                    onClick={() => { adjustVolume('sfx', -0.05); }}
                     className="p-1.5 rounded-lg border border-white/5 bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
                     disabled={sfxMuted}
                   >
@@ -362,7 +362,7 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
                     disabled={sfxMuted}
                   />
                   <button 
-                    onClick={() => adjustVolume('sfx', 0.05)}
+                    onClick={() => { adjustVolume('sfx', 0.05); }}
                     className="p-1.5 rounded-lg border border-white/5 bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
                     disabled={sfxMuted}
                   >
@@ -386,7 +386,7 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
                 </div>
                 <div className={`flex items-center space-x-3 transition-opacity ${musicMuted ? 'opacity-40' : 'opacity-100'}`}>
                   <button 
-                    onClick={() => adjustVolume('music', -0.05)}
+                    onClick={() => { adjustVolume('music', -0.05); }}
                     className="p-1.5 rounded-lg border border-white/5 bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
                     disabled={musicMuted}
                   >
@@ -400,7 +400,7 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
                     disabled={musicMuted}
                   />
                   <button 
-                    onClick={() => adjustVolume('music', 0.05)}
+                    onClick={() => { adjustVolume('music', 0.05); }}
                     className="p-1.5 rounded-lg border border-white/5 bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-colors"
                     disabled={musicMuted}
                   >
@@ -469,7 +469,7 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
                   ].map((preset) => (
                     <button
                       key={preset.id}
-                      onClick={() => applyPreset(preset.id as 'brutal' | 'tactical' | 'ambient' | 'stealth')}
+                      onClick={() => { applyPreset(preset.id as 'brutal' | 'tactical' | 'ambient' | 'stealth'); }}
                       className="px-1 py-2 text-[8px] font-mono uppercase tracking-wider border border-white/5 bg-white/5 hover:border-white/20 hover:bg-white/10 rounded-lg text-zinc-400 hover:text-white transition-all text-center flex flex-col items-center justify-center leading-tight gap-0.5"
                       title={preset.hint}
                     >

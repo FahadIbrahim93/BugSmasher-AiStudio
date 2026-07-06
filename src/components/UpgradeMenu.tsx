@@ -55,7 +55,7 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
     if (score >= cost) {
       onUpgrade(type, cost);
       setFlashingStat(type);
-      setTimeout(() => setFlashingStat(null), 1000);
+      setTimeout(() => { setFlashingStat(null); }, 1000);
       
       if (type === 'health') setHealthLevel(l => l + 1);
       if (type === 'radius') setRadiusLevel(l => l + 1);
@@ -127,7 +127,7 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
           <motion.div 
             variants={cardVariants} 
             onMouseEnter={() => { handleHover(); setHoveredUpgrade('health'); }}
-            onMouseLeave={() => setHoveredUpgrade(null)}
+            onMouseLeave={() => { setHoveredUpgrade(null); }}
             animate={
               flashingStat === 'health' 
                 ? { scale: [1, 1.08, 1], boxShadow: ["0 0 0px #fff0", "0 0 50px #fff4", "0 0 0px #fff0"] } 
@@ -184,7 +184,7 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
             </div>
             <div className="flex-grow" />
             <button 
-              onClick={() => handleBuy('health', healthCost)}
+              onClick={() => { handleBuy('health', healthCost); }}
               onMouseEnter={handleHover}
               aria-disabled={score < healthCost}
               aria-label={`Buy Core Structure upgrade for ${healthCost} credits`}
@@ -210,7 +210,7 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
           <motion.div 
             variants={cardVariants} 
             onMouseEnter={() => { handleHover(); setHoveredUpgrade('radius'); }}
-            onMouseLeave={() => setHoveredUpgrade(null)}
+            onMouseLeave={() => { setHoveredUpgrade(null); }}
             animate={
               flashingStat === 'radius' 
                 ? { scale: [1, 1.08, 1], boxShadow: ["0 0 0px #0ff0", "0 0 50px #0ff4", "0 0 0px #0ff0"] } 
@@ -267,7 +267,7 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
             </div>
             <div className="flex-grow" />
             <button 
-              onClick={() => handleBuy('radius', radiusCost)}
+              onClick={() => { handleBuy('radius', radiusCost); }}
               onMouseEnter={handleHover}
               aria-disabled={score < radiusCost}
               aria-label={`Buy Blast Radius upgrade for ${radiusCost} credits`}
@@ -293,7 +293,7 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
           <motion.div 
             variants={cardVariants} 
             onMouseEnter={() => { handleHover(); setHoveredUpgrade('turret'); }}
-            onMouseLeave={() => setHoveredUpgrade(null)}
+            onMouseLeave={() => { setHoveredUpgrade(null); }}
             animate={
               flashingStat === 'turret' 
                 ? { scale: [1, 1.08, 1], boxShadow: ["0 0 0px #f900", "0 0 50px #f904", "0 0 0px #f900"] } 
@@ -350,7 +350,7 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
             </div>
             <div className="flex-grow" />
             <button 
-              onClick={() => handleBuy('turret', turretCost)}
+              onClick={() => { handleBuy('turret', turretCost); }}
               onMouseEnter={handleHover}
               aria-disabled={score < turretCost}
               aria-label={`Buy Auto-Sentry upgrade for ${turretCost} credits`}

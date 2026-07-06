@@ -65,11 +65,11 @@ function createPRNG(seedStr: string) {
 export class PCGSystem {
   engine: GameEngine;
   activeMap: PCGMapConfig | null = null;
-  currentSeed: string = 'ALPHA-99';
+  currentSeed = 'ALPHA-99';
 
   // Procedural content generation state trackers (Tied to seed + wave)
   resourceSpawnedForWave: Record<number, boolean> = {};
-  hazardSpawnTimer: number = 0;
+  hazardSpawnTimer = 0;
 
   getPRNGForWave(wave: number, salt: string) {
     return createPRNG(this.currentSeed + `_w${wave}_` + salt);

@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    return () => unsubscribeAuth();
+    return () => { unsubscribeAuth(); };
   }, []);
 
   // Listen for profile changes

@@ -150,8 +150,8 @@ export function CustomCursor() {
       }
     };
 
-    const handleMouseDown = () => setIsClicking(true);
-    const handleMouseUp = () => setIsClicking(false);
+    const handleMouseDown = () => { setIsClicking(true); };
+    const handleMouseUp = () => { setIsClicking(false); };
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mousedown', handleMouseDown);

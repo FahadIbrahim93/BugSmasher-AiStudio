@@ -10,9 +10,9 @@ import type { PerformanceScaler } from './PerformanceScaler';
 
 export class ParticleRenderer {
   // Cached cloud gradients — avoid createRadialGradient 3× per frame
-  private cachedCloudGradients: Map<string, { gradient: CanvasGradient; cx: number; cy: number; r: number }> = new Map();
-  private lastCloudWidth: number = 0;
-  private lastCloudHeight: number = 0;
+  private cachedCloudGradients = new Map<string, { gradient: CanvasGradient; cx: number; cy: number; r: number }>();
+  private lastCloudWidth = 0;
+  private lastCloudHeight = 0;
 
   constructor(
     protected engine: GameEngine,
