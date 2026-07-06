@@ -4,6 +4,7 @@ import { SaveManager } from '../game/SaveManager';
 const firebaseMocks = vi.hoisted(() => ({
   currentUser: null as { uid: string; displayName: string } | null,
   submitScore: vi.fn(() => Promise.resolve(true)),
+  startSession: vi.fn(() => Promise.resolve({ sessionId: 'test-session-123', expiresAt: Date.now() + 600_000 })),
   getDoc: vi.fn(async () => ({
     exists: () => false,
     data: () => ({}),
@@ -22,6 +23,7 @@ vi.mock('../lib/firebase', () => ({
 vi.mock('../lib/firebaseService', () => ({
   FirebaseService: {
     submitScore: firebaseMocks.submitScore,
+    startSession: firebaseMocks.startSession,
   },
 }));
 
@@ -119,6 +121,7 @@ describe('SaveManager', () => {
     await SaveManager.setHighScore(5000, 12);
 
     expect(SaveManager.getHighScore()).toBe(5000);
-    expect(firebaseMocks.submitScore).toHaveBeenCalledWith('user-1', 'Operator', 5000, 12);
+    expect(firebaseMocks.startSession).toHaveBeenCalledOnce();
+    expect(firebaseMocks.submitScore).toHaveBeenCalledWith('user-1', 'Operator', 5000, 12, 'test-session-123');
   });
 });

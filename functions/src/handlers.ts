@@ -4,6 +4,7 @@ import { generateChecksum, generateClientChecksum } from './checksum';
 import { checkRateLimit } from './rateLimit';
 import { parseSaveData } from './saveSchema';
 import { assertRecord, assertSafeScore, requireAuth, sanitizeUsername } from './validation';
+import { validateAndConsumeSession, assertPlausibleSessionScore } from './sessionToken';
 
 export function getFirestore(): admin.firestore.Firestore {
   return admin.firestore();
@@ -44,8 +45,23 @@ export async function handleSubmitScore(
   const { score, wave } = assertSafeScore(body.score, body.wave);
   const username = sanitizeUsername(body.username);
 
+  // Session-token anti-cheat: validate and consume the session token
+  const sessionId = body.sessionId;
+  if (!sessionId || typeof sessionId !== 'string') {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'Session token (sessionId) is required for score submission.'
+    );
+  }
+
   const db = getFirestore();
   await checkRateLimit(db, uid, 'submitScore');
+
+  // Validate session token (atomic consume for replay protection)
+  const session = await validateAndConsumeSession(db, sessionId, uid);
+
+  // Plausibility check: score must be achievable within session duration
+  assertPlausibleSessionScore(score, session);
 
   const leaderboardRef = db.doc(`leaderboard/${uid}`);
 
@@ -65,3 +81,5 @@ export async function handleSubmitScore(
 
   return { ok: true };
 }
+
+

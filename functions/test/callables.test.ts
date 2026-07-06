@@ -16,6 +16,7 @@ type WrappedCallable = (
 
 let uploadSave: WrappedCallable;
 let submitScore: WrappedCallable;
+let startSession: WrappedCallable;
 
 const validSave = {
   score: 100,
@@ -35,6 +36,7 @@ beforeAll(async () => {
   const mod = await import('../lib/index');
   uploadSave = fft.wrap(mod.uploadSave) as WrappedCallable;
   submitScore = fft.wrap(mod.submitScore) as WrappedCallable;
+  startSession = fft.wrap(mod.startSession) as WrappedCallable;
 });
 
 afterAll(() => {
@@ -145,5 +147,151 @@ describe('submitScore callable', () => {
     await expect(
       submitScore({ score: 9_999, wave: 2, username: 'Spammer' }, { auth: { uid } })
     ).rejects.toThrow(/Rate limit exceeded/);
+  });
+});
+
+describe('startSession callable', () => {
+  it('rejects unauthenticated requests', async () => {
+    await expect(startSession({})).rejects.toThrow(/Authentication is required/);
+  });
+
+  it('creates a session token for authenticated user', async () => {
+    const result = (await startSession({}, { auth: { uid: 'session-user-1' } })) as {
+      sessionId: string;
+      expiresAt: number;
+    };
+
+    expect(result.sessionId).toMatch(/^[a-f0-9]{48}$/); // 24 bytes = 48 hex chars
+    expect(result.expiresAt).toBeGreaterThan(Date.now());
+
+    // Verify session document exists in Firestore
+    const snap = await admin.firestore().doc(`_sessions/${result.sessionId}`).get();
+    expect(snap.exists).toBe(true);
+    const data = snap.data();
+    expect(data?.userId).toBe('session-user-1');
+    expect(data?.used).toBe(false);
+  });
+
+  it('enforces rate limits on session creation', async () => {
+    const uid = 'rate-limit-session-user';
+    for (let i = 0; i < 30; i += 1) {
+      await startSession({}, { auth: { uid } });
+    }
+
+    await expect(
+      startSession({}, { auth: { uid } })
+    ).rejects.toThrow(/Rate limit exceeded/);
+  });
+});
+
+describe('submitScore with session tokens', () => {
+  it('rejects score submission without a session token', async () => {
+    await expect(
+      submitScore(
+        { score: 100, wave: 1, username: 'Player' },
+        { auth: { uid: 'no-session-user' } }
+      )
+    ).rejects.toThrow(/Session token/);
+  });
+
+  it('accepts score submission with a valid session token', async () => {
+    const uid = 'valid-session-user';
+
+    // Start a session
+    const sessionResult = (await startSession({}, { auth: { uid } })) as {
+      sessionId: string;
+    };
+
+    // Submit score with session token
+    const result = (await submitScore(
+      { score: 5_000, wave: 3, username: 'ValidPlayer', sessionId: sessionResult.sessionId },
+      { auth: { uid } }
+    )) as { ok: boolean };
+
+    expect(result.ok).toBe(true);
+
+    // Verify session token is marked as used
+    const snap = await admin.firestore().doc(`_sessions/${sessionResult.sessionId}`).get();
+    expect(snap.data()?.used).toBe(true);
+
+    // Verify leaderboard entry
+    const lbSnap = await admin.firestore().doc(`leaderboard/${uid}`).get();
+    expect(lbSnap.data()?.score).toBe(5_000);
+  });
+
+  it('rejects replay of a used session token', async () => {
+    const uid = 'replay-session-user';
+
+    // Start a session
+    const sessionResult = (await startSession({}, { auth: { uid } })) as {
+      sessionId: string;
+    };
+
+    // First use — should succeed
+    await submitScore(
+      { score: 1_000, wave: 1, username: 'ReplayUser', sessionId: sessionResult.sessionId },
+      { auth: { uid } }
+    );
+
+    // Second use — should be rejected (replay detection)
+    await expect(
+      submitScore(
+        { score: 500, wave: 1, username: 'ReplayUser', sessionId: sessionResult.sessionId },
+        { auth: { uid } }
+      )
+    ).rejects.toThrow(/already been used/);
+  });
+
+  it('rejects session token that belongs to a different user', async () => {
+    // Start session as user A
+    const sessionResult = (await startSession({}, { auth: { uid: 'user-a' } })) as {
+      sessionId: string;
+    };
+
+    // Submit score as user B using user A's token
+    await expect(
+      submitScore(
+        { score: 1_000, wave: 1, username: 'UserB', sessionId: sessionResult.sessionId },
+        { auth: { uid: 'user-b' } }
+      )
+    ).rejects.toThrow(/does not belong/);
+  });
+
+  it('rejects expired session tokens', async () => {
+    const uid = 'expired-session-user';
+
+    // Create a session with an already-expired timestamp
+    // We can't manipulate time via the API, so create a session document directly
+    const expiredSessionId = 'expired-session-test-id-1234';
+    await admin.firestore().doc(`_sessions/${expiredSessionId}`).set({
+      userId: uid,
+      sessionId: expiredSessionId,
+      createdAt: Date.now() - 700_000, // 700 seconds ago (over 10 min TTL)
+      expiresAt: Date.now() - 100_000, // Expired 100 seconds ago
+      used: false,
+    });
+
+    await expect(
+      submitScore(
+        { score: 100, wave: 1, username: 'ExpiredUser', sessionId: expiredSessionId },
+        { auth: { uid } }
+      )
+    ).rejects.toThrow(/has expired/);
+  });
+
+  it('rejects implausibly high scores for session duration', async () => {
+    const uid = 'implausible-score-user';
+
+    const sessionResult = (await startSession({}, { auth: { uid } })) as {
+      sessionId: string;
+    };
+
+    // Immediately submit a score that's too high for zero elapsed time
+    await expect(
+      submitScore(
+        { score: 100_000_000, wave: 100, username: 'Implausible', sessionId: sessionResult.sessionId },
+        { auth: { uid } }
+      )
+    ).rejects.toThrow(/maximum plausible score/);
   });
 });

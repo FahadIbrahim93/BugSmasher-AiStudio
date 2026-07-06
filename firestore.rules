@@ -31,7 +31,15 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // 4. Test connection fallback check
+    // 4. Server-only internal collections — no client access (admin SDK only)
+    match /_sessions/{document} {
+      allow read, write: if false;
+    }
+    match /_rateLimits/{document} {
+      allow read, write: if false;
+    }
+
+    // 5. Test connection fallback check
     match /test/{document} {
       allow read: if true;
     }

@@ -41,7 +41,13 @@ export function GameOver({ score, wave, onRetry, onMainMenu }: { score: number, 
       try {
         if (auth && auth.currentUser) {
           const username = auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'RECRUIT';
-          await FirebaseService.submitScore(auth.currentUser.uid, username, score, wave);
+          // Obtain a session token for anti-cheat replay protection
+          const session = await FirebaseService.startSession();
+          if (session) {
+            await FirebaseService.submitScore(auth.currentUser.uid, username, score, wave, session.sessionId);
+          } else {
+            console.warn('Could not obtain session token; leaderboard submission skipped.');
+          }
         }
       } catch (err) {
         console.warn('Leaderboard connection paused offline:', err);

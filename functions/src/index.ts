@@ -2,6 +2,7 @@ import * as functions from 'firebase-functions/v1';
 import * as admin from 'firebase-admin';
 import { generateChecksum } from './checksum';
 import { handleSubmitScore, handleUploadSave } from './handlers';
+import { handleStartSession } from './sessionToken';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -39,3 +40,8 @@ export const uploadSave = functions.https.onCall(handleUploadSave);
  * Authoritative leaderboard write path.
  */
 export const submitScore = functions.https.onCall(handleSubmitScore);
+
+/**
+ * Generates a session token for anti-cheat score submission.
+ */
+export const startSession = functions.https.onCall(handleStartSession);

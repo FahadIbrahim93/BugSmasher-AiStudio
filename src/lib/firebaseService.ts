@@ -120,18 +120,38 @@ export class FirebaseService {
   }
 
   /**
+   * Starts a new game session and returns a session token for anti-cheat score submission.
+   */
+  static async startSession(): Promise<{ sessionId: string; expiresAt: number } | null> {
+    try {
+      const start = httpsCallable<Record<string, never>, { sessionId: string; expiresAt: number }>(
+        functions,
+        'startSession'
+      );
+      const result = await start({});
+      return result.data;
+    } catch (error: unknown) {
+      handleFirestoreError(error, OperationType.CREATE, '_sessions/', false);
+      return null;
+    }
+  }
+
+  /**
    * Leaderboard
    */
-  static async submitScore(userId: string, username: string, score: number, wave: number) {
+  static async submitScore(userId: string, username: string, score: number, wave: number, sessionId?: string) {
     try {
       if (auth.currentUser?.uid !== userId) {
         throw new Error('Cannot submit a leaderboard score for a different user.');
       }
+      if (!sessionId) {
+        throw new Error('Session token (sessionId) is required for score submission.');
+      }
       const submit = httpsCallable<
-        { username: string; score: number; wave: number },
+        { username: string; score: number; wave: number; sessionId: string },
         { ok: boolean }
       >(functions, 'submitScore');
-      const result = await submit({ username, score, wave });
+      const result = await submit({ username, score, wave, sessionId });
       if (!result.data.ok) throw new Error('Leaderboard submission was rejected by the server.');
       return true;
     } catch (error: unknown) {

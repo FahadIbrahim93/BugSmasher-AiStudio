@@ -349,7 +349,13 @@ export class SaveManager {
           const userRef = doc(db, 'users', user.uid);
           const userSnap = await getDoc(userRef);
           const username = userSnap.exists() ? userSnap.data().username : (user.displayName || 'Anonymous User');
-          await FirebaseService.submitScore(user.uid, username, score, wave);
+          // Obtain a session token for anti-cheat replay protection
+          const session = await FirebaseService.startSession();
+          if (session) {
+            await FirebaseService.submitScore(user.uid, username, score, wave, session.sessionId);
+          } else {
+            console.warn('Could not obtain session token; cloud score submission skipped.');
+          }
         } catch (fsError) {
           console.warn('Could not submit high score online. Stored locally.', fsError);
         }

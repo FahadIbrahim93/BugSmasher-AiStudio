@@ -1,11 +1,12 @@
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions/v1';
 
-export type RateLimitedAction = 'uploadSave' | 'submitScore';
+export type RateLimitedAction = 'uploadSave' | 'submitScore' | 'startSession';
 
 const RATE_LIMITS: Record<RateLimitedAction, { max: number; windowMs: number }> = {
   uploadSave: { max: 10, windowMs: 60_000 },
   submitScore: { max: 5, windowMs: 60_000 },
+  startSession: { max: 30, windowMs: 60_000 }, // Players can start many practice sessions
 };
 
 export async function checkRateLimit(

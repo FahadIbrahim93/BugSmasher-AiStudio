@@ -84,15 +84,22 @@ describe('FirebaseService server-authoritative writes', () => {
   });
 
   it('submits leaderboard scores through the callable function', async () => {
-    const result = await FirebaseService.submitScore('user-1', 'Operator', 1200, 4);
+    const result = await FirebaseService.submitScore('user-1', 'Operator', 1200, 4, 'test-session-id-123');
 
     expect(result).toBe(true);
     expect(mocks.httpsCallable).toHaveBeenCalledWith({}, 'submitScore');
-    expect(mocks.callable).toHaveBeenCalledWith({ username: 'Operator', score: 1200, wave: 4 });
+    expect(mocks.callable).toHaveBeenCalledWith({ username: 'Operator', score: 1200, wave: 4, sessionId: 'test-session-id-123' });
+  });
+
+  it('refuses to submit leaderboard scores without a session token', async () => {
+    const result = await FirebaseService.submitScore('user-1', 'Operator', 1200, 4);
+
+    expect(result).toBe(false);
+    expect(mocks.callable).not.toHaveBeenCalled();
   });
 
   it('refuses to submit leaderboard scores for a different authenticated user', async () => {
-    const result = await FirebaseService.submitScore('other-user', 'Operator', 1200, 4);
+    const result = await FirebaseService.submitScore('other-user', 'Operator', 1200, 4, 'test-session-id-456');
 
     expect(result).toBe(false);
     expect(mocks.callable).not.toHaveBeenCalled();
