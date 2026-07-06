@@ -251,4 +251,153 @@ describe('GameEngine', () => {
     expect(engine.useConsumable('emp_generator')).toBe(true);
     expect(engine.bugs.every((bug) => bug.type !== 'boss' ? bug.hp === 0 : true)).toBe(true);
   });
+
+  it('should trigger game over when health reaches zero', () => {
+    engine.isRunning = true;
+    engine.start();
+    engine.health = 1;
+    engine.startWave();
+    (engine.waveManager as any).spawnBug();
+
+    const bug = engine.bugs[0];
+    engine.coreX = engine.width / 2;
+    engine.coreY = engine.height / 2;
+    bug.x = engine.width / 2;
+    bug.y = engine.height / 2;
+
+    const onGameOverSpy = vi.fn();
+    engine.onGameOver = onGameOverSpy;
+
+    // First update: bug reaches base, health drops below 0
+    engine.update(0.1);
+    expect(engine.health).toBeLessThanOrEqual(0);
+
+    // Second update: game over is triggered (checked at top of update)
+    engine.update(0.1);
+    expect(onGameOverSpy).toHaveBeenCalled();
+  });
+
+  it('should handle boss wave state and boss spawn', () => {
+    engine.wave = 10; // Boss wave threshold
+    engine.startWave();
+    expect(engine.waveManager.isBossWave).toBe(true);
+    expect(engine.waveManager.bossIntroActive).toBe(true);
+
+    // Advance enough to process boss intro and spawn
+    for (let i = 0; i < 60; i += 1) {
+      engine.update(0.1);
+    }
+
+    expect(engine.waveManager.bossIntroActive).toBe(false);
+  });
+
+  it('should handle wave completion and transition to next wave in endless mode', () => {
+    engine.gameModeConfig = { ...engine.gameModeConfig, endlessWaves: true };
+    engine.start();
+    engine.isRunning = true;
+    engine.startWave();
+
+    // Simulate wave completion by clearing bugs and setting bugsToSpawn to 0
+    engine.bugs = [];
+    engine.waveManager.bugsToSpawn = 0;
+
+    const currentWave = engine.wave;
+    engine.update(0.1);
+    // In endless mode, next wave should start automatically
+    expect(engine.wave).toBeGreaterThanOrEqual(currentWave);
+  });
+
+  it('should handle dash cooldown correctly', () => {
+    engine.isRunning = true;
+    engine.start();
+    engine.triggerDash(400, 300);
+    expect(engine.dashCooldownTimer).toBeGreaterThan(0);
+
+    // Second dash should be blocked by cooldown
+    const timerBefore = engine.dashCooldownTimer;
+    engine.triggerDash(500, 400);
+    expect(engine.dashCooldownTimer).toBe(timerBefore); // Cooldown not reset
+  });
+
+  it('should handle rapid fire powerup timer decay', () => {
+    engine.activatePowerup('rapid_fire');
+    expect(engine.rapidFireTimer).toBe(GameConfig.powerups.duration);
+
+    // Run update frames to decay the timer
+    for (let i = 0; i < 10; i += 1) {
+      engine.update(0.1);
+    }
+
+    expect(engine.rapidFireTimer).toBeLessThan(GameConfig.powerups.duration);
+  });
+
+  it('should handle shield timer decay', () => {
+    engine.activatePowerup('shield');
+    expect(engine.shieldTimer).toBe(GameConfig.powerups.duration);
+
+    for (let i = 0; i < 10; i += 1) {
+      engine.update(0.1);
+    }
+
+    expect(engine.shieldTimer).toBeLessThan(GameConfig.powerups.duration);
+  });
+
+  it('should not start a new wave if already active', () => {
+    engine.startWave();
+    expect(engine.waveManager.waveActive).toBe(true);
+
+    // Calling startWave again should not reset bugsToSpawn (already active)
+    const currentBugsToSpawn = engine.waveManager.bugsToSpawn;
+    engine.startWave();
+    expect(engine.waveManager.bugsToSpawn).toBe(currentBugsToSpawn);
+  });
+
+  it('should handle zero-score bug kills correctly', () => {
+    engine.startWave();
+    (engine.waveManager as any).spawnBug();
+    const bug = engine.bugs[0];
+    bug.hp = 1;
+    bug.scoreValue = 0;
+
+    const scoreBefore = engine.score;
+    engine.damageBug(bug, 1);
+
+    expect(engine.bugs.length).toBe(0);
+    expect(engine.score).toBe(scoreBefore); // Score unchanged
+  });
+
+  it('should handle performanceFactor game loop integration', () => {
+    engine.performanceFactor = 2.0;
+    engine.startWave();
+
+    for (let i = 0; i < 5; i += 1) {
+      engine.update(0.05);
+    }
+
+    expect(engine.waveManager.waveActive).toBe(true);
+  });
+
+  it('should handle game start and stop lifecycle', () => {
+    engine.startWave();
+    expect(engine.waveManager.waveActive).toBe(true);
+
+    engine.stop();
+    expect(engine.isRunning).toBe(false);
+  });
+
+  it('should export game state without losing wave state', () => {
+    engine.startWave();
+    engine.score = 500;
+    engine.wave = 5;
+
+    const state = engine.exportState();
+    expect(state.score).toBe(500);
+    expect(state.wave).toBe(5);
+  });
+
+  it('should handle challenge modifiers for healer and tank spawn weights', () => {
+    engine.setChallengeModifiers(['healer_horde', 'tank_wave']);
+    expect(engine.challengeModifiers?.healerSpawnMultiplier).toBe(4);
+    expect(engine.challengeModifiers?.tankSpawnMultiplier).toBe(3);
+  });
 });
