@@ -36,7 +36,7 @@
     "*.{md,json,yml,yaml,css}": "prettier --write"
   },
   "dependencies": {
-    "@google/genai": "^2.7.0",
+    "@google/genai": "^2.11.0",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
     "firebase": "^12.13.0",
