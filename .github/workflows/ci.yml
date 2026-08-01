@@ -62,7 +62,14 @@ jobs:
         env:
           CHECKSUM_SALT: ci-test-salt-not-for-production
 
+      # Same public Firebase web config as deploy-preview: keeps the uploaded
+      # dist artifact fully-configured and deterministic for any manual redeploy.
       - name: Production build
+        env:
+          VITE_FIREBASE_API_KEY: AIzaSyAgszp_gKNxJCUs0BWa42pArAzyHSuzDqw
+          VITE_FIREBASE_AUTH_DOMAIN: studio-1155838266-56095.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: studio-1155838266-56095
+          VITE_FIREBASE_APP_ID: 1:911343381703:web:75c16ea460d4aeab2ca2e2
         run: npm run build
 
       - name: Upload build artifact
@@ -97,6 +104,16 @@ jobs:
           cache: npm
 
       - name: Install & build
+        # Public Firebase web config (same values already shipped in the client
+        # bundle) baked into CI builds so the Firebase mirror and any artifact
+        # deploy get the fully-configured dist deterministically — no dashboard
+        # env setup required. NOTE: Vercel builds on its own infra; it still
+        # needs these in the Vercel dashboard env vars (Production scope).
+        env:
+          VITE_FIREBASE_API_KEY: AIzaSyAgszp_gKNxJCUs0BWa42pArAzyHSuzDqw
+          VITE_FIREBASE_AUTH_DOMAIN: studio-1155838266-56095.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: studio-1155838266-56095
+          VITE_FIREBASE_APP_ID: 1:911343381703:web:75c16ea460d4aeab2ca2e2
         run: |
           npm ci
           npm run build
