@@ -10,6 +10,9 @@ nul
 *.tmp
 *.bak
 
+# Local AI-workflow scratch notes (keep on disk for later sessions, never commit)
+Claude-AUDIT
+
 # Firebase client config (even if keys are "public", do not commit raw for best practice + quota protection)
 firebase-applet-config.json
 firebase-debug.log
