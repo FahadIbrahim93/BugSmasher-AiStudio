@@ -81,6 +81,10 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+    # Map the deploy secret to a job-level env var: GitHub Actions does not allow
+    # referencing secrets directly inside `if:` conditionals, so the step checks env.
+    env:
+      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
     steps:
       - name: Checkout
@@ -102,7 +106,7 @@ jobs:
       # skip it cleanly until FIREBASE_SERVICE_ACCOUNT is configured (previously it
       # crashed here, hidden by continue-on-error, leaving Firebase stale).
       - name: Deploy to Firebase Hosting (preview channel for PRs, live for main)
-        if: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
+        if: env.FIREBASE_SERVICE_ACCOUNT != ''
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
