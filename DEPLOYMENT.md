@@ -47,9 +47,10 @@ Open `http://localhost:3000`.
 ### Quality gates (run before every push)
 
 ```bash
-npm run lint    # TypeScript strict check
-npm test        # 507 Vitest unit tests (+ 21 functions/emulator tests via npm run ci)
-npm run build   # Vite production bundle → dist/
+npm run typecheck   # tsc --noEmit — hard gate (0 errors)
+npm run lint:eslint # advisory — ~233 tracked errors (see AGENTS.md); must not add new ones
+npm test            # 507 Vitest unit tests (+ 21 functions/emulator tests via npm run ci)
+npm run build       # Vite production bundle → dist/
 ```
 
 ---
@@ -108,11 +109,13 @@ If the secret is missing, CI still passes; deploy step is skipped (`continue-on-
 
 ### Firebase Hosting
 
+> **Note:** `.firebaserc` targets `demo-bugsmasher` (the emulator project). For real deploys always pass the production project explicitly:
+
 ```bash
 npm ci
 npm run build
 firebase login
-firebase deploy --only hosting
+firebase deploy --only hosting --project studio-1155838266-56095
 ```
 
 **Live URL (default):** https://studio-1155838266-56095.web.app
@@ -129,7 +132,7 @@ Rules file: [`firestore.rules`](./firestore.rules)
 
 ## Release Checklist (10/10 bar)
 
-- [ ] `npm run lint` — 0 TypeScript errors
+- [ ] `npm run typecheck` — 0 TypeScript errors (eslint advisory; tracked debt per AGENTS.md)
 - [ ] `npm run validate:functions` — Cloud Functions compile + schema unit tests
 - [ ] `npm run test:coverage` — 507 tests, engine/lib thresholds met (~78% lines today)
 - [ ] `npm run test:emulator` — rules + callable tests pass (Java 21+)

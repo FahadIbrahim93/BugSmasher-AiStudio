@@ -17,6 +17,8 @@ export default tseslint.config(
       'functions/lib/',
       'functions/node_modules/',
       '.firebase/',
+      '.agents/', // agent skill files are tooling, not app source — not in the tsconfig project
+      'functions/', // separate package with its own tsconfig/build — not resolvable by the root project service
       '*.config.*', // vite/ts configs are not part of the app source
       'e2e/', // Playwright tests have their own config
     ],
@@ -29,7 +31,10 @@ export default tseslint.config(
     languageOptions: {
       parserOptions: {
         projectService: {
-          allowDefaultProject: ['*.ts', '*.tsx', '*.mjs', '*.cjs'],
+          // server.ts and all root .ts/.tsx files are part of the root tsconfig project,
+          // so listing them here would create an allowDefaultProject conflict. Only
+          // keep the globs for module types that are NOT in the project.
+          allowDefaultProject: ['*.mjs', '*.cjs'],
         },
         tsconfigRootDir: import.meta.dirname,
       },
