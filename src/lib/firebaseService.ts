@@ -43,15 +43,21 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
-      userId: auth.currentUser?.uid,
+      userId: auth?.currentUser?.uid ?? null,
     },
     operationType,
     path
   };
   console.error('Firestore Error: ', JSON.stringify(errInfo));
+
   if (shouldThrow) {
     throw new Error(JSON.stringify(errInfo));
   }
+}
+
+// Firebase may be unconfigured (offline build): all cloud ops fail soft.
+function firebaseReady(): boolean {
+  return Boolean(auth && db && functions);
 }
 
 export class FirebaseService {
@@ -59,6 +65,7 @@ export class FirebaseService {
    * Profiles
    */
   static async updateUsername(userId: string, username: string) {
+    if (!firebaseReady()) return false;
     try {
       const userRef = doc(db, 'users', userId);
       await updateDoc(userRef, { 
@@ -76,13 +83,14 @@ export class FirebaseService {
    * Game Saves
    */
   static async uploadSave(userId: string, data: GameSaveData) {
+    if (!firebaseReady()) return false;
     try {
       const { checksum, ...pure } = data;
-      if (auth.currentUser?.uid !== userId) {
+      if (auth!.currentUser?.uid !== userId) {
         throw new Error('Cannot upload a cloud save for a different user.');
       }
       const upload = httpsCallable<{ data: Record<string, unknown> }, { ok: boolean; checksum?: string }>(
-        functions,
+        functions!,
         'uploadSave'
       );
       const result = await upload({ data: pure });
@@ -98,6 +106,7 @@ export class FirebaseService {
   }
 
   static async downloadSave(userId: string): Promise<GameSaveData | null> {
+    if (!firebaseReady()) return null;
     try {
       const saveRef = doc(db, 'users', userId, 'private', 'saves');
       const snap = await getDoc(saveRef);
@@ -123,9 +132,10 @@ export class FirebaseService {
    * Starts a new game session and returns a session token for anti-cheat score submission.
    */
   static async startSession(): Promise<{ sessionId: string; expiresAt: number } | null> {
+    if (!firebaseReady()) return null;
     try {
       const start = httpsCallable<Record<string, never>, { sessionId: string; expiresAt: number }>(
-        functions,
+        functions!,
         'startSession'
       );
       const result = await start({});
@@ -140,8 +150,9 @@ export class FirebaseService {
    * Leaderboard
    */
   static async submitScore(userId: string, username: string, score: number, wave: number, sessionId?: string) {
+    if (!firebaseReady()) return false;
     try {
-      if (auth.currentUser?.uid !== userId) {
+      if (auth!.currentUser?.uid !== userId) {
         throw new Error('Cannot submit a leaderboard score for a different user.');
       }
       if (!sessionId) {
@@ -150,7 +161,7 @@ export class FirebaseService {
       const submit = httpsCallable<
         { username: string; score: number; wave: number; sessionId: string },
         { ok: boolean }
-      >(functions, 'submitScore');
+      >(functions!, 'submitScore');
       const result = await submit({ username, score, wave, sessionId });
       if (!result.data.ok) throw new Error('Leaderboard submission was rejected by the server.');
       return true;
@@ -161,6 +172,7 @@ export class FirebaseService {
   }
 
   static async getTopScores(count = 10): Promise<LeaderboardEntry[]> {
+    if (!firebaseReady()) return [];
     try {
       const leaderboardQuery = query(
         collection(db, 'leaderboard'),

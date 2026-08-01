@@ -51,6 +51,7 @@ export class ProgressionManager {
   }
 
   static async initCloudSync() {
+    if (!auth || !db) return; // Firebase not configured — local-only mode
     auth.onAuthStateChanged(async (user) => {
       if (user) {
         try {
@@ -205,8 +206,8 @@ export class ProgressionManager {
   }
 
   private static async saveCloud() {
-    const user = auth.currentUser;
-    if (user) {
+    const user = auth?.currentUser;
+    if (user && db) {
       this.isSyncing = true;
       const pathStr = `users/${user.uid}/private/progression`;
       try {

@@ -29,6 +29,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!auth || !db) {
+      // Firebase not configured (offline build) — skip auth entirely.
+      setLoading(false);
+      return;
+    }
     const unsubscribeAuth = onAuthStateChanged(auth, async (user: User | null) => {
       setUser(user);
       if (user) {
@@ -71,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Listen for profile changes
   useEffect(() => {
-    if (!user) return;
+    if (!user || !db) return;
     let unsubscribe: (() => void) | null = null;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
     let attempt = 0;
@@ -102,9 +107,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             operationType: 'get',
             path: `users/${user.uid}`,
             authInfo: {
-              userId: auth.currentUser?.uid,
-              email: auth.currentUser?.email,
-              emailVerified: auth.currentUser?.emailVerified,
+              userId: auth?.currentUser?.uid ?? null,
+              email: auth?.currentUser?.email ?? null,
+              emailVerified: auth?.currentUser?.emailVerified ?? null,
             }
           };
           console.error('Firestore Error: ', JSON.stringify(errInfo));
@@ -123,6 +128,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   const signIn = async () => {
+    if (!auth || !googleProvider) return;
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const credential = GoogleAuthProvider.credentialFromResult(result);
@@ -135,6 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logOut = async () => {
+    if (!auth) return;
     try {
       await signOut(auth);
       setAccessToken(null);

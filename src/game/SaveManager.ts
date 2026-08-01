@@ -112,7 +112,7 @@ export class SaveManager {
         console.warn('localStorage backup write failed:', e);
       }
 
-      const user = auth.currentUser;
+      const user = auth?.currentUser;
       if (user) {
         try {
           await FirebaseService.uploadSave(user.uid, fullData);
@@ -204,7 +204,7 @@ export class SaveManager {
         biome
       });
 
-      const user = auth.currentUser;
+      const user = auth?.currentUser;
       if (user) {
         try {
           await FirebaseService.uploadSave(user.uid, fullData);
@@ -238,7 +238,7 @@ export class SaveManager {
       }
 
       // Try Cloud Save first if logged in
-      const user = auth.currentUser;
+      const user = auth?.currentUser;
       let dataStr: string | null = null;
       let isCloud = false;
 
@@ -342,8 +342,8 @@ export class SaveManager {
         console.warn('localStorage write failed for high score:', e);
       }
       
-      const user = auth.currentUser;
-      if (user) {
+      const user = auth?.currentUser;
+      if (user && db) {
         try {
           // Get username from profile
           const userRef = doc(db, 'users', user.uid);
