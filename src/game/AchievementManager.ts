@@ -20,7 +20,11 @@ export const ACHIEVEMENTS_DATA: Omit<Achievement, 'unlocked'>[] = [
   { id: 'boss_slayer', title: 'Giant Slayer', description: 'Kill your first boss.', icon: 'award', check: (s) => s.bossesKilled >= 1 },
   { id: 'swarmer_slayer', title: 'Swarmer Slayer', description: 'Kill 10 swarmers.', icon: 'zap', check: (_s, sess) => sess.swarmerKills >= 10 },
   { id: 'healer_hunter', title: 'Healer Hunter', description: 'Kill 5 healers.', icon: 'heart-off', check: (_s, sess) => sess.healerKills >= 5 },
-  { id: 'perfectionist', title: 'Perfectionist', description: 'Complete sub-wave without missing a click.', icon: 'aim', check: (_s, sess) => sess.perfectSequence && sess.kills >= 10 }
+  { id: 'perfectionist', title: 'Perfectionist', description: 'Complete sub-wave without missing a click.', icon: 'aim', check: (_s, sess) => sess.perfectSequence && sess.kills >= 10 },
+  { id: 'first_fury', title: 'Venting 101', description: 'Ignite FURY MODE for the first time.', icon: 'flame', check: (_s, sess) => sess.furyTriggers >= 1 },
+  { id: 'fury_master', title: 'Fury Master', description: 'Ignite FURY MODE 5 times.', icon: 'flame', check: (_s, sess) => sess.furyTriggers >= 5 },
+  { id: 'ground_slammer', title: 'Ground Slammer', description: 'Land 10 Ground Slams.', icon: 'hammer', check: (_s, sess) => sess.slamsUsed >= 10 },
+  { id: 'clean_sweep', title: 'Clean Sweep', description: 'Recycle 25 chunks of goo contamination.', icon: 'sparkles', check: (_s, sess) => sess.gooSweeps >= 25 }
 ];
 
 export class AchievementManager {

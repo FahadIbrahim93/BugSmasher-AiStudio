@@ -28,6 +28,30 @@ export class EnvironmentRenderer {
   protected get vfxScalar() { return this.scaler.vfxScalar; }
   protected get meshComplexityStep() { return this.scaler.meshComplexityStep; }
 
+  /**
+   * Save context, apply a parallax-reduced transform, execute drawFn, restore.
+   * factor: 0 = no shake (deepest background), 1 = full shake (foreground).
+   */
+  private drawWithParallax(factor: number, drawFn: () => void) {
+    if (factor >= 1) {
+      // Full shake — no transformation needed, just execute
+      drawFn();
+      return;
+    }
+    const ctx = this.engine.ctx;
+    const dpr = this.engine.dpr;
+    const ox = this.parent.parallaxOffsetX;
+    const oy = this.parent.parallaxOffsetY;
+    ctx.save();
+    ctx.setTransform(
+      dpr, 0, 0, dpr,
+      ox * factor * dpr,
+      oy * factor * dpr
+    );
+    drawFn();
+    ctx.restore();
+  }
+
   drawBiomeBackground() {
     const ctx = this.engine.ctx;
     const biomeId = this.engine.currentBiome;
@@ -99,81 +123,100 @@ export class EnvironmentRenderer {
       ctx.fillRect(0, 0, width, height);
     }
 
-    // Biome specific background particles/grid (cached offscreen when static)
+    // Biome specific background particles/grid
+    // Layers separated into far (grid/starfield, parallax 0.3) and mid (decorations, parallax 0.6)
     if (biomeId === 'neon_core') {
       const coreTheme = getActiveCoreThemeConfig();
-      const cacheKey = `neon_core_${coreTheme?.id || 'default'}`;
-      const cached = this.staticLayerCache.blitStaticLayer(this.engine, cacheKey, (c) => {
-        const gridColor = coreTheme ? `${coreTheme.colors.primary}0a` : 'rgba(57, 255, 20, 0.012)';
-        this.paintGrid(c as CanvasRenderingContext2D, 160, gridColor);
-        this.paintNeonCoreDetails(c as CanvasRenderingContext2D);
+      const gridColor = coreTheme ? `${coreTheme.colors.primary}0a` : 'rgba(57, 255, 20, 0.012)';
+      // Far: grid
+      this.drawWithParallax(0.3, () => { this.paintGrid(ctx, 160, gridColor); });
+      // Mid: tech brackets and labels
+      this.drawWithParallax(0.6, () => {
+        const cacheKey = `neon_core_details_${coreTheme?.id || 'default'}`;
+        const cached = this.staticLayerCache.blitStaticLayer(this.engine, cacheKey, (c) => {
+          this.paintNeonCoreDetails(c as CanvasRenderingContext2D);
+        });
+        if (!cached) this.paintNeonCoreDetails(ctx);
       });
-      if (!cached) {
-        const gridColor = coreTheme ? `${coreTheme.colors.primary}0a` : 'rgba(57, 255, 20, 0.012)';
-        this.paintGrid(ctx, 160, gridColor);
-        this.paintNeonCoreDetails(ctx);
-      }
     } else if (biomeId === 'quantum_void') {
-      const cached = this.staticLayerCache.blitStaticLayer(this.engine, biomeId, (c) => {
-        this.paintStarfield(c as CanvasRenderingContext2D, 60);
-        this.paintQuantumVoidNebula(c as CanvasRenderingContext2D);
+      // Far: starfield (deep space)
+      this.drawWithParallax(0.3, () => { this.paintStarfield(ctx, 60); });
+      // Mid: nebula and constellation threads
+      this.drawWithParallax(0.6, () => {
+        const cached = this.staticLayerCache.blitStaticLayer(this.engine, `quantum_void_nebula`, (c) => {
+          this.paintQuantumVoidNebula(c as CanvasRenderingContext2D);
+        });
+        if (!cached) this.paintQuantumVoidNebula(ctx);
       });
-      if (!cached) {
-        this.paintStarfield(ctx, 60);
-        this.paintQuantumVoidNebula(ctx);
-      }
     } else if (biomeId === 'void_abyss') {
-      const cached = this.staticLayerCache.blitStaticLayer(this.engine, biomeId, (c) => {
-        this.paintStarfield(c as CanvasRenderingContext2D, 120);
-        this.paintVoidAbyssAnomalies(c as CanvasRenderingContext2D);
+      // Far: starfield
+      this.drawWithParallax(0.3, () => { this.paintStarfield(ctx, 120); });
+      // Mid: anomaly and accretion disk
+      this.drawWithParallax(0.6, () => {
+        const cached = this.staticLayerCache.blitStaticLayer(this.engine, `void_abyss_anomalies`, (c) => {
+          this.paintVoidAbyssAnomalies(c as CanvasRenderingContext2D);
+        });
+        if (!cached) this.paintVoidAbyssAnomalies(ctx);
       });
-      if (!cached) {
-        this.paintStarfield(ctx, 120);
-        this.paintVoidAbyssAnomalies(ctx);
-      }
     } else if (biomeId === 'ember_depths') {
-      const cached = this.staticLayerCache.blitStaticLayer(this.engine, 'ember_depths_bg', (c) => {
-        this.paintEmberMagmaCracks(c as CanvasRenderingContext2D);
+      // Far: magma cracks (background structure)
+      this.drawWithParallax(0.3, () => {
+        const cached = this.staticLayerCache.blitStaticLayer(this.engine, 'ember_depths_cracks', (c) => {
+          this.paintEmberMagmaCracks(c as CanvasRenderingContext2D);
+        });
+        if (!cached) this.paintEmberMagmaCracks(ctx);
       });
-      if (!cached) {
-        this.paintEmberMagmaCracks(ctx);
-      }
+      // Mid: lava bubbles — animating, not cached
       if (this.currentFps >= 30) {
-        this.staticLayerCache.blitPeriodicLayer(
-          this.engine, `lava_${biomeId}`, 100,
-          (c) => { this.paintLavaBubbles(c as CanvasRenderingContext2D); }
-        );
+        this.drawWithParallax(0.6, () => {
+          this.staticLayerCache.blitPeriodicLayer(
+            this.engine, `lava_${biomeId}`, 100,
+            (c) => { this.paintLavaBubbles(c as CanvasRenderingContext2D); }
+          );
+        });
       }
     } else if (biomeId === 'frostbyte') {
-      const cached = this.staticLayerCache.blitStaticLayer(this.engine, 'frostbyte_bg', (c) => {
-        this.paintFrostbyteCrystals(c as CanvasRenderingContext2D);
+      // Far: crystal structures (background)
+      this.drawWithParallax(0.3, () => {
+        const cached = this.staticLayerCache.blitStaticLayer(this.engine, 'frostbyte_crystals', (c) => {
+          this.paintFrostbyteCrystals(c as CanvasRenderingContext2D);
+        });
+        if (!cached) this.paintFrostbyteCrystals(ctx);
       });
-      if (!cached) {
-        this.paintFrostbyteCrystals(ctx);
-      }
+      // Mid: falling snowflakes
       if (this.currentFps >= 30) {
-        this.staticLayerCache.blitPeriodicLayer(
-          this.engine, `snow_${biomeId}`, 100,
-          (c) => { this.paintSnowflakes(c as CanvasRenderingContext2D); }
-        );
+        this.drawWithParallax(0.6, () => {
+          this.staticLayerCache.blitPeriodicLayer(
+            this.engine, `snow_${biomeId}`, 100,
+            (c) => { this.paintSnowflakes(c as CanvasRenderingContext2D); }
+          );
+        });
       }
     } else if (biomeId === 'golden_cache' || biomeId === 'golden_spire') {
-      const cached = this.staticLayerCache.blitStaticLayer(this.engine, biomeId, (c) => {
-        this.paintGrid(c as CanvasRenderingContext2D, 120, 'rgba(255, 204, 0, 0.015)');
-        this.paintGoldenCircuitry(c as CanvasRenderingContext2D);
+      // Far: golden grid
+      this.drawWithParallax(0.3, () => { this.paintGrid(ctx, 120, 'rgba(255, 204, 0, 0.015)'); });
+      // Mid: golden circuitry
+      this.drawWithParallax(0.6, () => {
+        const cached = this.staticLayerCache.blitStaticLayer(this.engine, `${biomeId}_circuits`, (c) => {
+          this.paintGoldenCircuitry(c as CanvasRenderingContext2D);
+        });
+        if (!cached) this.paintGoldenCircuitry(ctx);
       });
-      if (!cached) {
-        this.paintGrid(ctx, 120, 'rgba(255, 204, 0, 0.015)');
-        this.paintGoldenCircuitry(ctx);
-      }
     } else if (biomeId === 'custom_map' && customMap) {
       const mapIdPart = 'id' in customMap ? customMap.id : (customMap as { seed?: string }).seed || 'pcg';
-      const cached = this.staticLayerCache.blitStaticLayer(this.engine, `custom_map_static_${mapIdPart}_${customMap.visualStyle}`, (c) => {
-        this.paintCustomMapDetails(c as CanvasRenderingContext2D, customMap);
+      // custom maps may include grid (far) + decorations (mid)
+      this.drawWithParallax(0.3, () => {
+        if (customMap.visualStyle === 'grid' || customMap.visualStyle === 'circuits') {
+          const gridColorStr = customMap.gridColor || 'rgba(0, 255, 204, 0.015)';
+          this.paintGrid(ctx, customMap.gridSize || 120, gridColorStr);
+        }
       });
-      if (!cached) {
-        this.paintCustomMapDetails(ctx, customMap);
-      }
+      this.drawWithParallax(0.6, () => {
+        const cached = this.staticLayerCache.blitStaticLayer(this.engine, `custom_map_details_${mapIdPart}_${customMap.visualStyle}`, (c) => {
+          this.paintCustomMapDetails(c as CanvasRenderingContext2D, customMap);
+        });
+        if (!cached) this.paintCustomMapDetails(ctx, customMap);
+      });
     }
 
     ctx.restore();
@@ -186,17 +229,14 @@ export class EnvironmentRenderer {
     const w = this.engine.width;
     const h = this.engine.height;
     const mainColor = map.color || '#00ffcc';
-    const gridColorStr = map.gridColor || 'rgba(0, 255, 204, 0.015)';
-    const size = map.gridSize || 120;
     const labelText = map.label || 'SYSTEM_RUN_OK';
 
-    // 1. Always paint some grid if requested or standard
-    if (map.visualStyle === 'grid' || map.visualStyle === 'circuits') {
-      this.paintGrid(ctx, size, gridColorStr);
-    }
+    // Note: grid for 'grid' and 'circuits' styles is drawn at parallax depth 0.3
+    // in the biome branch above — do not redraw here to avoid double-draw.
 
     // 2. Specific styles
     if (map.visualStyle === 'grid') {
+      // Grid lines already drawn at far parallax (0.3x) above; draw brackets and labels at mid parallax (0.6x)
       ctx.strokeStyle = `${mainColor}20`; // low opacity
       ctx.lineWidth = 1;
       const offset = 30;

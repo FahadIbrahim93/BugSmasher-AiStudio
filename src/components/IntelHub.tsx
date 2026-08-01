@@ -78,28 +78,43 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
   const [gmailStatus, setGmailStatus] = useState<{ success?: boolean; message?: string } | null>(null);
   const [backupStatus, setBackupStatus] = useState<{ success?: boolean; message?: string } | null>(null);
 
-  // Somatic Diagnostics States (Infinity-UI Inspired)
-  const [diagIdx, setDiagIdx] = useState(0);
-  const [somaticVoltage, setSomaticVoltage] = useState(48);
-  const [dopamineRate, setDopamineRate] = useState(82);
-
-  const somaticStatements = [
-    "CHANNULATING ACUTE VENT VECTORS...",
-    "DISCHARGING AMYGDALA OVERLOAD VOLTAGE...",
-    "FLUSHING RESIDUAL STRESS HORMONES & CORTISOL...",
-    "CONVERTING ANXIETY FREQUENCIES TO DOPAMINE BURSTS...",
-    "STABILIZING SOMATIC CALIBRATION RATIO...",
-    "VENT ENGINE DISCHARGE STAGE: SUCCESSFUL // RECOVERY COMPLETE"
-  ];
+  // REAL system diagnostics — replaces the fake clinical slot-machine telemetry
+  const [telemetry, setTelemetry] = useState({
+    fps: 0,
+    frameTime: 0,
+    jsHeapMb: 0,
+    audioOsc: 0,
+    audioThrottled: 0,
+    audioBudget: 0,
+  });
 
   useEffect(() => {
     if (activeTab !== 'dashboard') return;
-    const interval = setInterval(() => {
-      setDiagIdx((prev) => (prev + 1) % somaticStatements.length);
-      setSomaticVoltage(Math.floor(Math.random() * 30) + 35);
-      setDopamineRate(Math.floor(Math.random() * 20) + 78);
-    }, 4000);
-    return () => { clearInterval(interval); };
+    let rafId = 0;
+    let lastFrame = performance.now();
+    const frames: number[] = [];
+
+    const tick = (now: number) => {
+      const frameTime = now - lastFrame;
+      lastFrame = now;
+      frames.push(frameTime);
+      if (frames.length > 30) frames.shift();
+
+      const avg = frames.reduce((a, b) => a + b, 0) / frames.length;
+      const mem = (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory;
+      const audio = soundManager.getAudioStats();
+      setTelemetry({
+        fps: Math.round(1000 / Math.max(1, avg)),
+        frameTime: Math.round(avg * 10) / 10,
+        jsHeapMb: mem ? Math.round(mem.usedJSHeapSize / 1048576) : 0,
+        audioOsc: audio.oscillatorsSpawned,
+        audioThrottled: audio.throttledEvents,
+        audioBudget: audio.budgetPerWindow,
+      });
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => { cancelAnimationFrame(rafId); };
   }, [activeTab]);
 
   const stats = StatsManager.getStats();
@@ -262,12 +277,12 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
     >
-      <div className="bg-[#05070a] border border-[#22d3ee]/20 w-full max-w-6xl h-[85vh] rounded-3xl overflow-hidden flex flex-col shadow-[0_0_50px_rgba(6,182,212,0.15)]">
+      <div className="bg-[#05070a] glass-neon w-full max-w-6xl h-[85vh] rounded-3xl overflow-hidden flex flex-col shadow-[0_0_50px_rgba(6,182,212,0.15)]">
         
         {/* Header */}
         <div className="p-6 border-b border-rose-500/20 flex justify-between items-center bg-rose-950/10">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-black text-rose-500 select-none tracking-tight flex items-center gap-3 font-display uppercase">
+            <h2 className="heading-xl text-2xl sm:text-3xl text-rose-500 select-none flex items-center gap-3 uppercase">
               <Database className="text-rose-500 animate-pulse" />
               Somatic Catharsis Log
             </h2>
@@ -639,76 +654,82 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      {/* Left: Simulated Amygdala & Cortisol Diagnostic Readout */}
-                      <div className="lg:col-span-2 bg-[#05070a]/45 p-6 rounded-2xl border border-rose-500/20 shadow-xl flex flex-col justify-between font-mono space-y-6">
+                      {/* Left: REAL System Diagnostics Readout */}
+                      <div className="lg:col-span-2 bg-[#05070a]/45 p-6 rounded-2xl border border-cyan-500/20 shadow-xl flex flex-col justify-between font-mono space-y-6">
                         <div>
-                          <div className="flex items-center justify-between border-b border-rose-500/10 pb-3 mb-4">
+                          <div className="flex items-center justify-between border-b border-cyan-500/10 pb-3 mb-4">
                             <div className="flex items-center gap-2">
                               <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
                               </span>
-                              <span className="text-xs font-black text-rose-300 uppercase tracking-widest">CEREBRAL_VENT_DIAGNOSTICS</span>
+                              <span className="text-xs font-black text-cyan-300 uppercase tracking-widest">SYSTEM_DIAGNOSTICS</span>
                             </div>
-                            <span className="text-[9px] text-[#22c55e] bg-emerald-950/20 border border-emerald-500/25 px-2 py-0.5 rounded font-extrabold tracking-widest uppercase">VENTING_ACTIVE</span>
+                            <span className="text-[9px] text-[#22c55e] bg-emerald-950/20 border border-emerald-500/25 px-2 py-0.5 rounded font-extrabold tracking-widest uppercase">LIVE_FEED</span>
                           </div>
 
-                          {/* Specific Telemetry Items matching infinity-ui but clinical */}
+                          {/* Real Telemetry Items */}
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="p-3 bg-rose-950/10 border border-rose-500/10 rounded-xl space-y-1">
-                              <span className="text-[9px] text-zinc-500 uppercase block font-bold">Amygdala Calibration Voltage</span>
+                            <div className="p-3 bg-cyan-950/10 border border-cyan-500/10 rounded-xl space-y-1">
+                              <span className="text-[9px] text-zinc-500 uppercase block font-bold">Frame Rate</span>
                               <div className="flex items-baseline justify-between">
-                                <span className="text-xl font-black text-white">{somaticVoltage} mV</span>
-                                <span className="text-[8px] text-rose-400 uppercase tracking-widest animate-pulse">[PEAK]</span>
+                                <span className="text-xl font-black text-white">{telemetry.fps} FPS</span>
+                                <span className={`text-[8px] uppercase tracking-widest ${telemetry.fps >= 55 ? 'text-emerald-400' : telemetry.fps >= 30 ? 'text-amber-400' : 'text-red-400 animate-pulse'}`}>
+                                  {telemetry.fps >= 55 ? '[SMOOTH]' : telemetry.fps >= 30 ? '[STABLE]' : '[DROPPING]'}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="p-3 bg-zinc-950 border border-white/5 rounded-xl space-y-1">
+                              <span className="text-[9px] text-zinc-500 uppercase block font-bold">Frame Time</span>
+                              <div className="flex items-baseline justify-between">
+                                <span className="text-xl font-black text-white">{telemetry.frameTime} ms</span>
+                                <span className="text-[8px] text-cyan-500/60 uppercase tracking-widest">[LIVE]</span>
                               </div>
                             </div>
 
                             <div className="p-3 bg-amber-950/10 border border-amber-500/10 rounded-xl space-y-1">
-                              <span className="text-[9px] text-zinc-500 uppercase block font-bold">Cortisol Disposal Rate</span>
+                              <span className="text-[9px] text-zinc-500 uppercase block font-bold">JS Heap Used</span>
                               <div className="flex items-baseline justify-between">
-                                <span className="text-xl font-black text-white">DISCHARGING</span>
-                                <span className="text-xs font-black text-amber-400">{dopamineRate}%</span>
+                                <span className="text-xl font-black text-white">{telemetry.jsHeapMb} MB</span>
+                                <span className="text-[8px] text-amber-400 uppercase tracking-widest">[MEM]</span>
                               </div>
                               <div className="w-full bg-amber-950/40 rounded-full h-1 overflow-hidden relative mt-1.5">
-                                <div 
-                                  className="bg-amber-500 h-full shadow-[0_0_6px_rgba(245,158,11,0.7)] transition-all duration-500" 
-                                  style={{ width: `${dopamineRate}%` }}
+                                <div
+                                  className="bg-amber-500 h-full shadow-[0_0_6px_rgba(245,158,11,0.7)] transition-all duration-500"
+                                  style={{ width: `${Math.min(100, (telemetry.jsHeapMb / 256) * 100)}%` }}
                                 />
                               </div>
                             </div>
 
                             <div className="p-3 bg-zinc-950 border border-white/5 rounded-xl space-y-1">
-                              <span className="text-[9px] text-zinc-500 uppercase block font-bold">Anxiolytic Release Success</span>
-                              <div className="flex justify-between items-center">
-                                <span className="text-lg font-black text-white">{(stats.totalBugsKilled || 0).toLocaleString()} releases</span>
-                              </div>
-                            </div>
-
-                            <div className="p-3 bg-zinc-950 border border-white/5 rounded-xl space-y-1">
-                              <span className="text-[9px] text-zinc-500 uppercase block font-bold">Discharged Load Limits</span>
+                              <span className="text-[9px] text-zinc-500 uppercase block font-bold">Audio Pipeline Load</span>
                               <div className="flex justify-between items-center text-xs">
-                                <span className="text-zinc-600">STABLE CORE //</span>
-                                <span className="text-emerald-400 font-bold">REDUCED FRUSTRATIONS</span>
+                                <span className={`font-black ${telemetry.audioThrottled > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                                  {telemetry.audioOsc} OSC / {telemetry.audioThrottled} DROPPED
+                                </span>
+                                <span className="text-zinc-600">BUDGET {telemetry.audioBudget}/WINDOW</span>
                               </div>
                             </div>
                           </div>
                         </div>
 
-                        {/* Statements cycle inspired by infinity-ui and matching visual style */}
-                        <div className="bg-black/60 border border-rose-500/10 rounded-xl p-4 flex flex-col items-center justify-center text-center py-6 min-h-[90px]">
-                          <span className="text-[8px] text-zinc-600 uppercase tracking-widest block mb-2 font-black">NEURAL SYSTEM TELEMETRY STREAM</span>
-                          <div className="text-xs text-rose-400 font-extrabold tracking-wider leading-relaxed h-10 flex items-center justify-center">
-                            <AnimatePresence mode="wait">
-                              <motion.span
-                                key={diagIdx}
-                                initial={{ opacity: 0, y: 8 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -8 }}
-                                className="max-w-md block"
-                              >
-                                {somaticStatements[diagIdx]}
-                              </motion.span>
-                            </AnimatePresence>
+                        {/* Real session stats stream */}
+                        <div className="bg-black/60 border border-cyan-500/10 rounded-xl p-4 flex flex-col items-center justify-center text-center py-6 min-h-[90px]">
+                          <span className="text-[8px] text-zinc-600 uppercase tracking-widest block mb-2 font-black">VENTING SESSION LOG</span>
+                          <div className="grid grid-cols-3 gap-4 text-xs text-cyan-300 font-extrabold tracking-wider w-full max-w-md">
+                            <div className="flex flex-col items-center">
+                              <span className="text-2xl font-black text-white">{(stats.totalBugsKilled || 0).toLocaleString()}</span>
+                              <span className="text-[7px] text-zinc-500 uppercase tracking-widest mt-1">BIOMASS RELEASED</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                              <span className="text-2xl font-black text-white">{stats.totalWavesCompleted || 0}</span>
+                              <span className="text-[7px] text-zinc-500 uppercase tracking-widest mt-1">WAVES SURVIVED</span>
+                            </div>
+                            <div className="flex flex-col items-center">
+                              <span className="text-2xl font-black text-white">{stats.bossesKilled || 0}</span>
+                              <span className="text-[7px] text-zinc-500 uppercase tracking-widest mt-1">OVERSEERS EXCISED</span>
+                            </div>
                           </div>
                         </div>
                       </div>

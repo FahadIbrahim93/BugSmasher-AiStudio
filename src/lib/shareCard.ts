@@ -11,7 +11,11 @@ export async function generateShareCardImage(data: ShareCardData): Promise<Blob>
   const canvas = document.createElement('canvas');
   canvas.width = w;
   canvas.height = h;
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) {
+    throw new Error('Unable to obtain 2D canvas context for share card');
+  }
 
   const bg = ctx.createLinearGradient(0, 0, w, h);
   bg.addColorStop(0, '#050505');
@@ -56,7 +60,13 @@ export async function generateShareCardImage(data: ShareCardData): Promise<Blob>
   ctx.fillText('bugsmasher — defend the core', 48, h - 48);
 
   return new Promise((resolve, reject) => {
-    canvas.toBlob((b) => { b ? resolve(b) : reject(new Error('blob failed')); }, 'image/png');
+    canvas.toBlob((b) => {
+      if (b) {
+        resolve(b);
+        return;
+      }
+      reject(new Error('blob failed'));
+    }, 'image/png');
   });
 }
 

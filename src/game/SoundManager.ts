@@ -325,6 +325,14 @@ export class SoundManager {
 
   noiseBuffer: AudioBuffer | null = null;
 
+  // SFX burst protection (P0 benchmark): cap synthesis node allocation per 100ms window
+  private static readonly OSC_BUDGET_PER_WINDOW = 48;
+  private static readonly OSC_WINDOW_MS = 100;
+  private oscWindowStart = 0;
+  private oscSpawnsInWindow = 0;
+  private totalOscillatorSpawns = 0;
+  private throttledSfxEvents = 0;
+
   // Music system state
   private musicLayers: MusicLayer[] = [];
   private currentBiome = 'neon_core';
@@ -332,6 +340,8 @@ export class SoundManager {
   private currentIntensity = 1.0;
   private isBossActive = false;
   private isLowHealth = false;
+  private isSurgeActive = false;
+  private reducedMotion = false;
   private musicUpdateTimer = 0;
   private arpeggioTimer = 0;
   private arpeggioIndex = 0;
@@ -543,6 +553,7 @@ export class SoundManager {
 
     for (let i = 0; i < count; i++) {
       try {
+        if (!this.canSpawnOscillator()) break;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         const filter = this.ctx.createBiquadFilter();
@@ -638,7 +649,9 @@ export class SoundManager {
     if (!this.enabled || !this.ctx || !this.sfxGain) return;
 
     try {
+      if (!this.canSpawnOscillator()) return;
       const carrier = this.ctx.createOscillator();
+      if (!this.canSpawnOscillator()) return;
       const modulator = this.ctx.createOscillator();
       const modGain = this.ctx.createGain();
       const gain = this.ctx.createGain();
@@ -677,6 +690,7 @@ export class SoundManager {
     if (!this.enabled || !this.ctx || !this.sfxGain) return;
 
     try {
+      if (!this.canSpawnOscillator()) return;
       // Sub bass layer
       const sub = this.ctx.createOscillator();
       const subGain = this.ctx.createGain();
@@ -691,6 +705,7 @@ export class SoundManager {
       sub.stop(this.ctx.currentTime + duration);
 
       if (punch) {
+        if (!this.canSpawnOscillator()) return;
         // Transient click for impact
         const trans = this.ctx.createOscillator();
         const transGain = this.ctx.createGain();
@@ -729,6 +744,50 @@ export class SoundManager {
       filterFreq: baseFreq * 8,
       filterType: 'lowpass',
     }, isMusic);
+  }
+
+  // ─── Audio Load Budget & A11y ─────────────────────────────────────
+
+  /**
+   * Cap synthesis node allocation per 100ms window so dense SFX bursts
+   * (swarmer swarms, rapid-fire, nuke chain reactions) can never drop
+   * frames on mid-tier mobile (P0 benchmark requirement).
+   *
+   * NOTE: SFX-only — the adaptive music engine (playBiomeMusic) creates its
+   * oscillators directly via ctx.createOscillator() and intentionally
+   * bypasses this throttle so continuous music is never burst-capped.
+   */
+  private canSpawnOscillator(): boolean {
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    if (now - this.oscWindowStart > SoundManager.OSC_WINDOW_MS) {
+      this.oscWindowStart = now;
+      this.oscSpawnsInWindow = 0;
+    }
+    if (this.oscSpawnsInWindow >= SoundManager.OSC_BUDGET_PER_WINDOW) {
+      this.throttledSfxEvents++;
+      return false;
+    }
+    this.oscSpawnsInWindow++;
+    this.totalOscillatorSpawns++;
+    return true;
+  }
+
+  /** Respect a11y reduced-motion: flatten adaptive music intensity so the soundtrack stays calm. */
+  setReducedMotion(enabled: boolean) {
+    this.reducedMotion = enabled;
+  }
+
+  /**
+   * Measurable audio-load telemetry for the P0 benchmark (no frame drops from
+   * audio). Consumed by tests and by the HUD SYS_DIAGNOSTICS overlay
+   * (see src/components/HUD.tsx) which surfaces audio pressure during gameplay.
+   */
+  getAudioStats() {
+    return {
+      oscillatorsSpawned: this.totalOscillatorSpawns,
+      throttledEvents: this.throttledSfxEvents,
+      budgetPerWindow: SoundManager.OSC_BUDGET_PER_WINDOW,
+    };
   }
 
   // ─── SFX Methods ──────────────────────────────────────────────────
@@ -1261,6 +1320,55 @@ export class SoundManager {
     });
   }
 
+  critHit() {
+    if (this.ctx && this.sfxGain && audioAssets.play('crit_hit', this.sfxGain, this.sfxVolume * 0.6))
+      return;
+    // Bright, high-pitched "crit sparkle": fast rising ping with metallic harmonics.
+    // Distinct from the bassy shoot() thwack — highpass filtered, very short.
+    this.playRichTone({
+      frequencies: [1200, 1800, 2400],
+      types: ['triangle', 'sine', 'sine'],
+      durations: [0.06, 0.09, 0.12],
+      volumes: [0.07, 0.04, 0.02],
+      slideTo: [2400, 3200, 4000],
+      filterFreq: 5000,
+      filterType: 'highpass',
+    });
+    this.playShapedNoise(0.05, 0.02, 6000, 800, 'highpass');
+  }
+
+  miss() {
+    if (this.ctx && this.sfxGain && audioAssets.play('miss', this.sfxGain, this.sfxVolume * 0.3))
+      return;
+    // Dull, airy "whiff": descending slide with a soft low body.
+    // Intentionally quieter and flatter than shoot() so misses read as negative feedback.
+    this.playRichTone({
+      frequencies: [500, 300],
+      types: ['triangle', 'sine'],
+      durations: [0.09, 0.14],
+      volumes: [0.03, 0.015],
+      slideTo: [180, 120],
+      filterFreq: 1200,
+      filterType: 'lowpass',
+    });
+    this.playShapedNoise(0.12, 0.03, 1500, 100, 'bandpass');
+  }
+
+  comboBreak() {
+    if (this.ctx && this.sfxGain && audioAssets.play('combo_break', this.sfxGain, this.sfxVolume * 0.5))
+      return;
+    // Combo lost sting: two descending notes with a slight dissonant wobble.
+    this.playRichTone({
+      frequencies: [440, 330],
+      types: ['square', 'triangle'],
+      durations: [0.18, 0.25],
+      volumes: [0.05, 0.03],
+      slideTo: [330, 220],
+      filterFreq: 2000,
+      filterType: 'lowpass',
+    });
+  }
+
   // ─── Armory UI Sounds ────────────────────────────────────────────
 
   /** Equip/apply sound for selecting skins and themes — satisfying magnetic snap */
@@ -1357,11 +1465,12 @@ export class SoundManager {
 
   // ─── Adaptive Soundtrack ──────────────────────────────────────────
 
-  /** Update the music system's intensity based on current game state */
-  updateGameState(state: { intensity: number; healthPercent: number; isBossWave: boolean }) {
+  /** Update the music system's intensity based on current game state (calm → combat → surge → boss) */
+  updateGameState(state: { intensity: number; healthPercent: number; isBossWave: boolean; isSurgeActive?: boolean }) {
     this.targetIntensity = Math.max(0.3, Math.min(2.0, state.intensity));
     this.isBossActive = state.isBossWave;
     this.isLowHealth = state.healthPercent < 0.3;
+    this.isSurgeActive = state.isSurgeActive ?? false;
   }
 
   stopMusic() {
@@ -1456,7 +1565,10 @@ export class SoundManager {
     const intensityFactor = this.targetIntensity;
     const bossFactor = this.isBossActive ? 0.7 : 1.0;
     const healthCrisis = this.isLowHealth ? 1.5 : 1.0;
-    const combinedFactor = intensityFactor * bossFactor * healthCrisis;
+    const surgeFactor = this.isSurgeActive ? 1.3 : 1.0;
+    let combinedFactor = intensityFactor * bossFactor * healthCrisis * surgeFactor;
+    // Reduced-motion a11y: flatten adaptive intensity so the soundtrack stays calm
+    if (this.reducedMotion) combinedFactor = Math.min(combinedFactor, 1.0);
 
     this.musicLayers.forEach((layer) => {
       const now = this.ctx!.currentTime;

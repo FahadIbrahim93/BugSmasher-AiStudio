@@ -149,6 +149,13 @@ export class WaveManager {
       }
     } else if (this.engine.bugs.length === 0) {
       this.waveActive = false;
+      
+      // Spawn confetti celebration on wave completion
+      this.engine.particleSystem.spawnConfetti(
+        this.engine.width / 2,
+        this.engine.height / 2
+      );
+      
       this.engine.wave++;
       const mode = this.engine.gameModeConfig;
       if (mode.endlessWaves) {

@@ -19,6 +19,12 @@ export class BugRenderer {
   protected get vfxScalar() { return this.scaler.vfxScalar; }
   protected get meshComplexityStep() { return this.scaler.meshComplexityStep; }
 
+  /** Draw heat shimmer distortion around bugs in magma/ember biome */
+  drawHeatShimmerForBug(bug: Bug) {
+    if (!this.engine.particleSystem) return;
+    this.engine.particleSystem.spawnHeatShimmer(bug.x, bug.y, bug.size / 15);
+  }
+
   drawHazard(h: Hazard) {
     const ctx = this.engine.ctx;
     const progress = h.timer / h.duration;
@@ -335,6 +341,11 @@ export class BugRenderer {
     const ctx = this.engine.ctx;
     ctx.save();
     ctx.translate(bug.x, bug.y);
+    
+    // Heat shimmer effect for ember biome bugs
+    if (this.engine.currentBiome === 'ember_depths' && bug.active) {
+      this.drawHeatShimmerForBug(bug);
+    }
     
     // Draw glow trail (subtle persistent path) - skip on very low FPS
     if (!this.isLowEnd && bug.active && this.currentFps > 40) {

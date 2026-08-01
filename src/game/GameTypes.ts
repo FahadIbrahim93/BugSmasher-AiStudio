@@ -24,6 +24,10 @@ export interface Bug {
   healEffectTimer?: number;
   lavaTimer?: number;
   webTimer?: number; // New mechanic for spider boss
+  // Reactive dodge (scout dive-away)
+  dodgeTimer?: number;
+  dodgeDirX?: number;
+  dodgeDirY?: number;
   // Boss fields
   phase?: number;
   abilityTimer?: number;
@@ -43,3 +47,14 @@ export interface Hazard {
 
 export interface Powerup { active: boolean; x: number; y: number; type: string; color: string; icon: string; life: number; maxLife: number; size: number; collection: string; }
 export interface ResourcePickup { active: boolean; x: number; y: number; type: ResourceType; color: string; life: number; maxLife: number; size: number; }
+
+/** Persistent goo splatter left by smashed bugs (garbage-collectable contamination). */
+export interface GooPool {
+  active: boolean;
+  x: number;
+  y: number;
+  size: number;
+  color: string;
+  life: number;
+  maxLife: number;
+}

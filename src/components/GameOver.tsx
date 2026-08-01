@@ -59,7 +59,15 @@ export function GameOver({ score, wave, onRetry, onMainMenu }: { score: number, 
   }, [score, wave]);
 
   return (
-    <div className="absolute inset-0 bg-black/90 backdrop-blur-3xl flex flex-col items-center justify-center z-50 p-4">
+    <div className="absolute inset-0 bg-gradient-to-b from-black via-black/95 to-black/90 backdrop-blur-3xl flex flex-col items-center justify-center z-50 p-4">
+      {/* Ambient particle overlay */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-20">
+        <div className="absolute inset-0" style={{
+          backgroundImage: 'radial-gradient(1px 1px at 10% 20%, rgba(239,68,68,0.5), transparent), radial-gradient(1px 1px at 30% 60%, rgba(239,68,68,0.3), transparent), radial-gradient(2px 2px at 50% 80%, rgba(255,255,255,0.2), transparent), radial-gradient(1px 1px at 70% 30%, rgba(239,68,68,0.4), transparent), radial-gradient(2px 2px at 90% 50%, rgba(255,255,255,0.15), transparent)',
+          backgroundSize: '100% 100%'
+        }} />
+      </div>
+      
       {isPrestigeAnimation && (
         <div className="absolute inset-0 z-[100] bg-cyan-950/80 backdrop-blur-2xl flex flex-col items-center justify-center animate-pulse">
           <Zap className="w-16 h-16 text-cyan-400 mb-6 animate-bounce" />
@@ -74,14 +82,14 @@ export function GameOver({ score, wave, onRetry, onMainMenu }: { score: number, 
             <span>Syncing to Cloud...</span>
         </div>
       )}
-      <div className="max-w-md w-full text-center space-y-12">
+      <div className="max-w-md w-full text-center space-y-12" style={{animation: 'slideUp 0.6s ease-out'}}>
         <div className="flex flex-col items-center space-y-6">
-          <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center border border-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
+          <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center border border-red-500/30 shadow-[0_0_40px_rgba(239,68,68,0.3)] animate-bounce" style={{ animationDuration: '4s' }}>
             <Skull className="w-8 h-8 text-red-500 opacity-90" />
           </div>
           <div>
-            <h2 className="text-4xl sm:text-5xl font-black text-white font-display tracking-tight mb-2 cyber-text-glow">DEFENSE DOWN</h2>
-            <div className="h-[2px] w-12 bg-red-500 mx-auto my-4" />
+            <h2 className="text-4xl sm:text-5xl font-black text-white font-display tracking-tight mb-2 cyber-text-glow heading-xl">DEFENSE DOWN</h2>
+            <div className="h-[2px] w-12 bg-gradient-to-r from-transparent via-red-500 to-transparent mx-auto my-4" />
             <p className="text-red-500/60 text-sm font-mono tracking-widest uppercase animate-pulse">Core Connection Severed</p>
           </div>
         </div>

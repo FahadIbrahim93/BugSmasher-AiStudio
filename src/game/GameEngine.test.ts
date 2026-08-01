@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GameEngine } from './GameEngine';
 import { GameConfig } from './GameConfig';
 import { ProgressionManager } from './ProgressionManager';
+import { soundManager } from './SoundManager';
 
 // Mock the sound manager to prevent AudioContext errors in jsdom
 vi.mock('./SoundManager', () => ({
@@ -35,6 +36,10 @@ vi.mock('./SoundManager', () => ({
     stopMusic: vi.fn(),
     playBiomeMusic: vi.fn(),
     destroy: vi.fn(),
+    critHit: vi.fn(),
+    miss: vi.fn(),
+    comboBreak: vi.fn(),
+    setReducedMotion: vi.fn(),
   }
 }));
 
@@ -399,5 +404,310 @@ describe('GameEngine', () => {
     engine.setChallengeModifiers(['healer_horde', 'tank_wave']);
     expect(engine.challengeModifiers?.healerSpawnMultiplier).toBe(4);
     expect(engine.challengeModifiers?.tankSpawnMultiplier).toBe(3);
+  });
+
+  describe('audio feedback wiring', () => {
+    it('fires critHit when a crit lands on a bug', () => {
+      engine.startWave();
+      (engine.waveManager as any).spawnBug();
+      const bug = engine.bugs[0];
+      bug.type = 'basic'; // avoid boss crit path (driven by pulse, not Math.random)
+      bug.hp = 100;
+      bug.maxHp = 100;
+      vi.clearAllMocks();
+
+      // Force a crit: base critChance = 0.05 + skill bonus
+      const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.001);
+      engine.damageBug(bug, 1);
+      randomSpy.mockRestore();
+
+      expect(soundManager.critHit).toHaveBeenCalled();
+    });
+
+    it('does not fire critHit on a normal hit', () => {
+      engine.startWave();
+      (engine.waveManager as any).spawnBug();
+      const bug = engine.bugs[0];
+      bug.type = 'basic'; // avoid boss crit path (driven by pulse, not Math.random)
+      bug.hp = 100;
+      bug.maxHp = 100;
+      vi.clearAllMocks();
+
+      // No crit: random well above critChance
+      const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.9);
+      engine.damageBug(bug, 1);
+      randomSpy.mockRestore();
+
+      expect(soundManager.critHit).not.toHaveBeenCalled();
+      expect(soundManager.shoot).toHaveBeenCalled();
+    });
+
+    it('fires comboBreak when the streak timer expires with an active streak', () => {
+      engine.streakCount = 5;
+      engine.streakTimer = 0.05;
+      vi.clearAllMocks();
+
+      engine.update(0.1);
+
+      expect(soundManager.comboBreak).toHaveBeenCalled();
+      expect(engine.streakCount).toBe(0);
+    });
+
+    it('does not fire comboBreak when no streak is active', () => {
+      engine.streakCount = 0;
+      engine.streakTimer = 0.05;
+      vi.clearAllMocks();
+
+      engine.update(0.1);
+
+      expect(soundManager.comboBreak).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('RAGE METER / FURY MODE', () => {
+    it('addRage fills the meter and ignites FURY MODE at 100', () => {
+      engine.weaponHeat = 90;
+      engine.addRage(15);
+      expect(engine.furyActive).toBe(true);
+      expect(engine.weaponHeat).toBe(100);
+    });
+
+    it('does not re-trigger FURY MODE while already furious', () => {
+      engine.furyActive = true;
+      engine.triggerFury();
+      expect(engine.furyActive).toBe(true);
+    });
+
+    it('FURY MODE drains the meter and deactivates', () => {
+      engine.weaponHeat = 100;
+      engine.furyActive = true;
+      engine.furyTimer = engine.furyDuration;
+      // Simulate a full duration of drain
+      for (let i = 0; i < 40; i++) {
+        engine.update(0.1);
+      }
+      expect(engine.furyActive).toBe(false);
+      expect(engine.weaponHeat).toBe(0);
+    });
+
+    it('FURY MODE guarantees crits at 2x damage', () => {
+      engine.startWave();
+      (engine.waveManager as any).spawnBug();
+      const bug = engine.bugs[0];
+      bug.hp = 100;
+      bug.maxHp = 100;
+      bug.type = 'basic';
+      engine.furyActive = true;
+      vi.clearAllMocks();
+
+      const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.99);
+      engine.damageBug(bug, 1);
+      randomSpy.mockRestore();
+
+      expect(bug.hp).toBeLessThanOrEqual(98); // 1 * 2 = 2 damage guaranteed
+      expect(soundManager.critHit).toHaveBeenCalled();
+    });
+
+    it('resetEntities clears FURY MODE state', () => {
+      engine.furyActive = true;
+      engine.furyTimer = 2;
+      engine.resetEntities();
+      expect(engine.furyActive).toBe(false);
+      expect(engine.furyTimer).toBe(0);
+    });
+  });
+
+  describe('GROUND SLAM', () => {
+    it('damages all bugs within the blast radius scaled by charge', () => {
+      engine.startWave();
+      (engine.waveManager as any).spawnBug();
+      const bug = engine.bugs[0];
+      bug.x = 400;
+      bug.y = 300;
+      bug.hp = 100;
+      bug.maxHp = 100;
+      vi.clearAllMocks();
+
+      engine.triggerGroundSlam(400, 300, 1.0);
+
+      expect(bug.hp).toBeLessThan(100);
+      expect(engine.slamCharging).toBe(false);
+    });
+
+    it('does not damage bugs outside the blast radius', () => {
+      engine.startWave();
+      (engine.waveManager as any).spawnBug();
+      const bug = engine.bugs[0];
+      bug.x = 50;
+      bug.y = 50;
+      bug.hp = 100;
+      bug.maxHp = 100;
+
+      engine.triggerGroundSlam(750, 550, 0.5);
+
+      expect(bug.hp).toBe(100);
+    });
+  });
+
+  describe('RAGE REFUND', () => {
+    it('drops a powerup near the core when a streak expires', () => {
+      engine.startWave();
+      engine.streakCount = 5;
+      engine.streakTimer = 0.05;
+      engine.coreX = engine.width / 2;
+      engine.coreY = engine.height / 2;
+      const before = engine.powerups.length;
+
+      engine.update(0.1);
+
+      expect(engine.powerups.length).toBeGreaterThan(before);
+    });
+  });
+
+  describe('SCOUT DODGE', () => {
+    it('scouts dive away from a surviving strike', () => {
+      engine.startWave();
+      (engine.waveManager as any).spawnBug();
+      const bug = engine.bugs[0];
+      bug.type = 'scout';
+      bug.hp = 100;
+      bug.maxHp = 100;
+      bug.x = 400;
+      bug.y = 300;
+      engine.inputSystem.lastMouseX = 400;
+      engine.inputSystem.lastMouseY = 300;
+
+      engine.damageBug(bug, 1);
+
+      expect(bug.dodgeTimer).toBeGreaterThan(0);
+      expect(bug.dodgeDirX).toBeDefined();
+    });
+
+    it('non-scouts do not dodge', () => {
+      engine.startWave();
+      (engine.waveManager as any).spawnBug();
+      const bug = engine.bugs[0];
+      bug.type = 'basic';
+      bug.hp = 100;
+      bug.maxHp = 100;
+
+      engine.damageBug(bug, 1);
+
+      expect(bug.dodgeTimer).toBeUndefined();
+    });
+  });
+
+  describe('GOO SPLATTER LOOP', () => {
+    it('adds goo when bugs are killed', () => {
+      engine.startWave();
+      (engine.waveManager as any).spawnBug();
+      const bug = engine.bugs[0];
+      bug.hp = 1;
+      bug.maxHp = 1;
+
+      engine.damageBug(bug, 10);
+
+      expect(engine.gooSystem.gooPools.length).toBeGreaterThan(0);
+      expect(engine.gooSystem.gooAmount).toBeGreaterThan(0);
+    });
+  });
+
+  describe('RAGE CADENCE (playtest balance pass)', () => {
+    // Deterministic wave simulator: applies a fixed click schedule and runs the
+    // real update loop (decay + fury drain) between actions, then reports how
+    // many times FURY erupted. Pins the GameConfig.rage tuning contract.
+    const simulateWave = (
+      eng: GameEngine,
+      actions: ('hit' | 'miss' | 'slam')[],
+      seconds: number
+    ) => {
+      const dt = seconds / Math.max(1, actions.length);
+      for (const action of actions) {
+        if (action === 'hit') eng.addRage(GameConfig.rage.perHit);
+        else if (action === 'miss') eng.addRage(GameConfig.rage.perMiss);
+        else eng.addRage(GameConfig.rage.perSlam);
+        eng.update(dt);
+      }
+    };
+
+    it('pins the playtest balance values in GameConfig', () => {
+      expect(GameConfig.rage.perHit).toBe(15);
+      expect(GameConfig.rage.perMiss).toBe(10);
+      expect(GameConfig.rage.perSlam).toBe(8);
+      expect(GameConfig.rage.furyDuration).toBe(4.0);
+      expect(GameConfig.rage.maxHeat).toBe(100);
+      // Tuned so a typical wave nets ~100 heat (once-per-wave eruption)
+      expect(GameConfig.rage.decayPerSecond).toBe(6.0);
+    });
+
+    it('a typical wave (15 hits, 5 misses, 1 slam over ~25s) erupts FURY exactly once', () => {
+      // 15 hits / 5 misses / 1 slam, interleaved like real play, 21 actions over 25s
+      const actions: ('hit' | 'miss' | 'slam')[] = [
+        'hit', 'miss', 'hit', 'hit', 'miss', 'hit', 'hit', 'miss', 'hit', 'hit',
+        'miss', 'hit', 'hit', 'miss', 'hit', 'slam', 'hit', 'hit', 'hit', 'hit', 'hit',
+      ];
+      expect(actions.filter((a) => a === 'hit').length).toBe(15);
+      expect(actions.filter((a) => a === 'miss').length).toBe(5);
+      expect(actions.filter((a) => a === 'slam').length).toBe(1);
+
+      simulateWave(engine, actions, 25);
+
+      expect(engine.furyTriggers).toBe(1);
+      // FURY already drained; meter refilled a little after the eruption
+      expect(engine.weaponHeat).toBeLessThan(GameConfig.rage.maxHeat);
+    });
+
+    it('sparse play (8 hits, 2 misses over 30s) never erupts — decay wins', () => {
+      const actions: ('hit' | 'miss' | 'slam')[] = [
+        'hit', 'hit', 'miss', 'hit', 'hit', 'miss', 'hit', 'hit', 'hit', 'hit',
+      ];
+      simulateWave(engine, actions, 30);
+      expect(engine.furyTriggers).toBe(0);
+    });
+
+    it('double the input over two waves erupts roughly twice (cadence scales with volume)', () => {
+      // Two copies of the typical wave schedule over 50s
+      const wave: ('hit' | 'miss' | 'slam')[] = [
+        'hit', 'miss', 'hit', 'hit', 'miss', 'hit', 'hit', 'miss', 'hit', 'hit',
+        'miss', 'hit', 'hit', 'miss', 'hit', 'slam', 'hit', 'hit', 'hit', 'hit', 'hit',
+      ];
+      simulateWave(engine, [...wave, ...wave], 50);
+      expect(engine.furyTriggers).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  describe('VENTING TELEMETRY', () => {
+    it('increments furyTriggers each time FURY MODE ignites', () => {
+      engine.weaponHeat = 90;
+      engine.addRage(15);
+      expect(engine.furyTriggers).toBe(1);
+
+      // Fury must fully drain before it can re-trigger
+      engine.furyTimer = 0;
+      engine.furyActive = false;
+      engine.weaponHeat = 90;
+      engine.addRage(15);
+      expect(engine.furyTriggers).toBe(2);
+    });
+
+    it('increments slamsUsed when a Ground Slam lands', () => {
+      engine.startWave();
+      engine.triggerGroundSlam(400, 300, 0.5);
+      expect(engine.slamsUsed).toBe(1);
+      engine.triggerGroundSlam(400, 300, 0.5);
+      expect(engine.slamsUsed).toBe(2);
+    });
+
+    it('resets venting counters on resetEntities', () => {
+      engine.weaponHeat = 100;
+      engine.addRage(10);
+      engine.triggerGroundSlam(400, 300, 1);
+      expect(engine.furyTriggers).toBeGreaterThan(0);
+      expect(engine.slamsUsed).toBeGreaterThan(0);
+
+      engine.resetEntities();
+      expect(engine.furyTriggers).toBe(0);
+      expect(engine.slamsUsed).toBe(0);
+    });
   });
 });

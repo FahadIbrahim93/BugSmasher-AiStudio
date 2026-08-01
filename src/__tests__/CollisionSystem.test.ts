@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GameEngine } from '../game/GameEngine';
 import { CollisionSystem } from '../game/CollisionSystem';
 import { Bug } from '../game/GameTypes';
+import { soundManager } from '../game/SoundManager';
 
 vi.mock('../game/SoundManager', () => ({
   soundManager: {
@@ -34,6 +35,10 @@ vi.mock('../game/SoundManager', () => ({
     stopMusic: vi.fn(),
     playBiomeMusic: vi.fn(),
     destroy: vi.fn(),
+    critHit: vi.fn(),
+    miss: vi.fn(),
+    comboBreak: vi.fn(),
+    setReducedMotion: vi.fn(),
   }
 }));
 
@@ -131,6 +136,62 @@ describe('CollisionSystem', () => {
       collisionSystem.handleBugImpact(bug, engine.coreX, engine.coreY);
 
       expect(engine.streakCount).toBe(0);
+    });
+
+    it('fires comboBreak when a bug breaches the core with an active streak', () => {
+      engine.streakCount = 25;
+      engine.shieldTimer = 0;
+
+      const bug = {
+        active: true,
+        x: engine.coreX + 10,
+        y: engine.coreY + 10,
+        color: '#ff0000',
+        size: 15,
+      } as Bug;
+
+      vi.clearAllMocks();
+      collisionSystem.handleBugImpact(bug, engine.coreX, engine.coreY);
+
+      expect(soundManager.comboBreak).toHaveBeenCalled();
+      expect(engine.streakCount).toBe(0);
+    });
+
+    it('does not fire comboBreak when the streak is already zero', () => {
+      engine.streakCount = 0;
+      engine.shieldTimer = 0;
+
+      const bug = {
+        active: true,
+        x: engine.coreX + 10,
+        y: engine.coreY + 10,
+        color: '#ff0000',
+        size: 15,
+      } as Bug;
+
+      vi.clearAllMocks();
+      collisionSystem.handleBugImpact(bug, engine.coreX, engine.coreY);
+
+      expect(soundManager.comboBreak).not.toHaveBeenCalled();
+    });
+
+    it('does not fire comboBreak when the shield is up (streak preserved)', () => {
+      engine.streakCount = 25;
+      engine.shieldTimer = 5;
+
+      const bug = {
+        active: true,
+        x: engine.coreX + 10,
+        y: engine.coreY + 10,
+        color: '#ff0000',
+        size: 15,
+      } as Bug;
+
+      vi.clearAllMocks();
+      collisionSystem.handleBugImpact(bug, engine.coreX, engine.coreY);
+
+      expect(soundManager.comboBreak).not.toHaveBeenCalled();
+      expect(engine.streakCount).toBe(25);
     });
 
     it('should trigger shake effect on hit', () => {

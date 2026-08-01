@@ -33,6 +33,10 @@ vi.mock('../game/SoundManager', () => ({
     stopMusic: vi.fn(),
     playBiomeMusic: vi.fn(),
     destroy: vi.fn(),
+    critHit: vi.fn(),
+    miss: vi.fn(),
+    comboBreak: vi.fn(),
+    setReducedMotion: vi.fn(),
   }
 }));
 

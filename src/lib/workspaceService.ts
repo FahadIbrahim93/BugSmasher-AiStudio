@@ -19,9 +19,10 @@ async function apiCall(accessToken: string, url: string, options: RequestInit = 
 export async function getOrCreateSpreadsheet(accessToken: string): Promise<string> {
   const queryStr = encodeURIComponent("name = 'BUGSMASHER Combat Log & Metrics' and mimeType = 'application/vnd.google-apps.spreadsheet'");
   const driveSearch = await apiCall(accessToken, `https://www.googleapis.com/drive/v3/files?q=${queryStr}`);
-  
-  if (driveSearch.files && driveSearch.files.length > 0) {
-    return driveSearch.files[0].id;
+
+  const files = Array.isArray(driveSearch.files) ? driveSearch.files : [];
+  if (files.length > 0) {
+    return files[0].id;
   }
 
   // Create formatted spreadsheet

@@ -17,6 +17,7 @@ export function grantSupporterPack(): void {
 
 export async function purchaseSupporterPack(): Promise<boolean> {
   // Stub: real payment SDK replaces this
+  await Promise.resolve();
   if (import.meta.env.VITE_ENABLE_DEMO_PURCHASE === 'true') {
     grantSupporterPack();
     return true;

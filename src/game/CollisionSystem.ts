@@ -23,6 +23,11 @@ export class CollisionSystem {
       this.engine.health -= GameConfig.player.hitDamage;
       this.engine.renderer.impactFlash = 1.0;
       this.engine.lastHitTime = this.engine.globalTime;
+      if (this.engine.streakCount > 0) {
+        soundManager.comboBreak();
+        // Rage refund: the breach drops a consolation powerup near the core
+        this.engine.spawnRageRefund();
+      }
       this.engine.streakCount = 0;
       this.engine.shake(
         0.3,

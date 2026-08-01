@@ -24,18 +24,20 @@ export function PauseMenu({
   const hasSave = SaveManager.hasSave();
 
   return (
-    <div className="absolute inset-0 bg-black/60 backdrop-blur-xl flex flex-col items-center justify-center z-50 p-4">
+    <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-black/80 backdrop-blur-2xl flex flex-col items-center justify-center z-50 p-4">
       {isAccountOpen && <AccountMenu onClose={() => { setIsAccountOpen(false); }} />}
       {isIntelOpen && <IntelHub onBack={() => { setIsIntelOpen(false); }} />}
       
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="max-w-md w-full bg-black/40 backdrop-blur-3xl border-[0.5px] border-white/10 p-8 rounded-[2rem] shadow-2xl flex flex-col items-center"
+        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+        className="max-w-md w-full glass-deep p-8 rounded-[2rem] shadow-2xl flex flex-col items-center"
       >
-        <div className="w-16 h-16 rounded-full border border-white/10 flex items-center justify-center mb-6 bg-white/5">
-          <Settings2 className="w-8 h-8 text-white" />
+        <div className="w-16 h-16 rounded-2xl border border-white/10 flex items-center justify-center mb-6 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent" />
+          <Settings2 className="w-8 h-8 text-white relative z-10" />
         </div>
         
         <h2 className="text-3xl font-black text-white font-display mb-2 uppercase tracking-widest">

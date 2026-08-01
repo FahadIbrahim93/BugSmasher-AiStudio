@@ -8,7 +8,10 @@ export type SfxId =
   | 'ui_hover'
   | 'powerup'
   | 'hit_base'
-  | 'boss_warning';
+  | 'boss_warning'
+  | 'crit_hit'
+  | 'miss'
+  | 'combo_break';
 
 const PATHS: Record<SfxId, string> = {
   shoot: '/audio/shoot.wav',
@@ -18,6 +21,9 @@ const PATHS: Record<SfxId, string> = {
   powerup: '/audio/powerup.wav',
   hit_base: '/audio/hit_base.wav',
   boss_warning: '/audio/boss_warning.wav',
+  crit_hit: '/audio/crit_hit.wav',
+  miss: '/audio/miss.wav',
+  combo_break: '/audio/combo_break.wav',
 };
 
 export class AudioAssetLoader {

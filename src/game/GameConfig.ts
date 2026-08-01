@@ -94,6 +94,30 @@ export const GameConfig = {
     spawnRateReduction: 0.1,
     minSpawnRate: 0.1,
   },
+  // RAGE METER / FURY MODE — playtest-tuned so a typical wave of clicks
+  // (roughly 15 hits + 5 misses + 1 slam over ~25s) erupts FURY ~once.
+  rage: {
+    perHit: 15,
+    perMiss: 10,
+    perSlam: 8,
+    hitWithRapidFire: 0, // rapid-fire powerup: zero thermal friction
+    hitWithOverdrive: 4.5, // overdrive chip: optimized cooling buffer
+    furyDuration: 4.0,
+    maxHeat: 100,
+    // Passive cooldown when NOT in FURY. Tuned so average play nets ~100 heat
+    // per wave (once-per-wave eruption); too high and FURY becomes unreachable.
+    decayPerSecond: 6.0,
+  },
+  // GOO CONTAMINATION LOOP — splatter buildup, natural evaporation, sweep rate.
+  goo: {
+    addPerSize: 0.1,
+    maxAddPerPool: 6,
+    maxPools: 60,
+    poolLife: 30,
+    poolLifeCollectMultiplier: 4, // sweeping dissolves pools 4x faster
+    evaporationPerSecond: 0.4, // gentle natural decay (never soft-locks a run)
+    collectPerSecond: 30, // holding Q recycles goo at this rate
+  },
   abilities: {
     // Moved from GameEngine per audit (magic numbers)
     bioshieldCooldown: 40,

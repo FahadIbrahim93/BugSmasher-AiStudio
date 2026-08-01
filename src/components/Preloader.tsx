@@ -57,6 +57,12 @@ export function Preloader({ onComplete }: { onComplete: () => void }) {
         {/* Soft dark vignette overlays for extreme text visibility and contrast */}
         <div className="absolute inset-0 bg-radial-gradient from-transparent via-[#030303]/90 to-[#030303]" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#030303]/50 via-transparent to-[#030303]" />
+        
+        {/* Ambient particle dots */}
+        <div className="absolute inset-0 opacity-15" style={{
+          backgroundImage: 'radial-gradient(1px 1px at 20% 40%, rgba(255,255,255,0.4), transparent), radial-gradient(1px 1px at 50% 70%, rgba(255,255,255,0.3), transparent), radial-gradient(2px 2px at 80% 20%, rgba(52,211,153,0.3), transparent)',
+          backgroundSize: '150px 150px'
+        }} />
       </div>
       
       <div className="absolute inset-0 opacity-10 pointer-events-none z-10">
@@ -64,26 +70,28 @@ export function Preloader({ onComplete }: { onComplete: () => void }) {
       </div>
       
       <div className="z-10 flex flex-col items-center max-w-md w-full px-8">
-        <Bug className="w-12 h-12 text-white mb-12 animate-bounce" />
+        <div className="w-16 h-16 rounded-full border border-emerald-500/20 flex items-center justify-center mb-12 animate-pulse" style={{animationDuration: '2s'}}>
+          <Bug className="w-8 h-8 text-emerald-400" />
+        </div>
         
         <div className="w-full space-y-1 mb-8 overflow-hidden h-32">
             {readouts.map((r, i) => (
-                <div key={i} className="text-[10px] text-zinc-500 uppercase tracking-tighter opacity-70">
-                    <span className="text-zinc-700 mr-2">[{new Date().toISOString().split('T')[1].split('.')[0]}]</span> {r}
+                <div key={i} className="text-[10px] text-zinc-500 uppercase tracking-tighter opacity-70" style={{animation: 'slideUp 0.3s ease-out'}}>
+                    <span className="text-emerald-700 mr-2">[{new Date().toISOString().split('T')[1].split('.')[0]}]</span> {r}
                 </div>
             ))}
         </div>
 
-        <div className="w-full h-[1px] bg-zinc-800 relative mb-4">
+        <div className="w-full h-[2px] bg-zinc-800/50 rounded-full relative mb-4 overflow-hidden">
             <div 
-              className="absolute top-0 left-0 h-full bg-white shadow-[0_0_15px_#fff] transition-all duration-300"
+              className="absolute top-0 left-0 h-full bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-300 shadow-[0_0_15px_rgba(52,211,153,0.4)] transition-all duration-300 rounded-full"
               style={{ width: `${progress}%` }}
             />
         </div>
         
         <div className="flex justify-between w-full text-[9px] text-zinc-600 uppercase tracking-widest font-black">
-          <span>Uplink Established</span>
-          <span>{progress}%</span>
+          <span className="text-emerald-500/60">Uplink Established</span>
+          <span className="text-emerald-400/80">{progress}%</span>
         </div>
       </div>
     </div>

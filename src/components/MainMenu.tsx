@@ -54,6 +54,15 @@ export function MainMenu({
         {/* Soft dark vignette overlays for extreme text visibility and contrast */}
         <div className="absolute inset-0 bg-radial-gradient from-transparent via-[#030303]/85 to-[#030303]" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#030303]/40 via-transparent to-[#030303]" />
+        
+        {/* Floating particle field overlay */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,0.3), transparent), radial-gradient(2px 2px at 40% 70%, rgba(255,255,255,0.2), transparent), radial-gradient(1px 1px at 60% 20%, rgba(255,255,255,0.4), transparent), radial-gradient(1px 1px at 80% 50%, rgba(255,255,255,0.2), transparent), radial-gradient(2px 2px at 10% 80%, rgba(255,255,255,0.3), transparent), radial-gradient(1px 1px at 70% 90%, rgba(255,255,255,0.2), transparent), radial-gradient(2px 2px at 90% 10%, rgba(255,255,255,0.3), transparent), radial-gradient(1px 1px at 50% 50%, rgba(255,255,255,0.4), transparent)',
+            backgroundSize: '200px 200px',
+            animation: 'drift 12s ease-in-out infinite'
+          }} />
+        </div>
       </div>
 
       {isArmoryOpen && <Armory onClose={() => { setIsArmoryOpen(false); }} />}
@@ -86,15 +95,16 @@ export function MainMenu({
       <div className="z-10 flex flex-col items-center space-y-12 sm:space-y-16 w-full max-w-lg">
         <div className="text-center space-y-6">
           <div className="flex items-center justify-center mb-6">
-            <Bug className="w-12 h-12 sm:w-16 sm:h-16 text-rose-500 opacity-90 animate-pulse" />
+            <Bug className="w-12 h-12 sm:w-16 sm:h-16 text-rose-500 opacity-90 animate-bounce" style={{ animationDuration: '3s' }} />
           </div>
-          <h1 className="text-4xl sm:text-6xl md:text-8xl font-black tracking-tighter text-white font-display uppercase">
+          <h1 className="text-4xl sm:text-6xl md:text-8xl font-black tracking-tighter text-white font-display uppercase heading-xl relative">
             BUGSMASHER
+            <span className="absolute -inset-1 bg-gradient-to-r from-rose-500/10 via-transparent to-rose-500/10 blur-xl opacity-50 animate-pulse" />
           </h1>
           <p className="text-[10px] text-red-500 font-mono font-black tracking-[0.3em] uppercase mt-1 animate-pulse">
             ANGER VENT PROTOCOL ACTIVE
           </p>
-          <div className="h-px w-24 bg-rose-500/30 mx-auto mt-4 mb-6" />
+          <div className="h-px w-24 bg-gradient-to-r from-transparent via-rose-500/50 to-transparent mx-auto mt-4 mb-6" />
 
           {highScore > 0 && (
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4 mx-auto w-fit">
@@ -146,19 +156,21 @@ export function MainMenu({
             onClick={() => { SaveManager.setActiveSlotId(null); soundManager.init(); soundManager.uiClick(); onStart(); }}
             onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
             aria-label="Start Game"
-            className="group relative px-12 py-4 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-400 hover:to-rose-500 text-white rounded-full font-bold text-sm sm:text-base uppercase tracking-widest transition-all hover:scale-105 active:scale-95 flex items-center space-x-3 overflow-hidden w-full sm:w-auto shadow-[0_4px_25px_rgba(239,68,68,0.4)]"
+            className="group relative px-12 py-5 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-400 hover:to-rose-500 text-white rounded-full font-bold text-sm sm:text-base uppercase tracking-widest transition-all duration-300 hover:scale-105 active:scale-95 flex items-center space-x-3 overflow-hidden w-full sm:w-auto shadow-[0_4px_25px_rgba(239,68,68,0.4)] hover:shadow-[0_8px_40px_rgba(239,68,68,0.6)]"
           >
-            <span className="relative z-10 font-black">Begin Stress Vent</span>
-            <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+            {/* Shine effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+            <span className="relative z-10 font-black tracking-[0.15em]">Begin Stress Vent</span>
+            <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-transparent via-white/40 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
           </button>
 
           {/* Load Save Slot Button */}
           <button 
             onClick={() => { soundManager.init(); soundManager.uiClick(); setIsSaveSlotsOpen(true); }}
             onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
-            className="group relative w-full sm:w-auto px-6 py-3 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white rounded-full font-bold text-xs uppercase tracking-widest transition-all overflow-hidden flex items-center justify-center space-x-2.5"
+            className="group relative w-full sm:w-auto px-6 py-3 bg-zinc-900/80 border border-zinc-800 hover:border-emerald-500/30 hover:bg-zinc-900 text-zinc-300 hover:text-white rounded-full font-bold text-xs uppercase tracking-widest transition-all duration-300 overflow-hidden flex items-center justify-center space-x-2.5"
           >
-            <Download className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+            <Download className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
             <span>Load Memory Slate</span>
           </button>
 
@@ -166,10 +178,10 @@ export function MainMenu({
           <button 
             onClick={() => { soundManager.init(); soundManager.uiClick(); setIsArmoryOpen(true); }}
             onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
-            className={`group relative w-full sm:w-auto px-6 py-3 rounded-full font-bold text-xs uppercase tracking-widest transition-all overflow-hidden flex items-center justify-center space-x-2.5 ${
+            className={`group relative w-full sm:w-auto px-6 py-3 rounded-full font-bold text-xs uppercase tracking-widest transition-all duration-300 overflow-hidden flex items-center justify-center space-x-2.5 ${
               supporter 
-                ? 'bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500/20' 
-                : 'bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10'
+                ? 'bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500/20 hover:border-purple-500/40 hover:shadow-[0_0_20px_rgba(168,85,247,0.15)]' 
+                : 'bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:bg-white/10 hover:border-white/20'
             }`}
           >
             <Gem className="w-4 h-4" />

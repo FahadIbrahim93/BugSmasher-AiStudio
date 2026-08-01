@@ -13,7 +13,10 @@ export type AnalyticsEvent =
   | 'daily_challenge_start'
   | 'settings_changed'
   | 'achievement_unlocked'
-  | 'mission_claimed';
+  | 'mission_claimed'
+  | 'fury_triggered'
+  | 'slam_used'
+  | 'goo_swept';
 
 export type AnalyticsPayload = Record<string, string | number | boolean | undefined>;
 

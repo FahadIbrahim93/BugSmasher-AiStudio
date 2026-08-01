@@ -140,7 +140,7 @@ describe('ThemePreviewRing', () => {
     result = renderComponent(
       React.createElement(ThemePreviewRing, { themeId: 'theme_void', unlocked: true, active: true })
     );
-    const ring = result.container.querySelector('.theme-preview-ring') as HTMLElement;
+    const ring = result.container.querySelector<HTMLElement>('.theme-preview-ring')!;
     expect(ring.style.borderColor).toBe('rgb(255, 255, 255)');
   });
 
@@ -148,7 +148,7 @@ describe('ThemePreviewRing', () => {
     result = renderComponent(
       React.createElement(ThemePreviewRing, { themeId: 'theme_void', unlocked: true, active: false })
     );
-    const ring = result.container.querySelector('.theme-preview-ring') as HTMLElement;
+    const ring = result.container.querySelector<HTMLElement>('.theme-preview-ring')!;
     expect(ring.style.borderColor).toBe(hexToRgb(CORE_THEMES.theme_void.colors.primary));
   });
 
@@ -197,7 +197,7 @@ describe('ThemePreviewRing', () => {
     result = renderComponent(
       React.createElement(ThemePreviewRing, { themeId: 'theme_magma', unlocked: true, active: false })
     );
-    const ring = result.container.querySelector('.theme-preview-ring') as HTMLElement;
+    const ring = result.container.querySelector<HTMLElement>('.theme-preview-ring')!;
     expect(ring.style.getPropertyValue('--theme-primary')).toBe(CORE_THEMES.theme_magma.colors.primary);
     expect(ring.style.getPropertyValue('--theme-glow')).toBe(CORE_THEMES.theme_magma.colors.glow);
   });
@@ -208,7 +208,7 @@ describe('ThemePreviewRing', () => {
       const r = renderComponent(
         React.createElement(ThemePreviewRing, { themeId: id, unlocked: true, active: false })
       );
-      const ring = r.container.querySelector('.theme-preview-ring') as HTMLElement;
+      const ring = r.container.querySelector<HTMLElement>('.theme-preview-ring')!;
       expect(ring.style.borderColor).toBe(hexToRgb(CORE_THEMES[id].colors.primary));
       cleanup(r);
     }

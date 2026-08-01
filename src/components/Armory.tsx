@@ -139,12 +139,12 @@ export function Armory({ onClose }: ArmoryProps) {
   };
 
   return (
-    <div className="absolute inset-0 bg-black/95 z-[60] backdrop-blur-2xl flex flex-col p-6 sm:p-10 font-sans text-white overflow-hidden">
+    <div className="absolute inset-0 bg-black/95 glass-deep z-[60] flex flex-col p-6 sm:p-10 font-sans text-white overflow-hidden">
       <div className="max-w-6xl w-full mx-auto flex flex-col h-full">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-black tracking-tighter uppercase flex items-center space-x-3">
+            <h2 className="heading-xl text-3xl flex items-center space-x-3">
               <Gem className="text-purple-500 w-8 h-8" />
               <span>Armory</span>
             </h2>

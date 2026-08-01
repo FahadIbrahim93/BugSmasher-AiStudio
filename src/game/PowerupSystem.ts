@@ -118,6 +118,14 @@ export class PowerupSystem {
     this.engine.totalPowerupsCollected++;
     StatsManager.updateStats({ totalPowerupsCollected: 1 });
     void import('./SoundManager').then(({ soundManager }) => { soundManager.powerup(type); });
+    
+    // Starburst celebration on powerup collection
+    this.engine.particleSystem.spawnStarburst(
+      px !== undefined ? px : this.engine.coreX,
+      py !== undefined ? py : this.engine.coreY,
+      '#ffd700'
+    );
+    
     this.engine.particleSystem.spawnShockwave(
       this.engine.coreX,
       this.engine.coreY,

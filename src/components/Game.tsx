@@ -156,7 +156,10 @@ export function Game({
         swarmerKills: engineRef.current.swarmerKills,
         healerKills: engineRef.current.healerKills,
         kills: engineRef.current.killsInSubwave,
-        perfectSequence: engineRef.current.missedClicksInSubwave === 0
+        perfectSequence: engineRef.current.missedClicksInSubwave === 0,
+        furyTriggers: engineRef.current.furyTriggers || 0,
+        slamsUsed: engineRef.current.slamsUsed || 0,
+        gooSweeps: engineRef.current.gooSystem.gooSweeps || 0
       });
 
       // Reset subwave stats

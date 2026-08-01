@@ -55,7 +55,7 @@ export function Leaderboard({ onClose }: LeaderboardProps) {
       <motion.div 
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        className="bg-[#0a0a0a] border border-white/10 w-full max-w-2xl h-[80vh] flex flex-col rounded-2xl overflow-hidden relative shadow-[0_0_50px_rgba(0,0,0,0.8)]"
+        className="glass-deep w-full max-w-2xl h-[80vh] flex flex-col rounded-2xl overflow-hidden relative shadow-[0_0_50px_rgba(0,0,0,0.8)]"
       >
         {/* Header */}
         <div className="p-6 border-b border-white/10 flex items-center justify-between bg-white/5">
@@ -64,7 +64,7 @@ export function Leaderboard({ onClose }: LeaderboardProps) {
               <Trophy className={`w-6 h-6 ${tab === 'global' ? 'text-cyan-400' : 'text-fuchsia-400'}`} />
             </div>
             <div>
-              <h2 className="text-xl font-black tracking-tighter text-white uppercase font-display">
+              <h2 className="heading-xl text-xl text-white">
                 {tab === 'global' ? 'Global Leaderboard' : 'Local Host Top-5'}
               </h2>
               <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">

@@ -109,6 +109,43 @@ export class UIRenderer {
       ctx.fillStyle = '#ff6600';
       ctx.fillText(`CRITICAL OVERDRIVE: ${Math.ceil(this.engine.overdriveTimer)}s`, width - 20, 90);
     }
+    if (this.engine.furyActive) {
+      ctx.fillStyle = '#ff6a00';
+      ctx.fillText(`FURY REMAINING: ${Math.ceil(this.engine.furyTimer)}s`, width - 20, 110);
+    }
+  }
+
+  /** Ground Slam charge ring — grows while the pointer is held. */
+  drawSlamCharge(width: number, height: number) {
+    const engine = this.engine;
+    if (!engine.slamCharging || engine.slamCharge <= 0) return;
+    const ctx = engine.ctx;
+    const charge = engine.slamCharge;
+    const mx = engine.inputSystem?.lastMouseX ?? width / 2;
+    const my = engine.inputSystem?.lastMouseY ?? height / 2;
+    const radius = 30 + charge * 70;
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.strokeStyle = `rgba(255, 136, 0, ${0.4 + charge * 0.6})`;
+    ctx.lineWidth = 2 + charge * 3;
+    ctx.beginPath();
+    ctx.arc(mx, my, radius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = `rgba(255, 120, 0, ${charge * 0.25})`;
+    ctx.beginPath();
+    ctx.arc(mx, my, radius * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (charge >= 0.95) {
+      ctx.fillStyle = 'rgba(255, 200, 100, 0.9)';
+      ctx.font = 'bold 14px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('RELEASE!', mx, my - radius - 12);
+      ctx.textAlign = 'right';
+    }
+    ctx.restore();
   }
 
   drawBossHealthBar(width: number, height: number) {
@@ -265,18 +302,41 @@ export class UIRenderer {
     ctx.save();
     ctx.translate(width / 2, height / 2 - 20);
     
-    ctx.font = '900 38px "Space Grotesk", sans-serif';
+    // Upgrade font to Orbitron for a more premium display look
+    ctx.font = '900 42px "Orbitron", "Space Grotesk", sans-serif';
     ctx.fillStyle = `rgba(255, 255, 255, ${textAlpha})`;
     
     // Slight glitch text offsets
     const glitchOffset = Math.sin(this.engine.globalTime * 40) * 3 * (progress > 0.4 && progress < 0.6 ? 1 : 0);
-    ctx.fillText(`WAVE ${currentWave} LOCKING...`, glitchOffset, 0);
     
-    ctx.font = 'bold 12px "JetBrains Mono", monospace';
+    // Add glow effect to the wave text (skip on low FPS)
+    if (this.currentFps > 35) {
+      ctx.shadowColor = accentColor;
+      ctx.shadowBlur = textAlpha * 25;
+    }
+    ctx.fillText(`WAVE ${currentWave}`, glitchOffset, 0);
+    ctx.shadowBlur = 0;
+    
+    ctx.font = 'bold 13px "JetBrains Mono", monospace';
     ctx.fillStyle = `${accentColor}${Math.floor(textAlpha * 255).toString(16).padStart(2, '0')}`;
-    ctx.fillText('DIFFICULTY EXPONENT: INCREASING', 0, 32);
+    ctx.fillText('DIFFICULTY EXPONENT: INCREASING', 0, 36);
     
     ctx.restore();
+    
+    // PHASE 5: Post-sweep particle burst
+    if (progress > 0.85 && this.currentFps > 30 && Math.random() < 0.5) {
+      const burstX = width * (0.2 + Math.random() * 0.6);
+      const burstY = height * (0.3 + Math.random() * 0.4);
+      for (let i = 0; i < 3; i++) {
+        this.engine.particleSystem.spawnParticle(
+          burstX + (Math.random() - 0.5) * 40,
+          burstY + (Math.random() - 0.5) * 40,
+          accentColor,
+          2 + Math.random() * 3,
+          0.3 + Math.random() * 0.3
+        );
+      }
+    }
 
     ctx.restore();
   }

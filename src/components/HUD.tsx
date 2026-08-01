@@ -30,6 +30,17 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
   const dashBadgeRef = useRef<HTMLSpanElement>(null);
   const dashCircleRef = useRef<SVGCircleElement>(null);
 
+  // RAGE Meter / FURY MODE + Goo Contamination
+  const rageBarRef = useRef<HTMLDivElement>(null);
+  const rageTextRef = useRef<HTMLSpanElement>(null);
+  const furyBadgeRef = useRef<HTMLDivElement>(null);
+  const rageScanRef = useRef<HTMLDivElement>(null);
+  const gooBarRef = useRef<HTMLDivElement>(null);
+  const gooTextRef = useRef<HTMLSpanElement>(null);
+  const gooHintRef = useRef<HTMLDivElement>(null);
+  const gooScanRef = useRef<HTMLDivElement>(null);
+  const furyGlowRef = useRef<HTMLDivElement>(null);
+
   const [syncStatus, setSyncStatus] = useState<SaveSyncStatus>('idle');
   const [killLogs, setKillLogs] = useState<KillLog[]>([]);
 
@@ -98,6 +109,13 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
     percent: 0,
   });
 
+  // Audio pipeline load telemetry (oscillator budget throttle + WAV-vs-synth usage)
+  const [audioStats, setAudioStats] = useState({
+    oscillatorsSpawned: 0,
+    throttledEvents: 0,
+    budgetPerWindow: 0,
+  });
+
   useEffect(() => {
     const handlePerfChange = (e: Event) => {
       const customEvent = e as CustomEvent;
@@ -123,6 +141,11 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
     let lastWave = -1;
     let lastHealth = -1;
     let lastMaxHealth = -1;
+    let lastRage = -1;
+    let lastFury = false;
+    let lastGoo = -1;
+    let lastGooHeavy = false;
+    let lastGooCollecting = false;
 
     performance.now(); // last frame time tracked if needed for fps calc
     let frameCount = 0;
@@ -165,6 +188,8 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
               particles: pCount
             });
           }
+          // Audio pipeline load — always sample so the SYS_DIAGNOSTICS panel shows live audio pressure
+          setAudioStats(soundManager.getAudioStats());
         }
 
         if (showPerfDebugLocal) {
@@ -228,9 +253,21 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
           
           healthBarRef.current.style.width = `${healthPercent}%`;
           
-          // Class updates for health colors
-          healthBarRef.current.className = `h-full transition-all duration-300 ${healthPercent > 50 ? 'bg-white' : healthPercent > 20 ? 'bg-yellow-400' : 'bg-red-500'}`;
-          shieldIconRef.current.setAttribute('class', `lucide lucide-shield w-3.5 h-3.5 sm:w-4 sm:h-4 ${healthPercent > 50 ? 'text-zinc-400' : healthPercent > 20 ? 'text-yellow-400' : 'text-red-500 animate-pulse'}`);
+          // Class updates for health colors with gradient
+          healthBarRef.current.className = `h-full transition-all duration-300 ${
+            healthPercent > 50 
+              ? 'bg-gradient-to-r from-emerald-400 via-emerald-300 to-white shadow-[0_0_12px_rgba(52,211,153,0.3)]' 
+              : healthPercent > 20 
+                ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-yellow-300 shadow-[0_0_12px_rgba(245,158,11,0.3)]' 
+                : 'bg-gradient-to-r from-red-600 via-red-500 to-rose-400 shadow-[0_0_12px_rgba(239,68,68,0.4)]'
+          }`;
+          shieldIconRef.current.setAttribute('class', `lucide lucide-shield w-3.5 h-3.5 sm:w-4 sm:h-4 ${
+            healthPercent > 50 
+              ? 'text-emerald-400/80' 
+              : healthPercent > 20 
+                ? 'text-yellow-400' 
+                : 'text-red-500 animate-pulse'
+          }`);
 
           lastHealth = engine.health;
           lastMaxHealth = engine.maxHealth;
@@ -295,6 +332,89 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
             }
           }
         }
+
+        // Update RAGE Meter / FURY MODE
+        if (rageBarRef.current && rageTextRef.current) {
+          const rage = Math.max(0, Math.min(100, engine.weaponHeat || 0));
+          const furyNow = engine.furyActive;
+          const crossedRageThreshold = lastRage >= 0 && rage >= 75 && lastRage < 75;
+          const furyIgnited = furyNow && !lastFury;
+          if (rage !== lastRage || furyNow !== lastFury) {
+            rageBarRef.current.style.width = `${rage}%`;
+            rageTextRef.current.textContent = furyNow ? 'FURY' : `${Math.ceil(rage)}`;
+            rageBarRef.current.className = furyNow
+              ? 'h-full bg-gradient-to-r from-red-600 via-orange-500 to-amber-400 shadow-[0_0_10px_rgba(255,60,0,0.6)] animate-pulse'
+              : rage > 75
+                ? 'h-full bg-gradient-to-r from-red-700 to-orange-500'
+                : 'h-full bg-gradient-to-r from-orange-900 to-red-700';
+            if (furyBadgeRef.current) {
+              furyBadgeRef.current.classList.toggle('opacity-0', !furyNow);
+            }
+            // Scanline pulse sweeps down the meter when RAGE crosses 75% or FURY ignites
+            if ((crossedRageThreshold || furyIgnited) && rageScanRef.current) {
+              rageScanRef.current.animate(
+                [
+                  { opacity: 0, backgroundPositionY: '0px' },
+                  { opacity: 0.55, backgroundPositionY: '3px' },
+                  { opacity: 0, backgroundPositionY: '6px' },
+                ],
+                { duration: 500, easing: 'ease-out' }
+              );
+            }
+            // Brief screen-edge glow when FURY ignites — desktop only (AGENTS.md perf gate: isMobile)
+            if (furyIgnited && furyGlowRef.current && !engine.isMobile) {
+              furyGlowRef.current.animate(
+                [
+                  { opacity: 0 },
+                  { opacity: 0.6, offset: 0.2 },
+                  { opacity: 0.15, offset: 0.75 },
+                  { opacity: 0 },
+                ],
+                { duration: 1600, easing: 'ease-out' }
+              );
+            }
+            lastRage = rage;
+            lastFury = furyNow;
+          }
+        }
+
+        // Update Goo Contamination + HOLD Q sweep hint
+        if (gooBarRef.current && gooTextRef.current && gooHintRef.current) {
+          const gooAmt = engine.gooSystem?.gooAmount || 0;
+          const gooPct = Math.max(0, Math.min(100, gooAmt));
+          const gooHeavy = gooPct > 50;
+          const crossedGooThreshold = lastGoo >= 0 && gooPct > 50 && lastGoo <= 50;
+          const collecting = engine.gooSystem?.isCollecting ?? false;
+          if (gooPct !== lastGoo || gooHeavy !== lastGooHeavy || collecting !== lastGooCollecting) {
+            gooBarRef.current.style.width = `${gooPct}%`;
+            gooTextRef.current.textContent = `${Math.ceil(gooPct)}%`;
+            // Scanline pulse sweeps down the meter when contamination crosses 50%
+            if (crossedGooThreshold && gooScanRef.current) {
+              gooScanRef.current.animate(
+                [
+                  { opacity: 0, backgroundPositionY: '0px' },
+                  { opacity: 0.5, backgroundPositionY: '3px' },
+                  { opacity: 0, backgroundPositionY: '6px' },
+                ],
+                { duration: 500, easing: 'ease-out' }
+              );
+            }
+            gooBarRef.current.className = collecting
+              ? 'h-full bg-gradient-to-r from-lime-400 to-emerald-300 shadow-[0_0_8px_rgba(163,230,53,0.6)] animate-pulse'
+              : gooHeavy
+                ? 'h-full bg-gradient-to-r from-lime-600 to-green-400 shadow-[0_0_8px_rgba(132,204,22,0.4)]'
+                : 'h-full bg-gradient-to-r from-lime-900 to-lime-700';
+            if (gooHeavy || collecting) {
+              gooHintRef.current.classList.toggle('opacity-0', false);
+              gooHintRef.current.textContent = collecting ? 'SWEEPING...' : 'HOLD [Q] TO SWEEP';
+            } else {
+              gooHintRef.current.classList.toggle('opacity-0', true);
+            }
+            lastGoo = gooPct;
+            lastGooHeavy = gooHeavy;
+            lastGooCollecting = collecting;
+          }
+        }
       }
       animationFrameId = requestAnimationFrame(updateHUD);
     };
@@ -305,9 +425,15 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
 
   return (
     <div className="absolute top-0 left-0 w-full p-4 sm:p-6 flex justify-between items-start pointer-events-none z-10">
-      <div className="flex flex-col space-y-2 sm:space-y-4">
-        <div className="flex items-center space-x-2 sm:space-x-3 glass-panel px-4 py-2 sm:px-5 sm:py-2.5 rounded-full border border-white/10 shadow-[0_4_20px_rgba(0,0,0,0.5)]">
-          <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400" />
+      {/* FURY MODE ignition — brief screen-edge glow (desktop only; AGENTS.md perf gate: isMobile) */}
+      <div
+        ref={furyGlowRef}
+        className="fixed inset-0 opacity-0 pointer-events-none z-[5]"
+        style={{ boxShadow: 'inset 0 0 140px 45px rgba(255,50,10,0.35), inset 0 0 30px 8px rgba(255,90,40,0.25)' }}
+      />
+
+      <div className="flex flex-col space-y-2 sm:space-y-4">          <div className="flex items-center space-x-2 sm:space-x-3 glass-panel px-4 py-2 sm:px-5 sm:py-2.5 rounded-full border border-white/10 shadow-[0_4_20px_rgba(0,0,0,0.5)] hover:border-white/20 transition-all">
+          <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400/80" />
           <span className="text-zinc-500 font-medium text-xs sm:text-sm tracking-wider uppercase">Score</span>
           <span ref={scoreRef} className="text-lg sm:text-xl font-bold font-mono text-white tracking-widest pl-1 cyber-text-glow">000000</span>
         </div>
@@ -377,6 +503,64 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
           <div className="h-4 w-[1px] bg-white/10" />
           <span className="text-[8px] font-mono text-cyan-400 whitespace-nowrap bg-cyan-950/40 border border-cyan-500/25 px-1.5 py-0.5 rounded shadow-[0_0_6px_rgba(0,255,255,0.15)]">[SPACE / SHIFT]</span>
         </div>
+
+        {/* RAGE Meter — every smash/miss feeds it; at 100 you erupt into FURY MODE */}
+        <div className="glass-panel px-4 py-2 sm:px-5 sm:py-2.5 rounded-full border border-white/10 shadow-[0_4_20px_rgba(0,0,0,0.5)] transition-all">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[7px] text-red-500 font-black uppercase tracking-widest">Rage</span>
+            <span ref={rageTextRef} className="text-red-400 font-mono text-[9px] font-black tracking-widest">0</span>
+          </div>
+          <div className="relative w-28 sm:w-36 h-1.5 bg-zinc-900 rounded-full overflow-hidden ring-1 ring-white/5">
+            <div ref={rageBarRef} className="h-full transition-all duration-100 bg-gradient-to-r from-orange-900 to-red-700" style={{ width: '0%' }} />
+            {/* Scanline overlay — pulsed via Web Animations API when RAGE crosses 75% or FURY ignites */}
+            <div ref={rageScanRef} className="absolute inset-0 opacity-0 pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(0deg, rgba(255,90,60,0.9) 0px, rgba(255,90,60,0.9) 1px, transparent 1px, transparent 3px)' }} />
+          </div>
+          <div ref={furyBadgeRef} className="opacity-0 transition-opacity mt-1 text-center text-[8px] text-amber-400 font-black font-mono uppercase tracking-widest animate-pulse">FURY MODE ACTIVE</div>
+        </div>
+
+        {/* Goo Contamination — heavy goo clouds the viewport; hold Q (or the sweep button on touch) to recycle into scrap */}
+        {/* Pointer events stay scoped to the SWEEP button only — the HUD root is pointer-events-none so stray clicks pass through to the canvas */}
+        <div className="glass-panel px-4 py-2 sm:px-5 sm:py-2.5 rounded-full border border-white/10 shadow-[0_4_20px_rgba(0,0,0,0.5)] transition-all">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[7px] text-lime-500 font-black uppercase tracking-widest">Contamination</span>
+            <span ref={gooTextRef} className="text-lime-400 font-mono text-[9px] font-black tracking-widest">0%</span>
+          </div>
+          <div className="relative w-28 sm:w-36 h-1.5 bg-zinc-900 rounded-full overflow-hidden ring-1 ring-white/5">
+            <div ref={gooBarRef} className="h-full transition-all duration-100 bg-gradient-to-r from-lime-900 to-lime-700" style={{ width: '0%' }} />
+            {/* Scanline overlay — pulsed via Web Animations API when contamination crosses 50% */}
+            <div ref={gooScanRef} className="absolute inset-0 opacity-0 pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(0deg, rgba(163,230,53,0.9) 0px, rgba(163,230,53,0.9) 1px, transparent 1px, transparent 3px)' }} />
+          </div>
+          <div className="flex items-center justify-between mt-1">
+            <div ref={gooHintRef} className="opacity-0 transition-opacity text-center text-[8px] text-lime-300 font-black font-mono uppercase tracking-widest">HOLD [Q] TO SWEEP</div>
+            <button
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                const engine = engineRef.current;
+                if (engine) engine.gooSystem.isCollecting = true;
+              }}
+              onPointerUp={(e) => {
+                e.stopPropagation();
+                const engine = engineRef.current;
+                if (engine) engine.gooSystem.isCollecting = false;
+              }}
+              onPointerLeave={(e) => {
+                e.stopPropagation();
+                const engine = engineRef.current;
+                if (engine) engine.gooSystem.isCollecting = false;
+              }}
+              onPointerCancel={(e) => {
+                e.stopPropagation();
+                const engine = engineRef.current;
+                if (engine) engine.gooSystem.isCollecting = false;
+              }}
+              onContextMenu={(e) => { e.preventDefault(); }}
+              className="pointer-events-auto text-[8px] font-black font-mono uppercase tracking-widest text-lime-300 border border-lime-500/30 bg-lime-950/40 px-2 py-1 rounded select-none touch-none active:bg-lime-800/60 transition-colors"
+              aria-label="Hold to sweep goo contamination"
+            >
+              SWEEP
+            </button>
+          </div>
+        </div>
       </div>
       
       <div className="flex flex-col items-end space-y-3 pointer-events-none">
@@ -429,12 +613,12 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
         </div>
         
         <div className="flex flex-col items-end space-y-4">
-          <div className="flex items-center space-x-3 glass-panel px-4 py-2 sm:px-5 sm:py-2.5 rounded-full border border-white/10 shadow-[0_4_20px_rgba(0,0,0,0.5)] pointer-events-none">
+          <div className="flex items-center space-x-3 glass-panel px-4 py-2 sm:px-5 sm:py-2.5 rounded-full border border-white/10 shadow-[0_4_20px_rgba(0,0,0,0.5)] pointer-events-none hover:border-white/20 transition-all">
             <Shield ref={shieldIconRef} className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400" />
-            <div className="w-20 sm:w-32 h-1.5 sm:h-2 bg-zinc-900 rounded-full overflow-hidden">
+            <div className="w-20 sm:w-32 h-1.5 sm:h-2 bg-zinc-900 rounded-full overflow-hidden ring-1 ring-white/5">
               <div 
                 ref={healthBarRef}
-                className="h-full transition-all duration-300 bg-white"
+                className="h-full transition-all duration-300 bg-gradient-to-r from-emerald-400 via-emerald-300 to-white"
                 style={{ width: '100%' }}
               />
             </div>
@@ -584,6 +768,28 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
                 <span className="text-zinc-600 uppercase">PARTICLES:</span>
                 <span className="text-cyan-400 font-medium">{perfData.particles}</span>
               </div>
+              <div className="col-span-2 flex justify-between border-t border-white/5 pt-1 mt-0.5">
+                <span className="text-zinc-600 uppercase">AUDIO_OSC:</span>
+                <span className="text-cyan-400 font-medium">{audioStats.oscillatorsSpawned}</span>
+              </div>
+              <div className="col-span-2 flex justify-between">
+                <span className="text-zinc-600 uppercase">AUDIO_THROT:</span>
+                <span className={`font-bold ${audioStats.throttledEvents > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                  {audioStats.throttledEvents}
+                </span>
+              </div>
+              {audioStats.throttledEvents > 0 && (
+                <div className="col-span-2 flex justify-between">
+                  <span className="text-zinc-600 uppercase">AUDIO_DROPS:</span>
+                  <span className="text-amber-400 font-bold animate-pulse">THROTTLING</span>
+                </div>
+              )}
+              {audioStats.budgetPerWindow > 0 && (
+                <div className="col-span-2 flex justify-between border-t border-white/5 pt-1 mt-0.5">
+                  <span className="text-zinc-600 uppercase">AUDIO_BUDGET:</span>
+                  <span className="text-zinc-500 font-medium">{audioStats.budgetPerWindow}/100ms</span>
+                </div>
+              )}
             </div>
           </motion.div>
         )}

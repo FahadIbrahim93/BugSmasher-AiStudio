@@ -19,6 +19,9 @@ export class Renderer {
   impactFlash = 0;
   powerupAlpha = 0;
   chromaticOffset = 0;
+  /** Computed screen-shake offset for parallax depth layers */
+  parallaxOffsetX = 0;
+  parallaxOffsetY = 0;
 
   private scaler: PerformanceScaler;
   private environment: EnvironmentRenderer;
@@ -119,6 +122,10 @@ export class Renderer {
       offsetY += ry + this.engine.shakeY * this.engine.shakeMagnitude * intensity;
     }
 
+    // Store offsets for parallax depth layers (EnvironmentRenderer reads these)
+    this.parallaxOffsetX = offsetX;
+    this.parallaxOffsetY = offsetY;
+
     ctx.setTransform(
       this.engine.dpr,
       0,
@@ -146,6 +153,7 @@ export class Renderer {
 
     this.environment.drawBiomeBackground();
     this.particles.drawClouds();
+    this.drawGooPools();
 
     if (this.engine.wave > 15 || this.engine.waveManager.isBossWave) {
       if (this.currentFps > 35) {
@@ -172,6 +180,14 @@ export class Renderer {
     const hasEffects = ps.hasActiveEffects;
     
     if (hasEffects) {
+      // Heat shimmer rendered below everything else (FPS-gated)
+      if (this.currentFps > 28) {
+        ctx.globalCompositeOperation = 'screen';
+        for (const hs of ps.heatShimmers) {
+          if (hs.active) this.particles.drawHeatShimmer(hs);
+        }
+      }
+
       ctx.globalCompositeOperation = 'screen';
       for (let i = 0; i < ps.splatters.length; i++) {
         const s = ps.splatters[i];
@@ -279,15 +295,76 @@ export class Renderer {
     ctx.fillStyle = this.cachedVignette;
     ctx.fillRect(0, 0, width, height);
 
+    // Streak-tier screen reddening — the higher the combo, the hotter the frame
+    if (this.engine.streakCount >= 5) {
+      const streakHeat = Math.min(0.4, (this.engine.streakCount - 5) * 0.012);
+      ctx.fillStyle = `rgba(239, 68, 68, ${streakHeat})`;
+      ctx.fillRect(0, 0, width, height);
+    }
+
+    // Goo contamination viewport clouding
+    const gooPct = this.engine.gooSystem.gooAmount / 100;
+    if (gooPct > 0.5) {
+      const gooOpacity = (gooPct - 0.5) * 0.7;
+      ctx.fillStyle = `rgba(120, 180, 40, ${gooOpacity * 0.5})`;
+      ctx.fillRect(0, 0, width, height);
+    }
+
+    this.drawFuryOverlay(width, height);
+
     this.ui.drawActivePowerupUI(width, height);
     this.ui.drawBossHealthBar(width, height);
     this.ui.drawWaveTransition(width, height);
+    this.ui.drawSlamCharge(width, height);
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
   }
 
+  /** Persistent goo pools left by smashed bugs — floor contamination that clouds the viewport. */
+  private drawGooPools() {
+    const ctx = this.engine.ctx;
+    const pools = this.engine.gooSystem.gooPools;
+    for (const g of pools) {
+      if (!g.active) continue;
+      const alpha = Math.min(0.5, (g.life / g.maxLife) * 0.5);
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = g.color;
+      ctx.beginPath();
+      ctx.arc(g.x, g.y, g.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = alpha * 0.5;
+      ctx.beginPath();
+      ctx.arc(g.x + 3, g.y + 3, g.size * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /** FURY MODE: full-screen red heat + banner while the rage meter is maxed. */
+  private drawFuryOverlay(width: number, height: number) {
+    if (!this.engine.furyActive) return;
+    const ctx = this.engine.ctx;
+    const pulse = 0.12 + Math.sin(this.engine.globalTime * 6) * 0.04;
+    ctx.fillStyle = `rgba(255, 40, 0, ${pulse})`;
+    ctx.fillRect(0, 0, width, height);
+
+    // Banner shadow is expensive on mobile GPUs — AGENTS.md: gate shadowBlur behind isMobile
+    const useBannerShadow = !this.engine.isMobile && this.currentFps > 35;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.font = '900 34px "Orbitron", "Space Grotesk", sans-serif';
+    ctx.fillStyle = '#ff6a00';
+    if (useBannerShadow) {
+      ctx.shadowColor = '#ff2200';
+      ctx.shadowBlur = 18;
+    }
+    ctx.fillText('FURY MODE', width / 2, 70);
+    ctx.restore();
+  }
+
   // --- Delegation surface (preserves public API for tests & external callers) ---
 
+  drawSlamCharge = (width: number, height: number) => { this.ui.drawSlamCharge(width, height); };
   drawBiomeBackground = () => { this.environment.drawBiomeBackground(); };
   drawGrid = (...args: Parameters<EnvironmentRenderer['drawGrid']>) => { this.environment.drawGrid(...args); };
   drawStarfield = (...args: Parameters<EnvironmentRenderer['drawStarfield']>) =>

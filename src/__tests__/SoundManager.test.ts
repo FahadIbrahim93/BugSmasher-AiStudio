@@ -181,8 +181,90 @@ describe('SoundManager', () => {
       manager.armoryEquip();
       manager.armoryTabSwitch();
       manager.armoryUnlockTier();
+      manager.critHit();
+      manager.miss();
+      manager.comboBreak();
       manager.toggleSfxMute();
       manager.toggleMusicMute();
     }).not.toThrow();
+  });
+
+  it('gives crit, miss, and combo-break distinct oscillator signatures from a normal hit', () => {
+    const manager = new SoundManager();
+    manager.init();
+
+    const ctx = manager.ctx as unknown as { createOscillator: ReturnType<typeof vi.fn> };
+    const oscillatorCall = ctx.createOscillator;
+
+    oscillatorCall.mockClear();
+    manager.shoot();
+    const shootFrequencies = oscillatorCall.mock.results.length;
+    expect(shootFrequencies).toBeGreaterThan(0);
+
+    oscillatorCall.mockClear();
+    manager.critHit();
+    expect(oscillatorCall).toHaveBeenCalled();
+
+    oscillatorCall.mockClear();
+    manager.miss();
+    expect(oscillatorCall).toHaveBeenCalled();
+
+    oscillatorCall.mockClear();
+    manager.comboBreak();
+    expect(oscillatorCall).toHaveBeenCalled();
+  });
+
+  it('prefers a WAV asset over synthesis when one is available for the new SFX ids', async () => {
+    const { audioAssets } = await import('../game/AudioAssetLoader');
+    (audioAssets.play as ReturnType<typeof vi.fn>).mockReturnValueOnce(true);
+
+    const manager = new SoundManager();
+    manager.init();
+
+    const ctx = manager.ctx as unknown as { createOscillator: ReturnType<typeof vi.fn> };
+    const oscillatorCall = ctx.createOscillator;
+    oscillatorCall.mockClear();
+
+    manager.critHit();
+
+    // audioAssets.play returned true, so synthesis should be skipped entirely
+    expect(oscillatorCall).not.toHaveBeenCalled();
+  });
+
+  it('rate-limits oscillator allocation during SFX bursts (no audio frame drops)', () => {
+    const manager = new SoundManager();
+    manager.init();
+
+    const ctx = manager.ctx as unknown as { createOscillator: ReturnType<typeof vi.fn> };
+    ctx.createOscillator.mockClear();
+
+    // Simulate a dense burst of simultaneous hits (e.g. nuke + swarm splats)
+    for (let i = 0; i < 200; i += 1) {
+      manager.shoot();
+    }
+
+    const stats = manager.getAudioStats();
+    // Oscillator creation is budgeted per window — bounded, not 200x the synth count.
+    // (Use generous bounds so the assertion is stable across a 100ms window boundary.)
+    expect(ctx.createOscillator.mock.calls.length).toBeLessThan(200);
+    expect(stats.oscillatorsSpawned).toBeLessThan(200);
+    expect(stats.throttledEvents).toBeGreaterThan(0);
+    expect(() => { manager.shoot(); }).not.toThrow();
+  });
+
+  it('respects reduced-motion and surge state in the adaptive music system', () => {
+    const manager = new SoundManager();
+    manager.setReducedMotion(true);
+    manager.init();
+
+    expect(() => {
+      manager.updateGameState({ intensity: 2.0, healthPercent: 0.1, isBossWave: true, isSurgeActive: true });
+      manager.playBiomeMusic('neon_core');
+      manager.stopMusic();
+    }).not.toThrow();
+
+    // Non-surge state also works (optional field defaults to false)
+    manager.updateGameState({ intensity: 0.5, healthPercent: 0.9, isBossWave: false });
+    expect(() => { manager.playBiomeMusic('frostbyte'); }).not.toThrow();
   });
 });

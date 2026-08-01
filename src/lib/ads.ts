@@ -16,6 +16,7 @@ export class AdsService {
 
   static async showRewarded(_placement: string): Promise<AdReward | null> {
     if (!ENABLED) return null;
+    await Promise.resolve();
     // Provider SDK hooks here
     return null;
   }

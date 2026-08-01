@@ -1,6 +1,7 @@
 import { soundManager } from './SoundManager';
 import { GameConfig } from './GameConfig';
 import { Renderer } from './Renderer';
+import { analytics } from '../lib/analytics';
 import { ParticleSystem } from './ParticleSystem';
 import { WaveManager } from './WaveManager';
 import { GameSaveData } from './SaveManager';
@@ -13,6 +14,7 @@ import { BossSystem } from './BossSystem';
 import { PowerupSystem } from './PowerupSystem';
 import { HazardSystem } from './HazardSystem';
 import { PCGSystem } from './PCGSystem';
+import { GooSystem } from './GooSystem';
 import { CustomMapManager } from './CustomMapManager';
 import { computeModifierState, type ChallengeModifierId, type ChallengeModifierState } from './DailyChallengeManager';
 import { GameEngineStatusBus } from './GameEngineStatusBus';
@@ -45,6 +47,7 @@ export class GameEngine {
   powerupSystem: PowerupSystem;
   hazardSystem: HazardSystem;
   pcgSystem: PCGSystem;
+  gooSystem: GooSystem;
 
   powerups: Powerup[] = [];
   resources: ResourcePickup[] = [];
@@ -83,7 +86,19 @@ export class GameEngine {
 
   clickCooldown = 0;
   weaponHeat = 0;
-  isOverheated = false;
+  // RAGE METER — fills from clicks/misses; at 100 it ignites FURY MODE instead of locking out
+  furyActive = false;
+  furyTimer = 0;
+  readonly furyDuration: number = GameConfig.rage.furyDuration;
+
+  // Ground Slam (hold-to-charge) state
+  slamCharging = false;
+  slamCharge = 0;
+  readonly slamChargeMax = 1.0;
+
+  // Session counters for achievements/telemetry
+  furyTriggers = 0;
+  slamsUsed = 0;
 
   // Powerups (timers maintained here for external access)
   shieldTimer = 0;
@@ -198,6 +213,7 @@ export class GameEngine {
     this.powerupSystem = new PowerupSystem(this);
     this.hazardSystem = new HazardSystem(this);
     this.pcgSystem = new PCGSystem(this);
+    this.gooSystem = new GooSystem(this);
     const activeCustom: any = CustomMapManager.getActiveConfiguration();
     if (activeCustom?.obstacles && activeCustom.seed) {
       this.pcgSystem.activeMap = activeCustom;
@@ -228,6 +244,8 @@ export class GameEngine {
     if (this.powerupSystem) {
       this.powerupSystem.dropBonusMultiplier = preset.dropBonus;
     }
+    // Reduced-motion a11y: flatten adaptive music intensity when requested
+    soundManager.setReducedMotion(this.accessibility.reducedMotion);
   }
 
   syncVfxSettings() {
@@ -330,7 +348,13 @@ export class GameEngine {
     this.particleSystem.reset();
     this.powerups = [];
     this.weaponHeat = 0;
-    this.isOverheated = false;
+    this.furyActive = false;
+    this.furyTimer = 0;
+    this.slamCharging = false;
+    this.slamCharge = 0;
+    this.furyTriggers = 0;
+    this.slamsUsed = 0;
+    this.gooSystem.reset();
   }
 
   startWave() {
@@ -365,6 +389,94 @@ export class GameEngine {
     this.hitStopTimer = duration;
   }
 
+  /**
+   * RAGE METER — every click/miss feeds the vent. At 100 the player erupts
+   * into FURY MODE (guaranteed crits, AoE smashes, ×2 damage) instead of
+   * being punished with a lockout. No cooling-down penalty for venting.
+   */
+  addRage(amount: number) {
+    if (this.furyActive) return; // already raging
+    this.weaponHeat = Math.min(GameConfig.rage.maxHeat, this.weaponHeat + amount);
+    if (this.weaponHeat >= GameConfig.rage.maxHeat) {
+      this.triggerFury();
+    }
+  }
+
+  /** Ignite FURY MODE — the venting power fantasy. */
+  triggerFury() {
+    if (this.furyActive) return;
+    this.furyActive = true;
+    this.furyTimer = this.furyDuration;
+    this.weaponHeat = GameConfig.rage.maxHeat;
+    this.furyTriggers++;
+    soundManager.nuke();
+    this.shake(0.6, 30);
+    this.renderer.clickFlash = 0.8;
+    this.particleSystem.spawnShockwave(this.width / 2, this.height / 2, '#ff4400', 400);
+    this.particleSystem.spawnStarburst(this.width / 2, this.height / 2, '#ff6a00');
+    analytics.track('fury_triggered', { trigger: this.furyTriggers, wave: this.wave });
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('nexus_fury_active'));
+    }
+  }
+
+  /** AoE smash on a click while FURY MODE is active. */
+  applyFurySplash(x: number, y: number) {
+    if (!this.furyActive) return;
+    const radius = 150;
+    const radiusSq = radius * radius;
+    this.particleSystem.spawnShockwave(x, y, '#ff4400', radius);
+    for (let i = this.bugs.length - 1; i >= 0; i--) {
+      const b = this.bugs[i];
+      const dx = b.x - x;
+      const dy = b.y - y;
+      if (dx * dx + dy * dy < radiusSq) {
+        this.damageBug(b, 1);
+      }
+    }
+  }
+
+  /** Hold-to-charge Ground Slam — release for a crushing AoE. */
+  triggerGroundSlam(x: number, y: number, charge: number) {
+    this.slamCharging = false;
+    this.slamCharge = 0;
+    this.slamsUsed++;
+    analytics.track('slam_used', { charge: Math.round(charge * 100), wave: this.wave });
+    const radius = 90 + charge * 180;
+    const radiusSq = radius * radius;
+    const dmg = 1 + Math.round(charge * 3);
+
+    this.particleSystem.spawnShockwave(x, y, '#ff8800', radius);
+    this.particleSystem.spawnShockwave(x, y, '#ffffff', radius * 0.6);
+    this.particleSystem.spawnGibs(x, y, '#ff8800', 12);
+    this.shake(0.35, 20);
+    this.triggerHitStop(0.1);
+    soundManager.bossDeath();
+    this.renderer.clickFlash = 0.6;
+
+    for (let i = this.bugs.length - 1; i >= 0; i--) {
+      const b = this.bugs[i];
+      const dx = b.x - x;
+      const dy = b.y - y;
+      if (dx * dx + dy * dy < radiusSq) {
+        this.damageBug(b, dmg);
+      }
+    }
+
+    // Slamming is cathartic — the impact itself feeds the rage meter a little
+    this.addRage(GameConfig.rage.perSlam);
+  }
+
+  /** Rage-refund pickup: when a streak breaks, drop a consolation powerup near the core. */
+  spawnRageRefund() {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 40 + Math.random() * 60;
+    const x = this.coreX + Math.cos(angle) * dist;
+    const y = this.coreY + Math.sin(angle) * dist;
+    this.powerupSystem.spawn(x, y, true);
+    this.particleSystem.spawnShockwave(x, y, '#22c55e', 60);
+  }
+
   get threatShakeIntensity(): number {
     const bugCount = this.bugs.length;
     return Math.min(3.5, bugCount * 0.12);
@@ -383,11 +495,12 @@ export class GameEngine {
       intensity: this.waveManager ? this.waveManager.intensity : 1,
       performanceFactor: this.performanceFactor || 1.0,
       weaponHeat: this.weaponHeat,
-      isOverheated: this.isOverheated,
+      furyActive: this.furyActive,
       dashCooldownTimer: this.dashCooldownTimer,
       dashCooldown: this.dashCooldown,
       rapidFireTimer: this.rapidFireTimer,
       spikeBurstTimer: this.spikeBurstTimer,
+      shakeIntensity: this.threatShakeIntensity + (this.shakeTime > 0 ? this.shakeMagnitude * (this.shakeTime / 0.5) * 0.5 : 0),
     };
     GameEngineStatusBus.publish(status);
     GameEngineStatusBus.syncLegacyWindowGlobal(status);
@@ -455,18 +568,25 @@ export class GameEngine {
     this.particleSystem.update(dt);
     this.powerupSystem.updatePowerups(dt);
     this.powerupSystem.updateResources(dt);
+    this.gooSystem.update(dt);
     if (this.pcgSystem) {
       this.pcgSystem.update(dt);
     }
 
-    // Adaptive Music State Sync (every 500ms)
+    // Ground Slam charge accumulation (charged while held, released on pointerup)
+    if (this.slamCharging) {
+      this.slamCharge = Math.min(this.slamChargeMax, this.slamCharge + dt * 1.4);
+    }
+
+    // Adaptive Music State Sync (every 500ms) — FURY MODE surges the soundtrack
     this.musicUpdateTimer += dt;
     if (this.musicUpdateTimer >= 0.5) {
       this.musicUpdateTimer = 0;
       soundManager.updateGameState({
-        intensity: this.performanceFactor,
+        intensity: this.performanceFactor * (this.furyActive ? 1.6 : 1),
         healthPercent: this.health / this.maxHealth,
         isBossWave: this.waveManager.isBossWave,
+        isSurgeActive: this.waveManager.surgeActive || this.furyActive,
       });
     }
   }
@@ -547,8 +667,19 @@ export class GameEngine {
       }
     }
 
-    if (isCrit && typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('nexus_crit_hit'));
+    // FURY MODE: every hit is a guaranteed crit at ×2 damage — the venting reward
+    const furyCrit = this.furyActive;
+    if (furyCrit) {
+      isCrit = true;
+      finalAmount *= 2.0;
+      this.particleSystem.spawnShockwave(bug.x, bug.y, '#ff6a00', 90);
+    }
+
+    if (isCrit) {
+      soundManager.critHit();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('nexus_crit_hit'));
+      }
     }
 
     if (bug.armor && bug.armor < 1.0 && bug.armor > 0) {
@@ -563,10 +694,24 @@ export class GameEngine {
       this.shake(0.05, 2);
     }
 
+    // Reactive bug: scouts dive away from the strike point when they survive
+    if (bug.type === 'scout' && bug.hp > 0 && !bug.dodgeTimer) {
+      const fromX = this.inputSystem?.lastMouseX ?? bug.x + 1;
+      const fromY = this.inputSystem?.lastMouseY ?? bug.y;
+      const dx = bug.x - fromX;
+      const dy = bug.y - fromY;
+      const dist = Math.hypot(dx, dy) || 1;
+      bug.dodgeTimer = 0.35;
+      bug.dodgeDirX = dx / dist;
+      bug.dodgeDirY = dy / dist;
+      this.particleSystem.spawnSmoke(bug.x, bug.y, 'rgba(200, 200, 255, 0.4)');
+    }
+
     if (bug.hp <= 0) {
       this.killBug(bug);
     } else {
-      soundManager.shoot();
+      // Crits already announce via critHit() above — avoid double-firing the plain shot
+      if (!isCrit) soundManager.shoot();
       this.particleSystem.spawnGibs(bug.x, bug.y, bug.color, 3);
       this.particleSystem.spawnShockwave(bug.x, bug.y, '#ffffff', 30);
     }
@@ -619,6 +764,9 @@ export class GameEngine {
       this.particleSystem.spawnSplatter(bug.x, bug.y, bug.color);
     }
     this.particleSystem.spawnExplosion(bug.x, bug.y, bug.color, bug.type);
+
+    // Splatter accumulation loop — every smash leaves persistent goo on the field
+    this.gooSystem.addGoo(bug.x, bug.y, bug.size, bug.color);
 
     this.spawnResource(bug.x, bug.y, bug.type);
 
@@ -776,14 +924,19 @@ export class GameEngine {
   private updateTimers(dt: number) {
     if (this.clickCooldown > 0) this.clickCooldown -= dt;
 
-    if (this.isOverheated) {
-      this.weaponHeat -= 45 * dt;
-      if (this.weaponHeat <= 0) {
+    // RAGE METER — FURY MODE drains the meter over its full duration;
+    // otherwise it cools down slowly so the player can vent again
+    if (this.furyActive) {
+      this.furyTimer -= dt;
+      // Drain the meter to match the advertised duration: 100 / 4s = 25/s
+      this.weaponHeat = Math.max(0, this.weaponHeat - (GameConfig.rage.maxHeat / this.furyDuration) * dt);
+      if (this.furyTimer <= 0 || this.weaponHeat <= 0) {
+        this.furyActive = false;
+        this.furyTimer = 0;
         this.weaponHeat = 0;
-        this.isOverheated = false;
       }
     } else if (this.weaponHeat > 0) {
-      this.weaponHeat -= 50 * dt;
+      this.weaponHeat -= GameConfig.rage.decayPerSecond * dt;
       if (this.weaponHeat < 0) this.weaponHeat = 0;
     }
 
@@ -817,7 +970,12 @@ export class GameEngine {
   private updateMetrics(dt: number) {
     if (this.streakTimer > 0) {
       this.streakTimer -= dt;
-      if (this.streakTimer <= 0) this.streakCount = 0;
+      if (this.streakTimer <= 0 && this.streakCount > 0) {
+        soundManager.comboBreak();
+        // Rage refund: the streak death drops a consolation powerup near the core
+        this.spawnRageRefund();
+        this.streakCount = 0;
+      }
     }
     const safetyBonus = Math.min(1.0, (this.globalTime - this.lastHitTime) / 20);
     const streakBonus = Math.min(1.0, this.streakCount / 50);
@@ -940,6 +1098,16 @@ export class GameEngine {
   }
 
   private moveBug(bug: Bug, dx: number, dy: number, dist: number, dt: number, timeScale: number) {
+    // Reactive dodge — scouts burst away from the last strike for a short window
+    if (bug.dodgeTimer && bug.dodgeTimer > 0) {
+      bug.dodgeTimer -= dt;
+      const dodgeSpeed = bug.speed * 5 * timeScale;
+      bug.x += (bug.dodgeDirX ?? 0) * dodgeSpeed * dt;
+      bug.y += (bug.dodgeDirY ?? 0) * dodgeSpeed * dt;
+      bug.walkCycle += dodgeSpeed * dt * 0.2;
+      return;
+    }
+
     let speed = bug.speed * timeScale;
 
     // Apply challenge modifiers

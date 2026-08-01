@@ -10,11 +10,14 @@ export interface GameEngineStatus {
   intensity: number;
   performanceFactor: number;
   weaponHeat: number;
-  isOverheated: boolean;
+  /** FURY MODE active — rage meter filled; smashes become guaranteed crits + AoE */
+  furyActive: boolean;
   dashCooldownTimer: number;
   dashCooldown: number;
   rapidFireTimer: number;
   spikeBurstTimer: number;
+  /** Combined screen shake intensity for parallax backgrounds */
+  shakeIntensity: number;
 }
 
 export type GameEngineStatusListener = (status: GameEngineStatus | null) => void;

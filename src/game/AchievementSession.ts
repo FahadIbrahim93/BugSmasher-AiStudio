@@ -4,4 +4,7 @@ export interface AchievementSession {
   healerKills: number;
   kills: number;
   perfectSequence: boolean;
+  furyTriggers: number;
+  slamsUsed: number;
+  gooSweeps: number;
 }

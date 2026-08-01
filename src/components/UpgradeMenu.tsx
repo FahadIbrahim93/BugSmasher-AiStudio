@@ -108,7 +108,7 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
         className="max-w-4xl w-full text-center my-auto relative"
       >
          <motion.div variants={itemVariants} className="mb-8">
-           <h2 className="text-2xl sm:text-3xl font-black text-white font-display mb-2 uppercase tracking-widest">
+           <h2 className="heading-xl text-2xl sm:text-3xl text-white mb-2">
              WAVE {wave - 1} SECURED
            </h2>
            <div className="h-px w-16 bg-white/20 mx-auto mb-2" />
@@ -142,9 +142,9 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
                     }
                   : "visible"
             }
-            className={`group relative bg-black/60 backdrop-blur-md p-6 rounded-3xl border-[0.5px] transition-all duration-300 flex flex-col items-center ${
+            className={`group relative bg-black/60 backdrop-blur-md p-6 rounded-3xl border-[0.5px] transition-all duration-300 flex flex-col items-center hover:glass-neon ${
               score >= healthCost ? 'border-white/20' : 'border-white/10'
-            } hover:border-white/40`}
+            }`}
           >
             <AnimatePresence>
               {hoveredUpgrade === 'health' && (
@@ -225,9 +225,9 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
                     }
                   : "visible"
             }
-            className={`group relative bg-black/60 backdrop-blur-md p-6 rounded-3xl border-[0.5px] transition-all duration-300 flex flex-col items-center ${
+            className={`group relative bg-black/60 backdrop-blur-md p-6 rounded-3xl border-[0.5px] transition-all duration-300 flex flex-col items-center hover:glass-neon ${
               score >= radiusCost ? 'border-blue-500/30' : 'border-white/10'
-            } hover:border-blue-500/50`}
+            }`}
           >
             <AnimatePresence>
               {hoveredUpgrade === 'radius' && (
@@ -308,9 +308,9 @@ export function UpgradeMenu({ score, initialLevels, onUpgrade, onOpenProgression
                     }
                   : "visible"
             }
-            className={`group relative bg-black/60 backdrop-blur-md p-6 rounded-3xl border-[0.5px] transition-all duration-300 flex flex-col items-center ${
+            className={`group relative bg-black/60 backdrop-blur-md p-6 rounded-3xl border-[0.5px] transition-all duration-300 flex flex-col items-center hover:glass-neon ${
               score >= turretCost ? 'border-orange-500/30' : 'border-white/10'
-            } hover:border-orange-500/50`}
+            }`}
           >
             <AnimatePresence>
               {hoveredUpgrade === 'turret' && (

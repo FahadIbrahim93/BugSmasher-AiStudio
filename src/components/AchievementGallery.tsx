@@ -1,5 +1,6 @@
 import { Trophy, X } from 'lucide-react';
 import { ACHIEVEMENTS_DATA, AchievementManager } from '../game/AchievementManager';
+import { AchievementIcon } from './AchievementIcon';
 import { soundManager } from '../game/SoundManager';
 
 export function AchievementGallery({ onClose }: { onClose: () => void }) {
@@ -31,15 +32,24 @@ export function AchievementGallery({ onClose }: { onClose: () => void }) {
             return (
               <div
                 key={a.id}
-                className={`p-4 rounded-2xl border transition-all ${
+                data-achievement-id={a.id}
+                className={`p-4 rounded-2xl border transition-all group hover:scale-[1.02] ${
                   isUnlocked
                     ? 'bg-emerald-500/10 border-emerald-500/30'
-                    : 'bg-white/5 border-white/5 opacity-60'
+                    : 'bg-white/5 border-white/5 opacity-60 hover:opacity-80'
                 }`}
               >
-                <div className="flex justify-between items-start mb-2">
+                <div className="flex justify-between items-start mb-2 gap-3">
                   <span className="text-sm font-bold text-white">{a.title}</span>
-                  <span className="text-[10px] font-mono uppercase text-zinc-500">{a.icon}</span>
+                  <span
+                    className={`shrink-0 w-8 h-8 rounded-lg border flex items-center justify-center ${
+                      isUnlocked
+                        ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
+                        : 'bg-white/5 border-white/10 text-zinc-500'
+                    }`}
+                  >
+                    <AchievementIcon icon={a.icon} className="w-4 h-4" />
+                  </span>
                 </div>
                 <p className="text-xs text-zinc-400 font-mono">{a.description}</p>
                 {isUnlocked && (

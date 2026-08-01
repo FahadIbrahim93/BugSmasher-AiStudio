@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { GameEngine } from '../GameEngine';
 import { Bug, Powerup, Hazard, ResourcePickup } from '../GameTypes';
-import { Splatter, Particle, Shockwave, Laser, MuzzleFlash } from '../ParticleSystem';
+import { Splatter, Particle, Shockwave, Laser, MuzzleFlash, HeatShimmer } from '../ParticleSystem';
 import { assetManager } from '../AssetManager';
 import { GameConfig } from '../GameConfig';
 import { getActiveCoreThemeConfig } from '../CosmeticsManager';
@@ -177,6 +177,16 @@ export class ParticleRenderer {
     const ctx = this.engine.ctx;
     const alpha = p.life / p.maxLife;
     
+    if (p.type === 'confetti') {
+      this.drawConfetti(p);
+      return;
+    }
+
+    if (p.type === 'starburst') {
+      this.drawStarburst(p);
+      return;
+    }
+
     if (p.type === 'spark') {
       ctx.save();
       ctx.translate(p.x, p.y);
@@ -356,6 +366,112 @@ export class ParticleRenderer {
       ctx.fillRect(0, 0, w, h);
     });
 
+    ctx.restore();
+  }
+
+  drawConfetti(p: Particle) {
+    const ctx = this.engine.ctx;
+    ctx.save();
+    const alpha = p.life / p.maxLife;
+    const t = this.engine.globalTime;
+    
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rotation + t * 2);
+    ctx.globalAlpha = alpha * 0.9;
+    ctx.fillStyle = p.color;
+    
+    if (!this.isLowEnd) {
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 4;
+    }
+    
+    // Draw as small rectangle (confetti piece)
+    const wobble = Math.sin(t * 6 + (p.hueShift || 0)) * 1.5;
+    ctx.fillRect(-p.size * 0.5, -p.size * 0.3 + wobble, p.size, p.size * 0.6);
+    
+    ctx.restore();
+  }
+
+  drawStarburst(p: Particle) {
+    const ctx = this.engine.ctx;
+    ctx.save();
+    const alpha = p.life / p.maxLife;
+
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rotation);
+    ctx.globalAlpha = alpha;
+    
+    // Draw 4-pointed star ray
+    const size = p.size * (0.5 + 0.5 * alpha);
+    
+    ctx.beginPath();
+    ctx.moveTo(0, -size * 2);
+    ctx.lineTo(size * 0.4, -size * 0.3);
+    ctx.lineTo(size * 2, 0);
+    ctx.lineTo(size * 0.4, size * 0.3);
+    ctx.lineTo(0, size * 2);
+    ctx.lineTo(-size * 0.4, size * 0.3);
+    ctx.lineTo(-size * 2, 0);
+    ctx.lineTo(-size * 0.4, -size * 0.3);
+    ctx.closePath();
+    
+    ctx.fillStyle = '#ffffff';
+    if (!this.isLowEnd) {
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 12;
+    }
+    ctx.fill();
+    
+    // Core dot
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.arc(0, 0, size * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.restore();
+  }
+
+  drawHeatShimmer(hs: HeatShimmer) {
+    const ctx = this.engine.ctx;
+    ctx.save();
+    const alpha = hs.life / hs.maxLife;
+    const t = this.engine.globalTime;
+    
+    // Animated shimmering gradient
+    const pulse = Math.sin(t * 20 + hs.x * 0.1) * 5;
+    const radius = 40 + pulse + (1 - alpha) * 20;
+    
+    const grad = ctx.createRadialGradient(hs.x, hs.y, 0, hs.x, hs.y, radius);
+    grad.addColorStop(0, `rgba(255, 180, 50, ${alpha * 0.25 * hs.intensity})`);
+    grad.addColorStop(0.4, `rgba(255, 100, 20, ${alpha * 0.12 * hs.intensity})`);
+    grad.addColorStop(1, 'rgba(255, 50, 0, 0)');
+    
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.ellipse(
+      hs.x, hs.y,
+      radius, radius * 0.7 + Math.sin(t * 15 + hs.y * 0.05) * 8,
+      0, 0, Math.PI * 2
+    );
+    ctx.fill();
+    
+    // Wavy heat lines rising
+    ctx.strokeStyle = `rgba(255, 200, 100, ${alpha * 0.15 * hs.intensity})`;
+    ctx.lineWidth = 1.5;
+    for (let i = -2; i <= 2; i++) {
+      const xOff = i * 10 + Math.sin(t * 12 + hs.x * 0.02 + i) * 6;
+      ctx.beginPath();
+      ctx.moveTo(hs.x + xOff, hs.y + radius * 0.5);
+      ctx.quadraticCurveTo(
+        hs.x + xOff + Math.sin(t * 8 + i) * 5,
+        hs.y - radius * 0.3,
+        hs.x + xOff + Math.sin(t * 10 + i * 2) * 8,
+        hs.y - radius * 0.8
+      );
+      ctx.stroke();
+    }
+    
     ctx.restore();
   }
 

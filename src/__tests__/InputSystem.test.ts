@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GameEngine } from '../game/GameEngine';
 import { InputSystem } from '../game/InputSystem';
-// import { GameConfig } from '../game/GameConfig'; // unused in this test under strict
+import { soundManager } from '../game/SoundManager';
+import { GameConfig } from '../game/GameConfig';
 
 vi.mock('../game/SoundManager', () => ({
   soundManager: {
@@ -34,6 +35,10 @@ vi.mock('../game/SoundManager', () => ({
     stopMusic: vi.fn(),
     playBiomeMusic: vi.fn(),
     destroy: vi.fn(),
+    critHit: vi.fn(),
+    miss: vi.fn(),
+    comboBreak: vi.fn(),
+    setReducedMotion: vi.fn(),
   }
 }));
 
@@ -171,11 +176,59 @@ describe('InputSystem', () => {
       expect(engine.weaponHeat).toBeGreaterThan(initialHeat);
     });
 
-    it('should set overheat when weapon heat reaches 100', () => {
-      // Rapid clicks to overheat
+    it('grants exactly perHit rage on a landed smash (15)', () => {
+      engine.weaponHeat = 0;
+      engine.startWave();
+      (engine.waveManager as any).spawnBug();
+      const bug = engine.bugs[0];
+      bug.x = 400;
+      bug.y = 300;
+      bug.size = 15;
+      bug.hp = 100;
+
+      input.processClick(400, 300);
+
+      expect(engine.weaponHeat).toBe(GameConfig.rage.perHit);
+    });
+
+    it('grants exactly perMiss rage on a miss (10, not hit+miss)', () => {
+      engine.weaponHeat = 0;
+      input.processClick(400, 300); // empty space → miss
+
+      expect(engine.weaponHeat).toBe(GameConfig.rage.perMiss);
+    });
+
+    it('should ignite FURY MODE when rage meter reaches 100 instead of locking out', () => {
+      // Rapid clicks to fill the rage meter
       engine.weaponHeat = 90;
       input.processClick(400, 300);
-      expect(engine.isOverheated).toBe(true);
+      expect(engine.furyActive).toBe(true);
+      expect(engine.weaponHeat).toBe(100);
+    });
+
+    it('should allow clicks during FURY MODE (no lockout)', () => {
+      engine.furyActive = true;
+      engine.weaponHeat = 100;
+      engine.startWave();
+      (engine.waveManager as any).spawnBug();
+
+      const bug = engine.bugs[0];
+      bug.x = 400;
+      bug.y = 300;
+      bug.hp = 100;
+
+      vi.clearAllMocks();
+      input.processClick(400, 300);
+
+      // The click still damages the target (no lockout return) — fury forces crits
+      expect(bug.hp).toBeLessThan(100);
+    });
+
+    it('should build rage on misses', () => {
+      engine.weaponHeat = 0;
+      input.processClick(400, 300);
+      expect(engine.weaponHeat).toBeGreaterThan(0);
+      expect(soundManager.miss).toHaveBeenCalled();
     });
 
     it('should process click on a bug and deal damage', () => {
@@ -236,22 +289,61 @@ describe('InputSystem', () => {
       expect(engine.missedClicksInSubwave).toBe(initialMissed + 1);
     });
 
-    it('should apply distortion mirroring when controlDistortionTimer is active', () => {
+    it('fires the miss sound when clicking empty space', () => {
+      vi.clearAllMocks();
+      input.processClick(400, 300);
+      expect(soundManager.miss).toHaveBeenCalled();
+    });
+
+    it('does not fire the miss sound when clicking a bug', () => {
+      engine.startWave();
+      (engine.waveManager as any).spawnBug();
+      const bug = engine.bugs[0];
+      bug.x = 400;
+      bug.y = 300;
+      bug.size = 15;
+      bug.hp = 100;
+      vi.clearAllMocks();
+
+      input.processClick(400, 300);
+
+      expect(soundManager.miss).not.toHaveBeenCalled();
+    });
+
+    it('should apply softened distortion deflection when controlDistortionTimer is active', () => {
       engine.controlDistortionTimer = 2.0;
       engine.startWave();
       (engine.waveManager as any).spawnBug();
       
       const bug = engine.bugs[0];
-      // Place bug at mirrored position
+      // Softened partial mirror: x' = centerX + (centerX - x) * 0.35
+      // = 400 + (400 - 100) * 0.35 = 505 ; y' = 300 + (300 - 100) * 0.35 = 370
       const clickX = 100;
       const clickY = 100;
-      // Mirror: x' = centerX + (centerX - x) = 400 + (400 - 100) = 700
-      bug.x = 700;
-      bug.y = 500;
+      bug.x = 505;
+      bug.y = 370;
       bug.hp = 2;
 
       input.processClick(clickX, clickY);
       expect(bug.hp).toBeLessThan(2);
+    });
+
+    it('should telegraph distortion with glitch and chromatic effects', () => {
+      engine.controlDistortionTimer = 2.0;
+      input.processClick(400, 300);
+      expect(engine.renderer.isGlitching).toBe(true);
+      expect(engine.renderer.chromaticOffset).toBeGreaterThan(0);
+    });
+
+    it('should start goo collection on Q keydown and stop on keyup', () => {
+      engine.isRunning = true;
+      const down = new KeyboardEvent('keydown', { key: 'q', code: 'KeyQ' });
+      window.dispatchEvent(down);
+      expect(engine.gooSystem.isCollecting).toBe(true);
+
+      const up = new KeyboardEvent('keyup', { key: 'q', code: 'KeyQ' });
+      window.dispatchEvent(up);
+      expect(engine.gooSystem.isCollecting).toBe(false);
     });
   });
 

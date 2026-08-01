@@ -10,11 +10,12 @@ describe('GameEngineStatusBus', () => {
       intensity: 1.2,
       performanceFactor: 1,
       weaponHeat: 10,
-      isOverheated: false,
+      furyActive: false,
       dashCooldownTimer: 0,
       dashCooldown: 3,
       rapidFireTimer: 0,
       spikeBurstTimer: 0,
+      shakeIntensity: 0,
     };
     GameEngineStatusBus.publish(status);
     expect(GameEngineStatusBus.getSnapshot()).toEqual(status);

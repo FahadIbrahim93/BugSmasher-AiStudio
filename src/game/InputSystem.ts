@@ -20,8 +20,8 @@ export class InputSystem {
       this.rapidClickWindow = now;
     }
     this.rapidClickCount++;
-    // Throttle heavy effects when clicking faster than 8 clicks/sec
-    return this.rapidClickCount > 4;
+    // Only throttle heavy effects on mobile — desktop gets full juice at any APM
+    return this.engine.isMobile && this.rapidClickCount > 4;
   }
 
   constructor(engine: GameEngine) {
@@ -30,11 +30,16 @@ export class InputSystem {
     this.lastMouseY = engine.height / 2;
     this.handlePointerDown = this.handlePointerDown.bind(this);
     this.handlePointerMove = this.handlePointerMove.bind(this);
+    this.handlePointerUp = this.handlePointerUp.bind(this);
     this.handleKeyDown = this.handleKeyDown.bind(this);
+    this.handleKeyUp = this.handleKeyUp.bind(this);
     
     this.engine.canvas.addEventListener('pointerdown', this.handlePointerDown);
+    this.engine.canvas.addEventListener('pointerup', this.handlePointerUp);
+    this.engine.canvas.addEventListener('pointercancel', this.handlePointerUp);
     this.engine.canvas.addEventListener('pointermove', this.handlePointerMove);
     window.addEventListener('keydown', this.handleKeyDown);
+    window.addEventListener('keyup', this.handleKeyUp);
     this.handleGamepad = this.handleGamepad.bind(this);
   }
 
@@ -87,12 +92,27 @@ export class InputSystem {
   private handleKeyDown(e: KeyboardEvent) {
     if (e.repeat) return;
     if (this.engine.isPaused || !this.engine.isRunning) return;
+    // Q = Manual Garbage Collection: sweep goo contamination and recycle it
+    if (e.code === 'KeyQ' || e.key === 'q' || e.key === 'Q') {
+      e.preventDefault();
+      this.engine.gooSystem.isCollecting = true;
+      return;
+    }
     const bindings = loadControlBindings();
     if (matchesBinding(e.code, bindings.dash) || e.key === 'Shift') {
       e.preventDefault();
       this.engine.triggerDash(this.lastMouseX, this.lastMouseY);
     }
   }
+
+  private handleKeyUp(e: KeyboardEvent) {
+    if (e.code === 'KeyQ' || e.key === 'q' || e.key === 'Q') {
+      this.engine.gooSystem.isCollecting = false;
+    }
+  }
+
+  // Ground Slam hold-to-charge tracking
+  private pointerDownTime = 0;
 
   private handlePointerDown(e: PointerEvent) {
     e.preventDefault();
@@ -102,8 +122,33 @@ export class InputSystem {
     const rect = this.engine.canvas.getBoundingClientRect();
     this.lastMouseX = e.clientX - rect.left;
     this.lastMouseY = e.clientY - rect.top;
-    
+    this.pointerDownTime = performance.now();
+
+    // Start charging the Ground Slam — release after a hold triggers it
+    if (this.engine.isRunning && this.engine.waveManager.waveActive) {
+      this.engine.slamCharging = true;
+      this.engine.slamCharge = 0;
+    }
+
     this.processClick(e.clientX, e.clientY);
+  }
+
+  private handlePointerUp(e: PointerEvent) {
+    const engine = this.engine;
+    const wasCharging = engine.slamCharging;
+    engine.slamCharging = false;
+    if (engine.isPaused || !engine.isRunning || !engine.waveManager.waveActive) return;
+    if (!wasCharging) return;
+
+    const heldMs = performance.now() - this.pointerDownTime;
+    // A deliberate hold (>= 250ms) releases the Ground Slam; quick taps stay clicks
+    if (heldMs >= 250) {
+      const rect = engine.canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const charge = Math.min(1, engine.slamCharge);
+      engine.triggerGroundSlam(x, y, charge);
+    }
   }
 
   private handlePointerMove(e: PointerEvent) {
@@ -160,46 +205,26 @@ export class InputSystem {
     const clickX = clientX - rect.left;
     const clickY = clientY - rect.top;
 
-    if (engine.isOverheated) {
-      soundManager.uiError();
-      engine.particleSystem.spawnSmoke(clickX, clickY, 'rgba(239, 68, 68, 0.45)');
-      return;
-    }
-
     if (engine.clickCooldown > 0) return;
 
-    // Weapon Heat Mechanics
-    let heatIncrease = 15;
-    if (engine.rapidFireTimer > 0) {
-      heatIncrease = 0; // Rapid fire powerup operates at absolute zero thermal friction
-    } else if (engine.overdriveTimer > 0) {
-      heatIncrease = 4.5; // Overdrive chip has an optimized cooling buffer
-    }
-
-    engine.weaponHeat = Math.min(100, engine.weaponHeat + heatIncrease);
-    if (engine.weaponHeat >= 100) {
-      engine.isOverheated = true;
-      soundManager.uiError();
-      engine.particleSystem.spawnSmoke(clickX, clickY, 'rgba(239, 68, 68, 0.7)');
-      engine.particleSystem.spawnShockwave(clickX, clickY, '#ef4444', 70);
-    }
-    
-    // Set click cooldown (Slightly slower if webbed)
-    engine.clickCooldown = 0.08 / engine.hazardSlowdown;
+    // Set click cooldown (slower if webbed or goo-contaminated)
+    engine.clickCooldown = 0.08 / (engine.hazardSlowdown * engine.gooSystem.slowdownFactor);
     
     let x = clickX;
     let y = clickY;
 
-    // Distorted Controls Mechanic
+    // Distorted Controls — softened partial deflection (35% offset, not a full mirror)
+    // with a heavy visual telegraph so the player is never secretly hijacked.
     if (engine.controlDistortionTimer > 0) {
       const centerX = engine.width / 2;
       const centerY = engine.height / 2;
-      x = centerX + (centerX - x); // Mirror X
-      y = centerY + (centerY - y); // Mirror Y
+      x = centerX + (centerX - x) * 0.35;
+      y = centerY + (centerY - y) * 0.35;
       
-      // Visual feedback for distortion
-      engine.renderer.chromaticOffset = 10;
-      if (Math.random() < 0.2) engine.renderer.isGlitching = true;
+      // Always telegraph the hijack while active
+      engine.renderer.chromaticOffset = 12;
+      engine.renderer.isGlitching = true;
+      engine.particleSystem.spawnSmoke(x, y, 'rgba(150, 0, 255, 0.3)');
     }
 
     // Intercept with PCG System
@@ -290,6 +315,17 @@ export class InputSystem {
       const clickRadius = bug.size * GameConfig.player.baseClickRadiusMultiplier * engine.clickRadiusMultiplier;
       if (distSq < clickRadius * clickRadius) {
         hit = true;
+        // RAGE METER — a landed smash feeds the vent (perHit default; rapid-fire is
+        // frictionless, overdrive runs an optimized cooling buffer). NOTE: modifier
+        // gains are absolute values, not multipliers of perHit. Powerup-collection
+        // and PCG-intercepted clicks intentionally do not feed rage (not a smash).
+        let rageGain = GameConfig.rage.perHit;
+        if (engine.rapidFireTimer > 0) {
+          rageGain = GameConfig.rage.hitWithRapidFire;
+        } else if (engine.overdriveTimer > 0) {
+          rageGain = GameConfig.rage.hitWithOverdrive;
+        }
+        engine.addRage(rageGain);
         if (typeof navigator !== 'undefined' && navigator.vibrate) {
           navigator.vibrate(12);
         }
@@ -308,16 +344,26 @@ export class InputSystem {
     }
     
     if (!hit) {
-      soundManager.shoot();
+      soundManager.miss();
+      // Missing builds rage — the swing and miss makes you angrier, which feeds FURY MODE
+      engine.addRage(GameConfig.rage.perMiss);
       engine.particleSystem.spawnMissParticles(x, y);
       engine.missedClicksInSubwave++;
+    }
+
+    // FURY MODE: every smash becomes an AoE splash through the swarm
+    if (engine.furyActive) {
+      engine.applyFurySplash(x, y);
     }
   }
 
   public destroy() {
     this.stopGamepadPolling();
     this.engine.canvas.removeEventListener('pointerdown', this.handlePointerDown);
+    this.engine.canvas.removeEventListener('pointerup', this.handlePointerUp);
+    this.engine.canvas.removeEventListener('pointercancel', this.handlePointerUp);
     this.engine.canvas.removeEventListener('pointermove', this.handlePointerMove);
     window.removeEventListener('keydown', this.handleKeyDown);
+    window.removeEventListener('keyup', this.handleKeyUp);
   }
 }

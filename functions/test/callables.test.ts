@@ -106,8 +106,12 @@ describe('submitScore callable', () => {
   });
 
   it('writes leaderboard entry for authenticated user', async () => {
+    const sessionResult = (await startSession({}, { auth: { uid: 'leader-1' } })) as {
+      sessionId: string;
+    };
+
     const result = (await submitScore(
-      { score: 12_500, wave: 5, username: '  Alice  ' },
+      { score: 12_500, wave: 5, username: '  Alice  ', sessionId: sessionResult.sessionId },
       { auth: { uid: 'leader-1' } }
     )) as { ok: boolean };
 
@@ -125,27 +129,54 @@ describe('submitScore callable', () => {
 
   it('preserves higher existing score', async () => {
     const uid = 'leader-monotonic';
-    await submitScore({ score: 50_000, wave: 10, username: 'Pro' }, { auth: { uid } });
-    await submitScore({ score: 10_000, wave: 20, username: 'Pro' }, { auth: { uid } });
+    const sessionResult = (await startSession({}, { auth: { uid } })) as {
+      sessionId: string;
+    };
+    await submitScore(
+      { score: 50_000, wave: 10, username: 'Pro', sessionId: sessionResult.sessionId },
+      { auth: { uid } }
+    );
+    const secondSession = (await startSession({}, { auth: { uid } })) as {
+      sessionId: string;
+    };
+    await submitScore(
+      { score: 10_000, wave: 20, username: 'Pro', sessionId: secondSession.sessionId },
+      { auth: { uid } }
+    );
 
     const snap = await admin.firestore().doc(`leaderboard/${uid}`).get();
     expect(snap.data()?.score).toBe(50_000);
   });
 
   it('rejects implausible scores', async () => {
+    const sessionResult = (await startSession({}, { auth: { uid: 'cheater-1' } })) as {
+      sessionId: string;
+    };
+
     await expect(
-      submitScore({ score: 2_000_000, wave: 5, username: 'Cheater' }, { auth: { uid: 'cheater-1' } })
-    ).rejects.toThrow(/plausibility bounds/);
+      submitScore(
+        { score: 2_000_000, wave: 5, username: 'Cheater', sessionId: sessionResult.sessionId },
+        { auth: { uid: 'cheater-1' } }
+      )
+    ).rejects.toThrow(/maximum plausible score|plausibility bounds/);
   });
 
   it('enforces rate limits', async () => {
     const uid = 'rate-limit-score-user';
     for (let i = 0; i < 5; i += 1) {
-      await submitScore({ score: 1_000 + i, wave: 1, username: 'Spammer' }, { auth: { uid } });
+      const session = (await startSession({}, { auth: { uid } })) as { sessionId: string };
+      await submitScore(
+        { score: 1_000 + i, wave: 1, username: 'Spammer', sessionId: session.sessionId },
+        { auth: { uid } }
+      );
     }
 
+    const rateSession = (await startSession({}, { auth: { uid } })) as { sessionId: string };
     await expect(
-      submitScore({ score: 9_999, wave: 2, username: 'Spammer' }, { auth: { uid } })
+      submitScore(
+        { score: 9_999, wave: 2, username: 'Spammer', sessionId: rateSession.sessionId },
+        { auth: { uid } }
+      )
     ).rejects.toThrow(/Rate limit exceeded/);
   });
 });
@@ -281,15 +312,22 @@ describe('submitScore with session tokens', () => {
 
   it('rejects implausibly high scores for session duration', async () => {
     const uid = 'implausible-score-user';
+    const staleSessionId = 'stale-session-test-id-1234';
 
-    const sessionResult = (await startSession({}, { auth: { uid } })) as {
-      sessionId: string;
-    };
+    await admin.firestore().doc(`_sessions/${staleSessionId}`).set({
+      userId: uid,
+      sessionId: staleSessionId,
+      createdAt: Date.now() - 90_000,
+      expiresAt: Date.now() + 300_000,
+      used: false,
+    });
 
-    // Immediately submit a score that's too high for zero elapsed time
+    // Score must pass assertSafeScore (≤ 50_000 + wave * 250_000 = 25.05M for wave 100)
+    // but exceed the session-duration cap (90s elapsed × 5_000/s = 450_000). 1M leaves
+    // ~110s of timing slack so the test can't flake if the emulator stalls.
     await expect(
       submitScore(
-        { score: 100_000_000, wave: 100, username: 'Implausible', sessionId: sessionResult.sessionId },
+        { score: 1_000_000, wave: 100, username: 'Implausible', sessionId: staleSessionId },
         { auth: { uid } }
       )
     ).rejects.toThrow(/maximum plausible score/);

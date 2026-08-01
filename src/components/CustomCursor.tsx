@@ -26,7 +26,7 @@ export function CustomCursor() {
   const [healthPercent, setHealthPercent] = useState(1);
   const [intensity, setIntensity] = useState(1);
   const [weaponHeat, setWeaponHeat] = useState(0);
-  const [isOverheated, setIsOverheated] = useState(false);
+  const [furyActive, setFuryActive] = useState(false);
 
   // New features state
   const [dashCooldownTimer, setDashCooldownTimer] = useState(0);
@@ -73,7 +73,7 @@ export function CustomCursor() {
         setHealthPercent(1);
         setIntensity(1);
         setWeaponHeat(0);
-        setIsOverheated(false);
+        setFuryActive(false);
       }
       return;
     }
@@ -81,7 +81,7 @@ export function CustomCursor() {
     const biomeVal = status.currentBiome || 'neon_core';
     const intensityVal = Math.round((status.intensity || 1) * 100) / 100;
     setWeaponHeat(status.weaponHeat || 0);
-    setIsOverheated(!!status.isOverheated);
+    setFuryActive(!!status.furyActive);
     setDashCooldownTimer(status.dashCooldownTimer || 0);
     setDashCooldown(status.dashCooldown || 3.0);
     setRapidFireActive(!!(status.rapidFireTimer && status.rapidFireTimer > 0));
@@ -243,8 +243,8 @@ export function CustomCursor() {
           ctx.clearRect(0, 0, size, size);
 
           // Emit steam particles
-          // If overheated, emit very dense active venting steam. If high heat, emit minor venting steam.
-          const emitChance = isOverheated ? 0.8 : (weaponHeat > 60 ? 0.25 : 0.0);
+          // FURY MODE: very dense active venting steam. High rage: minor venting steam.
+          const emitChance = furyActive ? 0.85 : (weaponHeat > 60 ? 0.25 : 0.0);
           if (emitChance > 0 && Math.random() < emitChance) {
             const angle = Math.random() * Math.PI * 2;
             const dist = 12 + Math.random() * 8;
@@ -255,8 +255,8 @@ export function CustomCursor() {
             const speedX = Math.cos(angle) * 0.4 + (Math.random() - 0.5) * 0.3;
             const speedY = -0.5 - Math.random() * 1.5; // Rise up
             
-            const heatColor = isOverheated 
-              ? (Math.random() < 0.3 ? 'rgba(239, 68, 68, 0.5)' : Math.random() < 0.6 ? 'rgba(249, 115, 22, 0.4)' : 'rgba(220, 220, 220, 0.45)') 
+            const heatColor = furyActive 
+              ? (Math.random() < 0.3 ? 'rgba(255, 106, 0, 0.6)' : Math.random() < 0.6 ? 'rgba(255, 180, 60, 0.5)' : 'rgba(255, 240, 200, 0.55)') 
               : 'rgba(200, 200, 200, 0.3)';
 
             particlesRef.current.push({
@@ -299,7 +299,7 @@ export function CustomCursor() {
     return () => {
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
-  }, [weaponHeat, isOverheated, isMobileDevice]);
+  }, [weaponHeat, furyActive, isMobileDevice]);
 
   if (isMobileDevice) return null;
 
@@ -474,31 +474,31 @@ export function CustomCursor() {
             cy="21"
             r="17"
             fill="transparent"
-            stroke={isOverheated ? '#f87171' : `rgba(239, 68, 68, ${0.45 + (weaponHeat / 100) * 0.55})`}
+            stroke={furyActive ? '#ffb020' : `rgba(239, 68, 68, ${0.45 + (weaponHeat / 100) * 0.55})`}
             strokeWidth="3"
             strokeDasharray="106.81"
             strokeDashoffset={106.81 * (1 - weaponHeat / 100)}
             strokeLinecap="round"
             className="transition-all duration-75"
             style={{
-              filter: isOverheated 
-                ? 'drop-shadow(0 0 5px #ef4444) drop-shadow(0 0 2px #f87171)' 
+              filter: furyActive 
+                ? 'drop-shadow(0 0 8px #ff6a00) drop-shadow(0 0 3px #ffb020)' 
                 : `drop-shadow(0 0 3px rgba(239, 68, 68, ${0.1 + (weaponHeat / 100) * 0.6}))`
             }}
           />
         </svg>
       )}
 
-      {/* Overheat Alert Badge */}
-      {isOverheated && (
+      {/* FURY MODE Alert Badge */}
+      {furyActive && (
         <div 
-          className="absolute left-1/2 -translate-x-1/2 top-full mt-2 font-mono text-[8px] font-black text-red-500 bg-black/80 border border-red-500/30 px-1.5 py-0.5 rounded shadow-[0_0_12px_rgba(239,68,68,0.5)] tracking-widest uppercase animate-pulse select-none whitespace-nowrap"
+          className="absolute left-1/2 -translate-x-1/2 top-full mt-2 font-mono text-[8px] font-black text-amber-300 bg-black/80 border border-amber-400/40 px-1.5 py-0.5 rounded shadow-[0_0_12px_rgba(255,106,0,0.6)] tracking-widest uppercase animate-pulse select-none whitespace-nowrap"
           style={{ 
-            textShadow: '0 0 5px rgba(239, 68, 68, 0.8)',
+            textShadow: '0 0 5px rgba(255, 106, 0, 0.9)',
             transform: `translate3d(calc(-50% + ${ringTransform.dx}px), ${ringTransform.dy}px, 0)`
           }}
         >
-          OVERHEATED
+          FURY MODE
         </div>
       )}
     </div>

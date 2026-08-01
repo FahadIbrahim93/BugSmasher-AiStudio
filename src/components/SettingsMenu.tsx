@@ -260,7 +260,7 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-2xl w-full bg-zinc-900/50 border border-white/10 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden"
+        className="max-w-2xl w-full glass-deep p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden"
       >
         <button 
           onClick={() => { soundManager.uiClick(); onBack(); }}
@@ -277,7 +277,7 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
           <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-4 group-hover:border-white/20 group-active:scale-95 transition-all">
             <Settings2 className="w-8 h-8 text-white group-hover:rotate-45 transition-transform duration-500" />
           </div>
-          <h2 className="text-3xl font-black text-white uppercase tracking-[0.2em] font-display transition-colors group-hover:text-zinc-200">System Settings</h2>
+          <h2 className="heading-xl text-3xl text-white transition-colors group-hover:text-zinc-200">System Settings</h2>
           {clickCount > 0 && clickCount < 5 && (
             <motion.p 
               initial={{ opacity: 0, y: -5 }}

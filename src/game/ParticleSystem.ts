@@ -9,7 +9,8 @@ export interface Particle {
   rotation: number; 
   life: number; 
   maxLife: number; 
-  type?: 'circle' | 'spark' | 'smoke' | 'debris';
+  type?: 'circle' | 'spark' | 'smoke' | 'debris' | 'confetti' | 'starburst';
+  hueShift?: number;
 }
 export interface SplatterDrop { x: number; y: number; size: number; active: boolean; }
 export interface Splatter { active: boolean; x: number; y: number; rotation: number; size: number; color: string; life: number; maxLife: number; drops: SplatterDrop[]; }
@@ -17,7 +18,17 @@ export interface Shockwave { active: boolean; x: number; y: number; radius: numb
 export interface Laser { active: boolean; x1: number; y1: number; x2: number; y2: number; life: number; maxLife: number; color: string; width: number; }
 export interface MuzzleFlash { active: boolean; x: number; y: number; life: number; maxLife: number; size: number; }
 
-const MAX_PARTICLES = 500;
+export interface HeatShimmer { 
+  active: boolean; 
+  x: number; 
+  y: number; 
+  intensity: number; 
+  life: number; 
+  maxLife: number;
+}
+
+const MAX_PARTICLES = 800;
+const MAX_HEAT_SHIMMERS = 30;
 const MAX_SPLATTERS = 100;
 const MAX_SHOCKWAVES = 50;
 const MAX_LASERS = 50;
@@ -54,12 +65,16 @@ export class ParticleSystem {
   muzzleFlashes: MuzzleFlash[] = Array.from({ length: MAX_MUZZLE_FLASHES }, () => ({ active: false, x: 0, y: 0, life: 0, maxLife: 0, size: 0 }));
   muzzleFlashIdx = 0;
 
+  heatShimmers: HeatShimmer[] = Array.from({ length: MAX_HEAT_SHIMMERS }, () => ({ active: false, x: 0, y: 0, intensity: 0, life: 0, maxLife: 0 }));
+  heatShimmerIdx = 0;
+
   reset() {
     this.particles.forEach(p => p.active = false);
     this.splatters.forEach(s => s.active = false);
     this.shockwaves.forEach(sw => sw.active = false);
     this.lasers.forEach(l => l.active = false);
     this.muzzleFlashes.forEach(f => f.active = false);
+    this.heatShimmers.forEach(h => h.active = false);
   }
 
   update(dt: number) {
@@ -107,6 +122,14 @@ export class ParticleSystem {
       anyActive = true;
       f.life -= dt;
       if (f.life <= 0) f.active = false;
+    }
+
+    for (let i = 0; i < MAX_HEAT_SHIMMERS; i++) {
+      const h = this.heatShimmers[i];
+      if (!h.active) continue;
+      anyActive = true;
+      h.life -= dt;
+      if (h.life <= 0) h.active = false;
     }
     
     // Early-out hint: if nothing is active, skip rendering pass overhead
@@ -382,6 +405,79 @@ export class ParticleSystem {
         
         this.particleIdx = (this.particleIdx + 1) % MAX_PARTICLES;
     }
+  }
+
+  spawnConfetti(x: number, y: number, baseColor?: string) {
+    const isLowQuality = this.engine && (this.engine.isMobile || !this.engine.highFidelityVFX);
+    let count = isLowQuality ? 15 : 45;
+    count = Math.max(1, Math.round(count * this.vfxCountMultiplier));
+    const confettiColors = ['#ff0', '#f0f', '#0ff', '#f44', '#4f4', '#44f', '#ff8', '#fa0', '#fff', '#8ff', '#f8f', '#aaf'];
+    for (let i = 0; i < count; i++) {
+      const p = this.particles[this.particleIdx];
+      const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.2; // Mostly downward spread
+      const speed = Math.random() * 200 + 50;
+      
+      p.active = true;
+      p.type = 'confetti';
+      p.x = x + (Math.random() - 0.5) * 400;
+      p.y = y + (Math.random() - 0.5) * 200;
+      p.vx = Math.cos(angle) * speed;
+      p.vy = Math.sin(angle) * speed;
+      p.size = Math.random() * 6 + 3;
+      p.color = baseColor || confettiColors[Math.floor(Math.random() * confettiColors.length)];
+      p.hueShift = Math.random() * Math.PI * 2;
+      p.rotation = Math.random() * Math.PI * 2;
+      p.life = 2.5 + Math.random() * 2.5;
+      p.maxLife = p.life;
+      
+      this.particleIdx = (this.particleIdx + 1) % MAX_PARTICLES;
+    }
+  }
+
+  spawnStarburst(x: number, y: number, color: string) {
+    const isLowQuality = this.engine && (this.engine.isMobile || !this.engine.highFidelityVFX);
+    const rayCount = isLowQuality ? 8 : 18;
+    
+    for (let i = 0; i < rayCount; i++) {
+      const p = this.particles[this.particleIdx];
+      const angle = (i / rayCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.3;
+      const speed = Math.random() * 350 + 150;
+      
+      p.active = true;
+      p.type = 'starburst';
+      p.x = x;
+      p.y = y;
+      p.vx = Math.cos(angle) * speed;
+      p.vy = Math.sin(angle) * speed;
+      p.size = Math.random() * 8 + 4;
+      p.color = i % 2 === 0 ? '#ffffff' : color;
+      p.rotation = angle;
+      p.life = 0.5 + Math.random() * 0.4;
+      p.maxLife = p.life;
+      
+      this.particleIdx = (this.particleIdx + 1) % MAX_PARTICLES;
+    }
+    
+    // Central bright flash
+    const flash = this.muzzleFlashes[this.muzzleFlashIdx];
+    flash.active = true;
+    flash.x = x;
+    flash.y = y;
+    flash.life = 0.15;
+    flash.maxLife = 0.15;
+    flash.size = 50;
+    this.muzzleFlashIdx = (this.muzzleFlashIdx + 1) % MAX_MUZZLE_FLASHES;
+  }
+
+  spawnHeatShimmer(x: number, y: number, intensity = 1.0) {
+    const h = this.heatShimmers[this.heatShimmerIdx];
+    h.active = true;
+    h.x = x;
+    h.y = y;
+    h.intensity = intensity;
+    h.life = 0.12;
+    h.maxLife = 0.12;
+    this.heatShimmerIdx = (this.heatShimmerIdx + 1) % MAX_HEAT_SHIMMERS;
   }
 
   spawnParticle(x: number, y: number, color: string, size = 5, life = 0.5) {

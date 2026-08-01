@@ -10,11 +10,12 @@ describe('ParticleSystem', () => {
 
   describe('initialization', () => {
     it('should allocate fixed-size particle pools', () => {
-      expect(ps.particles.length).toBe(500);
+      expect(ps.particles.length).toBe(800);
       expect(ps.splatters.length).toBe(100);
       expect(ps.shockwaves.length).toBe(50);
       expect(ps.lasers.length).toBe(50);
       expect(ps.muzzleFlashes.length).toBe(20);
+      expect(ps.heatShimmers.length).toBe(30);
     });
 
     it('should initialize all pool elements as inactive', () => {
@@ -23,6 +24,7 @@ describe('ParticleSystem', () => {
       expect(ps.shockwaves.every(sw => !sw.active)).toBe(true);
       expect(ps.lasers.every(l => !l.active)).toBe(true);
       expect(ps.muzzleFlashes.every(f => !f.active)).toBe(true);
+      expect(ps.heatShimmers.every(h => !h.active)).toBe(true);
     });
 
     it('should have correct number of drops per splatter', () => {
@@ -37,6 +39,7 @@ describe('ParticleSystem', () => {
       expect(ps.shockwaveIdx).toBe(0);
       expect(ps.laserIdx).toBe(0);
       expect(ps.muzzleFlashIdx).toBe(0);
+      expect(ps.heatShimmerIdx).toBe(0);
     });
 
     it('should have vfxCountMultiplier of 1 when no engine', () => {
@@ -66,6 +69,7 @@ describe('ParticleSystem', () => {
       expect(ps.shockwaves.every(sw => !sw.active)).toBe(true);
       expect(ps.lasers.every(l => !l.active)).toBe(true);
       expect(ps.muzzleFlashes.every(f => !f.active)).toBe(true);
+      expect(ps.heatShimmers.every(h => !h.active)).toBe(true);
     });
   });
 
@@ -88,14 +92,14 @@ describe('ParticleSystem', () => {
     it('should advance the particle index', () => {
       const idx = ps.particleIdx;
       ps.spawnParticle(0, 0, '#fff');
-      expect(ps.particleIdx).toBe((idx + 1) % 500);
+      expect(ps.particleIdx).toBe((idx + 1) % 800);
     });
 
     it('should wrap around the pool', () => {
       // Force idx to near max
-      ps.particleIdx = 498;
+      ps.particleIdx = 798;
       ps.spawnParticle(0, 0, '#fff');
-      expect(ps.particleIdx).toBe(499);
+      expect(ps.particleIdx).toBe(799);
       ps.spawnParticle(0, 0, '#fff');
       expect(ps.particleIdx).toBe(0);
     });
@@ -347,6 +351,7 @@ describe('ParticleSystem', () => {
       ps.spawnMuzzleFlash(0, 0, 40);
       ps.update(0.1);
       expect(ps.muzzleFlashes.every(f => !f.active)).toBe(true);
+      expect(ps.heatShimmers.every(h => !h.active)).toBe(true);
     });
 
     it('should handle multiple updates without errors', () => {
@@ -365,6 +370,63 @@ describe('ParticleSystem', () => {
 
     it('should not throw when updating with empty pools', () => {
       expect(() => { ps.update(0.1); }).not.toThrow();
+    });
+  });
+
+  describe('spawnConfetti', () => {
+    it('should create confetti-type particles', () => {
+      ps.spawnConfetti(400, 300);
+      const active = ps.particles.filter(p => p.active && p.type === 'confetti');
+      expect(active.length).toBeGreaterThan(0);
+      for (const p of active) {
+        expect(p.type).toBe('confetti');
+        expect(p.hueShift).toBeDefined();
+      }
+    });
+
+    it('should use the provided color when given', () => {
+      ps.spawnConfetti(0, 0, '#ff0');
+      const active = ps.particles.filter(p => p.active && p.type === 'confetti');
+      expect(active.every(p => p.color === '#ff0')).toBe(true);
+    });
+  });
+
+  describe('spawnStarburst', () => {
+    it('should create starburst-type particles', () => {
+      ps.spawnStarburst(200, 200, '#ffd700');
+      const active = ps.particles.filter(p => p.active && p.type === 'starburst');
+      expect(active.length).toBeGreaterThan(0);
+      for (const p of active) {
+        expect(p.type).toBe('starburst');
+      }
+    });
+
+    it('should create a central muzzle flash', () => {
+      ps.spawnStarburst(200, 200, '#ffd700');
+      expect(ps.muzzleFlashes.some(f => f.active)).toBe(true);
+    });
+  });
+
+  describe('spawnHeatShimmer', () => {
+    it('should create an active heat shimmer', () => {
+      ps.spawnHeatShimmer(100, 100, 1.5);
+      const active = ps.heatShimmers.filter(h => h.active);
+      expect(active.length).toBe(1);
+      expect(active[0].x).toBe(100);
+      expect(active[0].y).toBe(100);
+      expect(active[0].intensity).toBe(1.5);
+      expect(active[0].life).toBe(0.12);
+    });
+
+    it('should default intensity to 1.0', () => {
+      ps.spawnHeatShimmer(0, 0);
+      expect(ps.heatShimmers[0].intensity).toBe(1.0);
+    });
+
+    it('should deactivate heat shimmer after update', () => {
+      ps.spawnHeatShimmer(0, 0);
+      ps.update(0.15);
+      expect(ps.heatShimmers.every(h => !h.active)).toBe(true);
     });
   });
 
