@@ -97,11 +97,15 @@ jobs:
           npm ci
           npm run build
 
+      # Primary hosting is Vercel (currently serves the latest build; push-to-deploy
+      # integration not yet confirmed). The Firebase deploy is a secondary mirror;
+      # skip it cleanly until FIREBASE_SERVICE_ACCOUNT is configured (previously it
+      # crashed here, hidden by continue-on-error, leaving Firebase stale).
       - name: Deploy to Firebase Hosting (preview channel for PRs, live for main)
+        if: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           channelId: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || 'live' }}
           projectId: studio-1155838266-56095
-        continue-on-error: true

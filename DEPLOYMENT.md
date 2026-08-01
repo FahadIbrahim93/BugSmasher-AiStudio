@@ -1,8 +1,9 @@
 # BUGSMASHER — Deployment Guide
 
-**Last updated:** 2026-06-29
-**Target environments:** Local dev · CI (GitHub Actions) · Firebase Hosting · Firebase Firestore
-**Live URL:** https://studio-1155838266-56095.web.app
+**Last updated:** 2026-08-01
+**Target environments:** Local dev · CI (GitHub Actions) · Vercel (primary hosting) · Firebase Hosting (secondary) · Firebase Firestore
+**Live URL (primary):** https://bugsmasher-hopetheory.vercel.app — currently serves the latest build (verified; push-to-deploy integration not yet confirmed — see note below)
+**Live URL (secondary):** https://studio-1155838266-56095.web.app — Firebase mirror; currently stale until `FIREBASE_SERVICE_ACCOUNT` secret is configured
 
 ---
 
@@ -91,17 +92,18 @@ Workflow: [`.github/workflows/ci.yml`](./.github/workflows/ci.yml)
 
 Local full gate: `npm run ci` (same steps, includes `validate:functions` unit tests).
 
-### On push to `main` (optional auto-deploy):
+### Deployment reality (verified 2026-08-01)
 
-Deploys to **Firebase Hosting** when `FIREBASE_SERVICE_ACCOUNT` secret is configured.
+- **Primary live hosting is Vercel**: `https://bugsmasher-hopetheory.vercel.app` currently serves the latest build (verified — same bundle hash as local `main`). **Note:** this was verified as a snapshot; if Vercel's GitHub push-to-deploy integration isn't configured, future pushes need a manual `vercel --prod` until it is.
+- The CI workflow also attempts a **Firebase Hosting deploy** (`channelId: live`) on push to `main`, but it **crashes with `Input required and not supplied: firebaseServiceAccount`** because the `FIREBASE_SERVICE_ACCOUNT` secret is not configured. `continue-on-error: true` previously hid this — the Firebase site therefore stays stale. **Do not treat a green CI as proof the Firebase mirror updated.**
 
-#### Setup Firebase deploy secret
+#### To enable the Firebase auto-deploy
 
 1. Firebase Console → Project Settings → Service accounts → Generate new private key
 2. GitHub repo → Settings → Secrets → Actions → New secret: `FIREBASE_SERVICE_ACCOUNT` (paste JSON)
 3. Push to `main` — workflow deploys `dist/` to channel `live`
 
-If the secret is missing, CI still passes; deploy step is skipped (`continue-on-error: true`).
+Until the secret is configured, the deploy step is skipped cleanly (see `ci.yml` guard).
 
 ---
 
@@ -118,7 +120,8 @@ firebase login
 firebase deploy --only hosting --project studio-1155838266-56095
 ```
 
-**Live URL (default):** https://studio-1155838266-56095.web.app
+**Live URL (primary):** https://bugsmasher-hopetheory.vercel.app — use this for players.
+**Firebase mirror:** https://studio-1155838266-56095.web.app — secondary; only current after a successful `firebase deploy --only hosting` or once the CI secret is configured.
 
 ### Firestore rules only
 

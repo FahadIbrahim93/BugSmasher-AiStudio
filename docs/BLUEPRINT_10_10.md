@@ -554,7 +554,7 @@ Tests: npm run ci (507 | coverage 80/70) | Scope: engine only
 
 #### Current State
 
-- ✅ Firebase Hosting live at `studio-1155838266-56095.web.app`
+- ✅ Vercel live at `bugsmasher-hopetheory.vercel.app` (primary, current) — Firebase Hosting mirror `studio-1155838266-56095.web.app` currently stale (missing `FIREBASE_SERVICE_ACCOUNT` secret)
 - ✅ Vercel alternative configured
 - ✅ Cloud Functions with callables, rate limits, Zod schema
 - ✅ PWA configured with Service Worker
@@ -1217,7 +1217,7 @@ npm run ci                     # typecheck + functions + coverage + emulator + b
 
 ### Appendix D: Key Contacts & Resources
 
-- **Live Site:** https://studio-1155838266-56095.web.app
+- **Live Site (primary):** https://bugsmasher-hopetheory.vercel.app · **Firebase mirror:** https://studio-1155838266-56095.web.app (stale until deploy secret configured)
 - **Repository:** https://github.com/FahadIbrahim93/BugSmasher-HopeTheory
 - **Firebase Console:** https://console.firebase.google.com/project/studio-1155838266-56095
 - **Skills Repository:** https://github.com/obra/superpowers (14 skills installed)
