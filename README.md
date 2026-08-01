@@ -2,7 +2,7 @@
 
 An ultra-minimalist, high-intensity AI-themed base defense game with Brutalist OS aesthetics vs. neon bio-luminescent bugs. React 19 + TypeScript + Canvas 2D. 60+ FPS target with real-time performance scaling.
 
-**Live:** [https://bugsmasher-hopetheory.vercel.app](https://bugsmasher-hopetheory.vercel.app) _(primary — serves the latest build)_ · [Firebase mirror](https://studio-1155838266-56095.web.app) _(secondary — currently stale; needs `FIREBASE_SERVICE_ACCOUNT` secret to auto-deploy)_  
+**Live:** [https://bugsmasher-hopetheory.vercel.app](https://bugsmasher-hopetheory.vercel.app) _(primary — serves the latest build with FURY/venting + full SFX pack; cloud features need one Vercel redeploy to pick up the `vercel.json` env config — see DEPLOYMENT.md)_ · [Firebase mirror](https://studio-1155838266-56095.web.app) _(secondary — currently stale; needs `FIREBASE_SERVICE_ACCOUNT` secret to auto-deploy)_  
 **Repo:** [FahadIbrahim93/BugSmasher-HopeTheory](https://github.com/FahadIbrahim93/BugSmasher-HopeTheory)  
 **Version:** 2.5.0 | **Audit:** ~7.1/10 (as of July 2026). **507** frontend tests pass with engine/lib coverage gates; **21** Firebase emulator + functions unit tests prove the security boundary. See [BLUEPRINT_10_10.md](./docs/BLUEPRINT_10_10.md), [VERIFICATION_2026-06-30.md](./docs/VERIFICATION_2026-06-30.md), and [AGENTS.md](./AGENTS.md).
 
