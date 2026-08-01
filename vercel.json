@@ -5,7 +5,11 @@
   "framework": "vite",
   "outputDirectory": "dist",
   "env": {
-    "GEMINI_API_KEY": ""
+    "GEMINI_API_KEY": "",
+    "VITE_FIREBASE_API_KEY": "AIzaSyAgszp_gKNxJCUs0BWa42pArAzyHSuzDqw",
+    "VITE_FIREBASE_AUTH_DOMAIN": "studio-1155838266-56095.firebaseapp.com",
+    "VITE_FIREBASE_PROJECT_ID": "studio-1155838266-56095",
+    "VITE_FIREBASE_APP_ID": "1:911343381703:web:75c16ea460d4aeab2ca2e2"
   },
   "headers": [
     {
@@ -18,7 +22,7 @@
       ]
     },
     {
-      "source": "/dist/(.*)",
+      "source": "/assets/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
