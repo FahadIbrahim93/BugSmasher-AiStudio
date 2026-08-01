@@ -48,11 +48,11 @@ npm run dev
 npm run typecheck          # TypeScript check (tsc --noEmit)
 npm run lint:eslint        # ESLint (TS + React + a11y rules)
 npm run lint:all           # Both typecheck + ESLint
-npm test                   # 507 frontend unit tests
+npm test                   # 600+ frontend unit tests
 npm run test:coverage     # engine/lib coverage gate
 npm run test:emulator     # Firestore rules + callable tests (requires Java 21+)
 npm run validate:functions # Cloud Functions build + schema unit tests
-npm run ci                # typecheck + ESLint + functions + coverage + emulator + build
+npm run ci                # typecheck (hard gate) + functions + coverage + emulator + build; ESLint advisory (tracked debt, see AGENTS.md)
 ```
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for full pipeline and production deploy.

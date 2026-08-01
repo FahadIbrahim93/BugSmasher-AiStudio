@@ -181,7 +181,7 @@ Tests: npm run ci (507 + emulator) | Scope: engine only
 | Change type             | Minimum verification                                   | Also required                             |
 | ----------------------- | ------------------------------------------------------ | ----------------------------------------- |
 | Engine / gameplay       | `npm test` + affected test files                       | Coverage must not drop below thresholds   |
-| UI only                 | `npm run lint` + `npm test` + manual smoke             | Screenshot in PR if visual                |
+| UI only                 | `npm run typecheck` + `npm test` + manual smoke        | Screenshot in PR if visual                |
 | Cloud Functions / rules | `npm run validate:functions` + `npm run test:emulator` | Update `security_spec.md` if rules change |
 | Coverage thresholds     | `npm run test:coverage`                                | TASKBOARD + VERIFICATION doc              |
 | Dependencies            | `npm run ci` + note audit warnings                     | Lockfile only in dedicated PR             |
@@ -190,10 +190,10 @@ Tests: npm run ci (507 + emulator) | Scope: engine only
 **Full gate (default):** `npm run ci`
 
 ```bash
-npm run lint && npm run validate:functions && npm run test:coverage && npm run test:emulator && npm run build
+npm run ci  # typecheck (hard gate) + functions + coverage + emulator + build; ESLint advisory (tracked debt)
 ```
 
-Optional (not in CI until ST-01 complete): `npm run lint:eslint`
+ESLint runs in CI as an advisory step (continue-on-error) until the tracked debt is burned down — see AGENTS.md for the re-promotion plan.
 
 **Note:** `.npmrc` sets `legacy-peer-deps=true` so ESLint 10 scaffolding installs cleanly alongside jsx-a11y until peer ranges align.
 
