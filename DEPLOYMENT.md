@@ -1,8 +1,8 @@
 # BUGSMASHER — Deployment Guide
 
-**Last updated:** 2026-08-01
+**Last updated:** 2026-08-02
 **Target environments:** Local dev · CI (GitHub Actions) · Vercel (primary hosting) · Firebase Hosting (secondary) · Firebase Firestore
-**Live URL (primary):** https://bugsmasher-hopetheory.vercel.app — currently serves the latest build (verified; push-to-deploy integration not yet confirmed — see note below)
+**Live URL (primary):** https://bugsmasher-hopetheory.vercel.app — push-to-deploy NOT wired yet; see "To enable Vercel push-to-deploy" below
 **Live URL (secondary):** https://studio-1155838266-56095.web.app — Firebase mirror; currently stale until `FIREBASE_SERVICE_ACCOUNT` secret is configured
 
 ---
@@ -92,11 +92,20 @@ Workflow: [`.github/workflows/ci.yml`](./.github/workflows/ci.yml)
 
 Local full gate: `npm run ci` (same steps, includes `validate:functions` unit tests).
 
-### Deployment reality (verified 2026-08-01)
+### Deployment reality (verified 2026-08-02)
 
 - **Primary live hosting is Vercel**: `https://bugsmasher-hopetheory.vercel.app` currently serves the latest verified bundle (`index-aiDl7IiO.js` — matches local `main`; contains FURY/venting features and all 10 SFX including `crit_hit.wav`, `miss.wav`, `combo_break.wav`, all HTTP 200).
-- **Vercel push-to-deploy is NOT wired**: pushing to `main` does not trigger a Vercel rebuild (verified — bundle unchanged after CI-green pushes). Until the GitHub ↔ Vercel integration is enabled (or a manual `vercel --prod` is run), the live site only updates via manual redeploy.
-- **Firebase client config for Vercel**: `vercel.json` now injects the public `VITE_FIREBASE_*` web config at build time (researched: Vercel cloud builds do NOT auto-load committed `.env.production`; the `vercel.json` `env` key does inject). **Action required: trigger one redeploy of the latest deployment ≥ `9a75652`** (Deployments → ⋮ → Redeploy on the newest entry, or `vercel --prod` from the current `main` checkout — redeploying an older deployment rebuilds the old config and stays stale) to bake the API key into the live bundle (`index-DdML2CV-.js`). Dashboard env vars would take precedence over `vercel.json` if configured later.
+- **Vercel push-to-deploy is NOT wired (verified 2026-08-02)**: pushing to `main` does not trigger a Vercel rebuild (bundle unchanged after CI-green pushes). Root cause (verified from the GitHub side): the **Vercel GitHub App is not installed** on the `FahadIbrahim93` account (`gh api user/installations` → empty), so no webhook can fire. Until the GitHub ↔ Vercel integration is connected (steps below), the live site only updates via manual `vercel --prod` or dashboard redeploy.
+- **Firebase client config for Vercel**: `vercel.json` now injects the public `VITE_FIREBASE_*` web config at build time (researched: Vercel cloud builds do NOT auto-load committed `.env.production`; the `vercel.json` `env` key does inject). Config is committed and proven: `vite build` with these values yields `index-DdML2CV-.js` with the API key baked in (exit 0). **Live bundle is still stale** — `index-aiDl7IiO.js` (no API key) — because no deployment ≥ `9a75652` has gone live yet; the wiring steps below fix this permanently. Dashboard env vars would take precedence over `vercel.json` if configured later.
+
+#### To enable Vercel push-to-deploy (auto-deploy on push to `main`)
+
+1. **Install the Vercel GitHub App** (mandatory, GitHub side — cannot be done via API or a PAT): open https://github.com/apps/vercel/installations/new → account `FahadIbrahim93` → "Only select repositories" → `BugSmasher-HopeTheory` → **Install**. (App installation does NOT auto-connect the project; step 2 links it.)
+2. **Link the repo to the Vercel project** (Vercel side):
+   - **Dashboard (2 min):** vercel.com → project `bugsmasher-hopetheory` → **Settings → Git → Connect Git Repository** → `FahadIbrahim93/BugSmasher-HopeTheory` → Save. Production branch defaults to `main`; auto-deploy on push is enabled by default. Leave **Ignored Build Step** empty (a custom ignore step suppresses auto-deploys).
+   - **Or via REST API** (needs a valid Vercel token with project write access): `PATCH https://api.vercel.com/v1/projects/{idOrName}` (project name `bugsmasher-hopetheory` or its ID) with body `{"gitRepository":{"type":"github","repo":"FahadIbrahim93/BugSmasher-HopeTheory"}}`.
+3. **Verify**: push any commit to `main` → Vercel creates a Production deployment → live bundle flips to `index-DdML2CV-.js` (API key baked in). Confirm with: `curl -s https://bugsmasher-hopetheory.vercel.app | grep -oE 'index-[A-Za-z0-9_-]+[.]js'`.
+
 - The CI workflow also attempts a **Firebase Hosting deploy** (`channelId: live`) on push to `main`, but it **skips cleanly** (env-guarded) because the `FIREBASE_SERVICE_ACCOUNT` secret is not configured — the Firebase site stays stale. **Do not treat a green CI as proof the Firebase mirror updated.** CI builds now bake the same public Firebase config (both `quality` and `deploy-preview` build steps), so once the secret is added the mirror will deploy a fully-configured build.
 
 #### To enable the Firebase auto-deploy
