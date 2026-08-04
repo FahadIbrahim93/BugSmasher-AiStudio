@@ -270,7 +270,10 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
         </button>
 
         <div 
+          role="button"
+          tabIndex={0}
           onClick={handleHeaderClick}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleHeaderClick(); } }}
           className="flex flex-col items-center mb-12 cursor-pointer select-none group"
           title="Click structure to probe diagnostics"
         >
@@ -417,7 +420,7 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
                 </div>
                 <div className="h-14 flex items-end justify-between px-1 gap-1 pt-1">
                   {Array.from({ length: 16 }).map((_, i) => {
-                    let targetVolume = masterVol;
+                    let targetVolume: number;
                     let colorClass = "from-emerald-500/80 to-teal-400/80";
                     if (isMuted) {
                       targetVolume = 0;
@@ -459,7 +462,7 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
 
               {/* Tactical Audio Presets */}
               <div className="space-y-2">
-                <label className="text-[9px] text-zinc-500 font-mono uppercase tracking-wider block">Soundscape Presets</label>
+                <span className="text-[9px] text-zinc-500 font-mono uppercase tracking-wider block">Soundscape Presets</span>
                 <div className="grid grid-cols-4 gap-1.5">
                   {[
                     { id: 'brutal', label: 'Max Brutal', hint: 'MSTR 100, SFX 100, MUS 85' },
@@ -503,7 +506,10 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
                 <span>Visuals</span>
               </div>
               <div 
+                role="button"
+                tabIndex={0}
                 onClick={() => { soundManager.uiClick(); toggleVFX(); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleVFX(); } }}
                 className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group animate-fade-in"
               >
                 <div className="flex flex-col items-start text-left">
@@ -516,7 +522,10 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
               </div>
 
               <div 
+                role="button"
+                tabIndex={0}
                 onClick={() => { soundManager.uiClick(); togglePerformanceStats(); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePerformanceStats(); } }}
                 className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group"
               >
                 <div className="flex flex-col items-start text-left">
@@ -617,7 +626,10 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
           ].map((item) => (
             <div
               key={item.key}
+              role="button"
+              tabIndex={0}
               onClick={() => { soundManager.uiClick(); updateA11y({ [item.key]: !a11y[item.key] }); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); updateA11y({ [item.key]: !a11y[item.key] }); } }}
               className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-colors cursor-pointer"
             >
               <div>
@@ -651,7 +663,10 @@ export function SettingsMenu({ onBack, onOpenArmory }: { onBack: () => void; onO
               </div>
 
               <div
+                role="button"
+                tabIndex={0}
                 onClick={togglePerfDebug}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePerfDebug(); } }}
                 className="flex items-center justify-between p-4 bg-cyan-950/10 rounded-2xl border border-cyan-500/15 hover:bg-cyan-950/20 hover:border-cyan-500/30 transition-all cursor-pointer group"
               >
                 <div>

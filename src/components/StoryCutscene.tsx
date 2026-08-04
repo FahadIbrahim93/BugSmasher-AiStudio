@@ -179,6 +179,14 @@ export const StoryCutscene = ({ lines, onComplete }: StoryCutsceneProps) => {
         {/* Dialogue Box (GameBoy Style) */}
         <div 
           onClick={handleNext}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleNext();
+            }
+          }}
           className={`h-44 border-t-4 transition-colors duration-500 p-6 relative cursor-pointer group ${currentLine.mood === 'alert' ? 'bg-red-950/20 border-red-800' : 'bg-zinc-900 border-zinc-700'}`}
         >
           <div className="mb-2 flex justify-between items-center">

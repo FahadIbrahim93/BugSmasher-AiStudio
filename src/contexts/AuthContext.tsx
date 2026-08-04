@@ -34,41 +34,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
       return;
     }
-    const unsubscribeAuth = onAuthStateChanged(auth, async (user: User | null) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (user: User | null) => {
       setUser(user);
       if (user) {
-        try {
-          // Sync profile
-          const userRef = doc(db, 'users', user.uid);
-          const userDoc = await getDoc(userRef);
-          
-          if (!userDoc.exists()) {
-            const newProfile: UserProfile = {
+        // Profile sync runs async; loading stays true until it settles so the
+        // UI never shows "loaded" with a missing profile (original ordering).
+        void (async () => {
+          try {
+            // Sync profile
+            const userRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userRef);
+            
+            if (!userDoc.exists()) {
+              const newProfile: UserProfile = {
+                uid: user.uid,
+                username: user.displayName || 'Anonymous User',
+                email: user.email,
+                updatedAt: new Date().toISOString()
+              };
+              await setDoc(userRef, newProfile);
+              setProfile(newProfile);
+            } else {
+              setProfile(userDoc.data() as UserProfile);
+            }
+          } catch (error: unknown) {
+            console.warn("Offline or failed to sync user profile from Firestore:", error);
+            // High-reliability fallback: use auth details to build local profile state
+            setProfile({
               uid: user.uid,
               username: user.displayName || 'Anonymous User',
-              email: user.email,
+              email: user.email || null,
               updatedAt: new Date().toISOString()
-            };
-            await setDoc(userRef, newProfile);
-            setProfile(newProfile);
-          } else {
-            setProfile(userDoc.data() as UserProfile);
+            });
           }
-        } catch (error: unknown) {
-          console.warn("Offline or failed to sync user profile from Firestore:", error);
-          // High-reliability fallback: use auth details to build local profile state
-          setProfile({
-            uid: user.uid,
-            username: user.displayName || 'Anonymous User',
-            email: user.email || null,
-            updatedAt: new Date().toISOString()
-          });
-        }
+          setLoading(false);
+        })();
       } else {
         setProfile(null);
         setAccessToken(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => { unsubscribeAuth(); };

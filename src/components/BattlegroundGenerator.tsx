@@ -168,10 +168,10 @@ export function BattlegroundGenerator({
                 {/* Handcrafted Sectors Grid */}
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <label className="text-[10px] uppercase tracking-widest text-zinc-400 font-mono font-black flex items-center space-x-1.5">
+                    <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-mono font-black flex items-center space-x-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
                       <span>SELECT PREDEFINED INFRASTRUCTURE</span>
-                    </label>
+                    </span>
                     <span className="text-[8px] font-mono text-cyan-400/60 bg-cyan-950/20 border border-cyan-500/15 px-2 py-0.5 rounded uppercase font-bold">
                       {HANDCRAFTED_BATTLEGROUNDS.length} Sectors Loaded
                     </span>
@@ -261,11 +261,12 @@ export function BattlegroundGenerator({
                 {/* Part 1: Seed config input, randomizer & copy */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] uppercase tracking-widest text-zinc-400 font-mono font-bold block">
+                    <label htmlFor="pcg-seed-input" className="text-[10px] uppercase tracking-widest text-zinc-400 font-mono font-bold block">
                       SYSTEM ALPHANUMERIC SEED STRING
                     </label>
                     <div className="flex gap-2">
                       <input
+                        id="pcg-seed-input"
                         type="text"
                         value={pcgSeed}
                         onChange={(e) => {
@@ -288,9 +289,9 @@ export function BattlegroundGenerator({
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] uppercase tracking-widest text-zinc-400 font-mono font-bold block">
+                    <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-mono font-bold block">
                       COMMUNITY CHALLENGE CODE
-                    </label>
+                    </span>
                     <div className="flex gap-2">
                       <button
                         onClick={handleCopySeedCode}
@@ -306,9 +307,9 @@ export function BattlegroundGenerator({
 
                 {/* Part 2: Theme / Shader selection */}
                 <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest text-zinc-400 font-mono font-bold block">
+                  <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-mono font-bold block">
                     BIOME PRESET ENVIRO-SHADER
-                  </label>
+                  </span>
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                     {([
                       { id: 'nuclear_melt', label: 'MELTDOWN', color: '#39ff14' },

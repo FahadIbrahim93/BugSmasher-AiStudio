@@ -1,5 +1,5 @@
+/* global console */
 import fs from 'fs';
-import path from 'path';
 
 const src = fs.readFileSync('src/game/Renderer.ts', 'utf8');
 const lines = src.split('\n');

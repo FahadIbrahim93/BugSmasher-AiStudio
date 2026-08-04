@@ -189,26 +189,21 @@ export class Renderer {
       }
 
       ctx.globalCompositeOperation = 'screen';
-      for (let i = 0; i < ps.splatters.length; i++) {
-        const s = ps.splatters[i];
+      for (const s of ps.splatters) {
         if (s.active) this.particles.drawSplatter(s);
       }
 
       ctx.globalCompositeOperation = 'lighter';
-      for (let i = 0; i < ps.shockwaves.length; i++) {
-        const sw = ps.shockwaves[i];
+      for (const sw of ps.shockwaves) {
         if (sw.active) this.particles.drawShockwave(sw);
       }
-      for (let i = 0; i < ps.particles.length; i++) {
-        const p = ps.particles[i];
+      for (const p of ps.particles) {
         if (p.active) this.particles.drawParticle(p);
       }
-      for (let i = 0; i < ps.lasers.length; i++) {
-        const l = ps.lasers[i];
+      for (const l of ps.lasers) {
         if (l.active) this.particles.drawLaser(l);
       }
-      for (let i = 0; i < ps.muzzleFlashes.length; i++) {
-        const mf = ps.muzzleFlashes[i];
+      for (const mf of ps.muzzleFlashes) {
         if (mf.active) this.particles.drawMuzzleFlash(mf);
       }
     }
@@ -216,11 +211,10 @@ export class Renderer {
     ctx.globalCompositeOperation = 'source-over';
 
     const powerups = this.engine.powerups;
-    for (let i = 0; i < powerups.length; i++) this.particles.drawPowerup(powerups[i]);
+    for (const p of powerups) this.particles.drawPowerup(p);
 
     const resources = this.engine.resources;
-    for (let i = 0; i < resources.length; i++) {
-      const r = resources[i];
+    for (const r of resources) {
       if (r.active) this.particles.drawResource(r);
     }
 
@@ -232,10 +226,10 @@ export class Renderer {
     this.bugs.drawBase();
 
     const hazards = this.engine.hazards;
-    for (let i = 0; i < hazards.length; i++) this.bugs.drawHazard(hazards[i]);
+    for (const hazard of hazards) this.bugs.drawHazard(hazard);
 
     const bugs = this.engine.bugs;
-    for (let i = 0; i < bugs.length; i++) this.bugs.drawBug(bugs[i]);
+    for (const bug of bugs) this.bugs.drawBug(bug);
 
     // Skip expensive overlay passes when FPS is struggling
     if (this.currentFps > 30) {

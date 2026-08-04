@@ -194,10 +194,10 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
 
         if (showPerfDebugLocal) {
           const memory = (performance as Performance & { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit?: number } }).memory;
-          let used = 0;
-          let total = 0;
-          let limit = 0;
-          let pct = 0;
+          let used: number;
+          let total: number;
+          let limit: number;
+          let pct: number;
 
           if (memory) {
             used = Math.round(memory.usedJSHeapSize / 1048576);
@@ -450,6 +450,8 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
 
         {/* Dash Module Indicator with Click Trigger and Hotkey Indicator */}
         <div 
+          role="button"
+          tabIndex={0}
           onClick={() => {
             const engine = engineRef.current;
             if (engine) {
@@ -459,6 +461,12 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
                 // Perform a smart safety emergency dash back upward-middle
                 engine.triggerDash(engine.width / 2, engine.height * 0.35);
               }
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              e.currentTarget.click();
             }
           }}
           className="flex items-center space-x-2 sm:space-x-3 glass-panel px-4 py-2 sm:px-5 sm:py-2.5 rounded-full border border-white/10 shadow-[0_4_20px_rgba(0,0,0,0.5)] cursor-pointer hover:bg-white/5 active:scale-95 transition-all pointer-events-auto"
@@ -637,7 +645,7 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
       <div className="fixed top-28 sm:top-32 left-1/2 -translate-x-1/2 flex flex-col items-center space-y-2 pointer-events-none z-20 w-fit max-w-xs sm:max-w-md">
         <AnimatePresence mode="popLayout">
           {killLogs.map((log) => {
-            let label = 'TENSION DISSIPATED';
+            let label: string;
             let bugDisplayName = log.type.toUpperCase();
             let bgClass = "bg-zinc-950 text-white";
             let borderClass = "border-red-500 shadow-[4px_4px_0px_#ef4444]";
@@ -871,7 +879,7 @@ function ConsumableBar({ engineRef }: { engineRef: React.RefObject<GameEngine | 
 
     const handleUse = (id: string) => {
         const engine = engineRef.current;
-        if (engine && engine.useConsumable(id)) {
+        if (engine && engine.consumeConsumable(id)) {
             // Sound handled by engine
         } else {
             soundManager.uiError();

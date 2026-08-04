@@ -33,7 +33,7 @@ export function saveControlBindings(bindings: ControlBindings): void {
 export function subscribeControlBindings(listener: (b: ControlBindings) => void): () => void {
   if (typeof window === 'undefined') {
     listener(loadControlBindings());
-    return () => {};
+    return () => undefined;
   }
   const handler = (e: Event) => {
     listener((e as CustomEvent<ControlBindings>).detail ?? loadControlBindings());

@@ -54,7 +54,7 @@ describe('PowerupSystem', () => {
       left: 0, top: 0, right: 800, bottom: 600,
       width: 800, height: 600,
       x: 0, y: 0,
-      toJSON: () => {},
+      toJSON: () => undefined,
     });
     engine = new GameEngine(canvas);
     powerupSystem = engine.powerupSystem;
@@ -287,7 +287,7 @@ describe('PowerupSystem', () => {
       const rY = engine.coreY;
 
       powerupSystem.spawnResource(rX, rY, 'basic');
-      const r = engine.resources.filter(res => res.active)[0];
+      const r = engine.resources.find(res => res.active)!;
 
       const distBefore = Math.sqrt(
         (r.x - engine.coreX) ** 2 + (r.y - engine.coreY) ** 2
@@ -311,7 +311,7 @@ describe('PowerupSystem', () => {
       powerupSystem.spawnResource(rX, rY, 'basic');
       spy.mockRestore();
 
-      const r = engine.resources.filter(res => res.active)[0];
+      const r = engine.resources.find(res => res.active)!;
 
       powerupSystem.updateResources(0.016);
 

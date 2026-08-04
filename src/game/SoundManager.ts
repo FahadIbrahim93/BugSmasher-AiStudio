@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment -- full type-hardening tracked in TASKBOARD; WebAudio synthesis needs the escape hatch
 // @ts-nocheck
 import { audioAssets } from './AudioAssetLoader';
 
@@ -14,7 +15,7 @@ import { audioAssets } from './AudioAssetLoader';
 
 export interface VoiceLine {
   text: string;
-  speaker: 'SYSTEM' | 'STATION AI' | '???' | string;
+  speaker: string;
   mood?: 'normal' | 'glitch' | 'shiver' | 'alert';
 }
 
@@ -86,56 +87,6 @@ class CompressorProcessor {
   }
 }
 
-class DistortionProcessor {
-  private waveShaper: WaveShaperNode;
-
-  constructor(ctx: AudioContext, dest: AudioNode, amount = 0.3) {
-    this.waveShaper = ctx.createWaveShaper();
-    this.waveShaper.curve = this.makeDistortionCurve(amount);
-    this.waveShaper.connect(dest);
-  }
-
-  private makeDistortionCurve(amount: number): Float32Array {
-    const samples = 256;
-    const curve = new Float32Array(samples);
-    for (let i = 0; i < samples; i++) {
-      const x = (i * 2) / samples - 1;
-      curve[i] = ((3 + amount) * x * Math.PI * 0.2) / (Math.PI + amount * Math.abs(x));
-    }
-    return curve;
-  }
-
-  getInput(): AudioNode { return this.waveShaper; }
-}
-
-class DelayProcessor {
-  private delay: DelayNode;
-  private feedback: GainNode;
-  private wetGain: GainNode;
-  private dryGain: GainNode;
-
-  constructor(ctx: AudioContext, dest: AudioNode) {
-    this.delay = ctx.createDelay(1.0);
-    this.delay.delayTime.value = 0.15;
-    
-    this.feedback = ctx.createGain();
-    this.feedback.gain.value = 0.2;
-    
-    this.wetGain = ctx.createGain();
-    this.wetGain.gain.value = 0.15;
-    this.dryGain = ctx.createGain();
-    this.dryGain.gain.value = 0.85;
-
-    this.delay.connect(this.feedback);
-    this.feedback.connect(this.delay);
-    this.delay.connect(this.wetGain);
-    this.wetGain.connect(dest);
-    this.dryGain.connect(dest);
-  }
-
-  getInput(): AudioNode { return this.delay; }
-}
-
 // ─── Voice Synthesis Engine ─────────────────────────────────────────────
 
 class VoiceSynthesizer {
@@ -194,13 +145,13 @@ class VoiceSynthesizer {
     });
   }
 
-  static async preloadVoices(): Promise<void> {
+  static preloadVoices(): void {
     if (!window.speechSynthesis) return;
     // Trigger voice loading
     window.speechSynthesis.getVoices();
     // Chrome loads voices asynchronously
     if (window.speechSynthesis.addEventListener) {
-      window.speechSynthesis.addEventListener('voiceschanged', () => {}, { once: true });
+      window.speechSynthesis.addEventListener('voiceschanged', () => undefined, { once: true });
     }
   }
 }
@@ -353,11 +304,11 @@ export class SoundManager {
 
   constructor() {
     this.loadSettings();
-    void this.preloadVoices();
+    this.preloadVoices();
   }
 
-  private async preloadVoices() {
-    void VoiceSynthesizer.preloadVoices();
+  private preloadVoices() {
+    VoiceSynthesizer.preloadVoices();
   }
 
   private loadSettings() {
@@ -590,9 +541,9 @@ export class SoundManager {
         osc.start();
         osc.stop(this.ctx.currentTime + config.durations[i]);
         oscs.push(osc);
-      } catch (e) {
-        // Silently skip failed oscillators
-      }
+    } catch {
+      // Silently skip failed oscillators
+    }
     }
 
     return { oscillators: oscs };
@@ -635,7 +586,7 @@ export class SoundManager {
 
       source.start();
       source.stop(this.ctx.currentTime + duration);
-    } catch (e) { /* ignore */ }
+    } catch { /* ignore */ }
   }
 
   /** Apply amplitude modulation to create rich textures */
@@ -677,7 +628,7 @@ export class SoundManager {
       modulator.start();
       carrier.stop(this.ctx.currentTime + duration);
       modulator.stop(this.ctx.currentTime + duration);
-    } catch (e) { /* ignore */ }
+    } catch { /* ignore */ }
   }
 
   /** Generate a subsonic bass hit with impact transient */
@@ -722,7 +673,7 @@ export class SoundManager {
         // Noise burst
         this.playShapedNoise(0.08, volume * 0.3, 5000, 50, 'lowpass');
       }
-    } catch (e) { /* ignore */ }
+    } catch { /* ignore */ }
   }
 
   /** Play a musical note with harmonics for richer tone */
@@ -815,7 +766,7 @@ export class SoundManager {
   splat(bugType?: string) {
     if (this.ctx && this.sfxGain) {
       // Vary playback rate dynamically for extra organic crunchiness
-      let rate = 1.0;
+      let rate: number;
       if (bugType === 'swarmer' || bugType === 'mini') {
         rate = 1.35 + Math.random() * 0.2; // faster, higher popping sounds
       } else if (bugType === 'tank' || bugType === 'beetle') {
@@ -956,7 +907,7 @@ export class SoundManager {
     } else if (type === 'multiplier') {
       // Ascending arpeggio with sparkle
       const notes = [523.25, 659.25, 783.99, 1046.5]; // C5 E5 G5 C6
-      notes.forEach((freq, _i) => {
+      notes.forEach((freq, i) => {
         setTimeout(() => {
           this.playNote(freq, 'triangle', 0.2, 0.06, [1, 3, 5], [1, 0.2, 0.1]);
         }, i * 80);
@@ -1486,7 +1437,7 @@ export class SoundManager {
           // Instant volume kill to prevent overlap
           layer.gains[i].gain.setValueAtTime(0, this.ctx.currentTime);
           setTimeout(() => {
-            try { osc.stop(); } catch (e) { /* already stopped */ }
+            try { osc.stop(); } catch { /* already stopped */ }
           }, 10);
         }
       });
@@ -1494,7 +1445,7 @@ export class SoundManager {
     this.musicLayers = [];
     this.currentIntensity = 1.0;
     this.arpeggioIndex = 0;
-    this.beatPhase = false;
+    this._beatPhase = false;
   }
 
   playBiomeMusic(biome: string) {
@@ -1508,7 +1459,7 @@ export class SoundManager {
     const now = this.ctx.currentTime;
 
     // Create music layers based on biome config
-    config.layers.forEach((layerConfig, _layerIdx) => {
+    config.layers.forEach((layerConfig) => {
       const oscs: OscillatorNode[] = [];
       const gains: GainNode[] = [];
       const oscCount = config.texture === 'arpeggio' ? 3 : (config.texture === 'chaos' ? 4 : 2);
@@ -1534,7 +1485,7 @@ export class SoundManager {
 
           oscs.push(osc);
           gains.push(gain);
-        } catch (e) { /* ignore */ }
+        } catch { /* ignore */ }
       }
 
       this.musicLayers.push({

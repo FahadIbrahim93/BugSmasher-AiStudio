@@ -25,7 +25,8 @@ if (typeof window !== 'undefined') {
 
   // Intercept and absorb unhandled read-only / getter-only fetch errors
   const isFetchError = (err: unknown) => {
-    const msg = String(err instanceof Error ? err.message : err || '');
+    const msg =
+      typeof err === 'string' ? err : err instanceof Error ? err.message : '';
     return msg.includes('fetch') && (msg.includes('getter') || msg.includes('read only') || msg.includes('redefine'));
   };
 
@@ -44,7 +45,7 @@ if (typeof window !== 'undefined') {
   }, true);
 }
 
-void ProgressionManager.initCloudSync();
+ProgressionManager.initCloudSync();
 StoryManager.init();
 
 createRoot(document.getElementById('root')!).render(

@@ -91,7 +91,7 @@ export const TerminalLog = ({ unlockedLogs }: TerminalLogProps) => {
                   <div className="space-y-2">
                      <span className="text-[10px] text-zinc-500 uppercase">Fragment</span>
                      <p className="text-emerald-50/80 text-[11px] leading-relaxed italic border-l-4 border-emerald-500/30 pl-4 py-2 bg-emerald-950/20">
-                        "{activeLog.content}"
+                        &ldquo;{activeLog.content}&rdquo;
                      </p>
                   </div>
 
@@ -104,15 +104,16 @@ export const TerminalLog = ({ unlockedLogs }: TerminalLogProps) => {
                   </div>
                </div>
 
-               <div 
+               <button
+                 type="button"
                  onClick={() => {
                     setIsExpanded(false);
                     setShowNotification(false);
                  }}
-                 className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] py-4 text-center cursor-pointer transition-colors uppercase tracking-[0.2em]"
+                 className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] py-4 text-center cursor-pointer transition-colors uppercase tracking-[0.2em]"
                 >
                   Close Terminal
-               </div>
+               </button>
             </div>
           </motion.div>
         )}

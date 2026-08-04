@@ -50,7 +50,7 @@ export class AdManager {
       let loaded = false;
       switch (this.config.provider) {
         case 'admob':
-          loaded = await this.loadAdMob();
+          loaded = this.loadAdMob();
           break;
         case 'carbon':
           loaded = await this.loadCarbon();
@@ -96,9 +96,9 @@ export class AdManager {
     }
   }
 
-  private async loadAdMob(): Promise<boolean> {
+  private loadAdMob(): boolean {
     if (typeof window === 'undefined') return false;
-    
+
     const adUnitId = this.config.adUnitId;
     if (!adUnitId) {
       this.callbacks.onAdLoaded?.();
@@ -115,9 +115,9 @@ export class AdManager {
     return true;
   }
 
-  private async loadCarbon(): Promise<boolean> {
+  private loadCarbon(): Promise<boolean> {
     this.callbacks.onAdLoaded?.();
-    return true;
+    return Promise.resolve(true);
   }
 
   private async showCarbon(): Promise<boolean> {
@@ -127,9 +127,9 @@ export class AdManager {
     return true;
   }
 
-  private async loadDemo(): Promise<boolean> {
+  private loadDemo(): Promise<boolean> {
     this.callbacks.onAdLoaded?.();
-    return true;
+    return Promise.resolve(true);
   }
 
   private async showDemo(): Promise<boolean> {

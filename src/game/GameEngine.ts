@@ -597,8 +597,7 @@ export class GameEngine {
     const cx = this.coreX;
     const cy = this.coreY;
 
-    for (let i = 0; i < this.bugs.length; i++) {
-      const bug = this.bugs[i];
+    for (const bug of this.bugs) {
       const dx = bug.x - cx;
       const dy = bug.y - cy;
       const distSq = dx * dx + dy * dy;
@@ -893,8 +892,8 @@ export class GameEngine {
     this.syncSkills(); // Apply glass_cannon health/damage multipliers immediately
   }
 
-  useConsumable(id: string): boolean {
-    if (!ProgressionManager.useConsumable(id)) return false;
+  consumeConsumable(id: string): boolean {
+    if (!ProgressionManager.consumeConsumable(id)) return false;
 
     switch (id) {
       case 'repair_kit':
@@ -1161,8 +1160,7 @@ export class GameEngine {
         this.particleSystem.spawnShockwave(bug.x, bug.y, '#00ff66', 150);
 
         const HEAL_RADIUS_SQ = 22500;
-        for (let j = 0; j < this.bugs.length; j++) {
-          const o = this.bugs[j];
+        for (const o of this.bugs) {
           if (o !== bug && o.active) {
             const odx = o.x - bug.x;
             const ody = o.y - bug.y;

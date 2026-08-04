@@ -58,7 +58,7 @@ export class PowerupSystem {
    * Spawns a resource pickup when a bug is killed.
    */
   spawnResource(x: number, y: number, bugType: string) {
-    let type: ResourceType = 'scrap';
+    let type: ResourceType;
     let count = 1;
 
     switch (bugType) {

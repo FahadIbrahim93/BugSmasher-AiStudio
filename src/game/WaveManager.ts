@@ -242,8 +242,8 @@ export class WaveManager {
       const height = this.engine.height;
       const margin = 100;
 
-      let bx = 0, by = 0;
-      let ox = 0, oy = 0;
+      let bx: number, by: number;
+      let ox: number, oy: number;
       
       if (edge === 0) { // Top
         bx = Math.random() * (width - 200) + 100;
@@ -399,7 +399,7 @@ export class WaveManager {
   }
 
   private createBug(typeName: string, wave: number, xOverride?: number, yOverride?: number): Bug {
-    let x = 0, y = 0;
+    let x: number, y: number;
     const margin = 100;
     
     if (xOverride !== undefined && yOverride !== undefined) {

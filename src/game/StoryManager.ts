@@ -10,7 +10,7 @@ export class StoryManager {
 
   static init() {
     this.loadLocal();
-    void this.initCloudSync();
+    this.initCloudSync();
   }
 
   private static loadLocal() {
@@ -22,49 +22,53 @@ export class StoryManager {
     }
   }
 
-  private static async initCloudSync() {
+  private static initCloudSync() {
     if (!auth || !db) return; // Firebase not configured — local-only mode
-    auth.onAuthStateChanged(async (user) => {
+    auth.onAuthStateChanged((user) => {
       if (user) {
-        try {
-          const docRef = doc(db, 'users', user.uid, 'private', 'story');
-          
-          // Initial fetch
-          const snap = await getDoc(docRef);
-          if (snap.exists()) {
-            const data = snap.data();
-            if (data) {
-              this.playedBeats = new Set(data.playedBeats || []);
-              this.unlockedLogs = new Set(data.unlockedLogs || []);
-              this.saveLocal();
-            }
-          } else {
-            await setDoc(docRef, { 
-              playedBeats: Array.from(this.playedBeats),
-              unlockedLogs: Array.from(this.unlockedLogs)
-            });
-          }
-
-          // Listener
-          onSnapshot(docRef, (doc) => {
-            if (doc.exists() && !this.isSyncing) {
-              const data = doc.data();
-              if (data) {
-                this.playedBeats = new Set(data.playedBeats || []);
-                this.unlockedLogs = new Set(data.unlockedLogs || []);
-                this.saveLocal();
-              }
-            }
-          }, (err) => {
-            console.warn("Story real-time listener offline or blocked:", err);
-            handleFirestoreError(err, OperationType.GET, `users/${user.uid}/private/story`, false);
-          });
-        } catch (error) {
-          console.warn("Could not synchronize Story data with cloud, playing offline:", error);
-          handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/private/story`);
-        }
+        void this.syncStoryFromCloud(user);
       }
     });
+  }
+
+  private static async syncStoryFromCloud(user: { uid: string }) {
+    try {
+      const docRef = doc(db, 'users', user.uid, 'private', 'story');
+      
+      // Initial fetch
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data) {
+          this.playedBeats = new Set(data.playedBeats || []);
+          this.unlockedLogs = new Set(data.unlockedLogs || []);
+          this.saveLocal();
+        }
+      } else {
+        await setDoc(docRef, { 
+          playedBeats: Array.from(this.playedBeats),
+          unlockedLogs: Array.from(this.unlockedLogs)
+        });
+      }
+
+      // Listener
+      onSnapshot(docRef, (doc) => {
+        if (doc.exists() && !this.isSyncing) {
+          const data = doc.data();
+          if (data) {
+            this.playedBeats = new Set(data.playedBeats || []);
+            this.unlockedLogs = new Set(data.unlockedLogs || []);
+            this.saveLocal();
+          }
+        }
+      }, (err) => {
+        console.warn("Story real-time listener offline or blocked:", err);
+        handleFirestoreError(err, OperationType.GET, `users/${user.uid}/private/story`, false);
+      });
+    } catch (error) {
+      console.warn("Could not synchronize Story data with cloud, playing offline:", error);
+      handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/private/story`);
+    }
   }
 
   static getTriggeredBeat(type: 'wave_start' | 'boss_kill' | 'game_start' | 'prestige', value: number): StoryBeat | null {

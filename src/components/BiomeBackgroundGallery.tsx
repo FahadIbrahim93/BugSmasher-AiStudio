@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GameEngineStatusBus } from '../game/GameEngineStatusBus';
 
@@ -49,17 +49,13 @@ function ParallaxLayer({
    ========================================== */
 
 export function BiomeBackgroundGallery({ biome }: BiomeBackgroundGalleryProps) {
-  const [activeTheme, setActiveTheme] = useState<string>('neon_core');
+  // activeTheme is a pure projection of the biome prop — derive it directly
+  // instead of syncing via setState-in-effect.
+  const activeTheme = biome || 'neon_core';
   const containerRef = useRef<HTMLDivElement>(null);
   const mouseRef = useRef({ x: 0, y: 0 });
   const shakeRef = useRef(0);
   const rafRef = useRef(0);
-
-  useEffect(() => {
-    if (biome) {
-      setActiveTheme(biome);
-    }
-  }, [biome]);
 
   // Helper: normalize pointer position (-1..1 from center to edge)
   const normalizePointer = (clientX: number, clientY: number) => {

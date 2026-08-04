@@ -12,7 +12,7 @@ const SAMPLE_RATE = 22050;
 function writeWavHeader(dataSize) {
   const header = Buffer.alloc(44);
   header.write('RIFF', 0);
-  header.writeUInt32LE(36 + dataSize, 4);
+  header.writeUInt32LE(36 + Number(dataSize), 4);
   header.write('WAVE', 8);
   header.write('fmt ', 12);
   header.writeUInt32LE(16, 16);
@@ -111,7 +111,7 @@ function writeSimpleWav(filename, freq, durationSec, type = 'sine') {
   for (let i = 0; i < numSamples; i++) {
     const t = i / SAMPLE_RATE;
     const env = Math.exp(-t * 8);
-    let s = 0;
+    let s;
     if (type === 'sine') s = Math.sin(2 * Math.PI * freq * t);
     else if (type === 'noise') s = Math.random() * 2 - 1;
     else s = Math.sign(Math.sin(2 * Math.PI * freq * t));

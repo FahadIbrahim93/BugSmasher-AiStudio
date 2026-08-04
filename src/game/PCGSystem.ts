@@ -389,8 +389,7 @@ export class PCGSystem {
     const map = this.activeMap;
 
     // Check Obstacles first
-    for (let i = 0; i < map.obstacles.length; i++) {
-      const obs = map.obstacles[i];
+    for (const obs of map.obstacles) {
       if (!obs.active) continue;
 
       const dx = obs.x - x;
@@ -410,8 +409,7 @@ export class PCGSystem {
     }
 
     // Check Objectives
-    for (let i = 0; i < map.objectives.length; i++) {
-      const obj = map.objectives[i];
+    for (const obj of map.objectives) {
       if (!obj.active) continue;
 
       const dx = obj.x - x;

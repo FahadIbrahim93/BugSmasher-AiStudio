@@ -53,11 +53,9 @@ export function WorkspaceConsole({ onClose }: WorkspaceConsoleProps) {
     if (!accessToken) {
       throw new Error('Federated connection expired. Please login again.');
     }
-    const headers = {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-      ...(options.headers || {})
-    };
+    const headers = new Headers(options.headers);
+    headers.set('Authorization', `Bearer ${accessToken}`);
+    headers.set('Content-Type', 'application/json');
     const res = await fetch(url, { ...options, headers });
     if (!res.ok) {
       const errBody = await res.json().catch(() => ({}));
@@ -540,13 +538,13 @@ export function WorkspaceConsole({ onClose }: WorkspaceConsoleProps) {
                     </div>
 
                     <button
-                      onClick={handleSyncTasks}
+                      onClick={() => { void handleSyncTasks(); }}
                       disabled={loading}
                       className="w-full py-3.5 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-black font-black uppercase text-[10px] tracking-widest rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50"
                     >
                       {loading ? 'SYNCHRONIZING DIGITAL ASSETS...' : 'Sync to Google Tasks'}
                     </button>
-                    <p className="text-[9px] text-zinc-500 font-mono text-center">Creates & updates a designated 'BUGSMASHER Operative Tasks' list in your Tasks feed.</p>
+                    <p className="text-[9px] text-zinc-500 font-mono text-center">Creates &amp; updates a designated &apos;BUGSMASHER Operative Tasks&apos; list in your Tasks feed.</p>
                   </div>
                 )}
 
@@ -572,13 +570,13 @@ export function WorkspaceConsole({ onClose }: WorkspaceConsoleProps) {
                     </div>
 
                     <button
-                      onClick={handleExportSheets}
+                      onClick={() => { void handleExportSheets(); }}
                       disabled={loading}
                       className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-black font-black uppercase text-[10px] tracking-widest rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50"
                     >
                       {loading ? 'DRAFTING LEDGER LOGS...' : 'Export Metrics spreadsheet'}
                     </button>
-                    <p className="text-[9px] text-zinc-500 font-mono text-center">Writes rows into spreadsheet 'BUGSMASHER Combat Log & Metrics' with exact timestamps.</p>
+                    <p className="text-[9px] text-zinc-500 font-mono text-center">Writes rows into spreadsheet &apos;BUGSMASHER Combat Log &amp; Metrics&apos; with exact timestamps.</p>
                   </div>
                 )}
 
@@ -605,7 +603,7 @@ export function WorkspaceConsole({ onClose }: WorkspaceConsoleProps) {
                           <p className="text-[9px] text-zinc-500 font-mono">Set a daily 6:00 PM alarm containing specific combat tips to secure objectives.</p>
                         </div>
                         <button
-                          onClick={() => handleScheduleCalendar('daily')}
+                          onClick={() => { void handleScheduleCalendar('daily'); }}
                           disabled={loading}
                           className="py-2.5 bg-amber-500/15 border border-amber-400/40 text-amber-300 hover:bg-amber-500 hover:text-black font-mono font-bold text-[9px] uppercase rounded-xl transition-all"
                         >
@@ -621,7 +619,7 @@ export function WorkspaceConsole({ onClose }: WorkspaceConsoleProps) {
                           <p className="text-[9px] text-zinc-500 font-mono">Adds Saturday surge alerts representing 2x core extraction windows on Boss Rush modes.</p>
                         </div>
                         <button
-                          onClick={() => handleScheduleCalendar('boss')}
+                          onClick={() => { void handleScheduleCalendar('boss'); }}
                           disabled={loading}
                           className="py-2.5 bg-red-500/10 border border-red-500/35 text-red-300 hover:bg-red-500 hover:text-white font-mono font-bold text-[9px] uppercase rounded-xl transition-all"
                         >
@@ -656,7 +654,7 @@ export function WorkspaceConsole({ onClose }: WorkspaceConsoleProps) {
                     </div>
 
                     <button
-                      onClick={handleCompileDoc}
+                      onClick={() => { void handleCompileDoc(); }}
                       disabled={loading}
                       className="w-full py-3.5 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-black uppercase text-[10px] tracking-widest rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50"
                     >

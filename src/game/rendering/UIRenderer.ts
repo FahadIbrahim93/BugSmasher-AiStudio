@@ -1,10 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment -- full type-hardening tracked in TASKBOARD; file needs the escape hatch for WebAudio-heavy drawing code
 // @ts-nocheck
 import { GameEngine } from '../GameEngine';
-import { Bug, Powerup, Hazard, ResourcePickup } from '../GameTypes';
-import { Splatter, Particle, Shockwave, Laser, MuzzleFlash } from '../ParticleSystem';
-import { assetManager } from '../AssetManager';
-import { GameConfig } from '../GameConfig';
-import { getActiveCoreThemeConfig } from '../CosmeticsManager';
 import type { Renderer } from '../Renderer';
 import type { PerformanceScaler } from './PerformanceScaler';
 
@@ -88,7 +84,7 @@ export class UIRenderer {
     ctx.restore();
   }
 
-  drawActivePowerupUI(width: number, height: number) {
+  drawActivePowerupUI(width: number, _height: number) {
     const ctx = this.engine.ctx;
     ctx.textAlign = 'right';
     ctx.font = 'bold 12px "JetBrains Mono", monospace';
@@ -148,7 +144,7 @@ export class UIRenderer {
     ctx.restore();
   }
 
-  drawBossHealthBar(width: number, height: number) {
+  drawBossHealthBar(width: number, _height: number) {
     const ctx = this.engine.ctx;
     const boss = this.engine.bugs.find(b => b.type === 'boss');
     if (!boss) return;

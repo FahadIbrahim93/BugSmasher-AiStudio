@@ -102,6 +102,37 @@ export default tseslint.config(
       '@typescript-eslint/no-misused-promises': 'error',
       // Allow utility classes with only static methods (e.g. ChecksumSystem)
       '@typescript-eslint/no-extraneous-class': 'off',
+      // `_`-prefixed identifiers are intentionally-unused by project convention
+      // (TypeScript's noUnusedLocals/noUnusedParameters already ignore them)
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
+      'no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
+      // React Compiler-specific rules: this codebase is NOT compiled with the
+      // React Compiler, so these engine-oriented rules fire on deliberate legacy
+      // patterns (store sync in effects, render-time animation clock reads,
+      // singleton mutation in event handlers, ref reads for one-shot menus).
+      // Keep them visible as warnings for new code; fix the real issues, not
+      // compiler-optimization hints. See docs/AGENTIC_WORKFLOW.md.
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/purity': 'warn',
+      'react-hooks/immutability': 'warn',
+      'react-hooks/refs': 'warn',
+      'react-hooks/preserve-manual-memoization': 'warn',
+    },
+  },
+  // TS files: the base no-unused-vars rule cannot understand parameter
+  // properties (`constructor(protected engine)`), type-annotation params, or
+  // decorators — @typescript-eslint/no-unused-vars handles all TS constructs
+  // and is configured above, so turn the base rule off for TS sources.
+  {
+    files: ['**/*.{ts,tsx}'],
+    rules: {
+      'no-unused-vars': 'off',
     },
   },
   // Test file overrides — relax some strictness

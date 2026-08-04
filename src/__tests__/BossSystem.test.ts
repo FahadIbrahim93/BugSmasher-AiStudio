@@ -79,7 +79,7 @@ describe('BossSystem', () => {
       left: 0, top: 0, right: 800, bottom: 600,
       width: 800, height: 600,
       x: 0, y: 0,
-      toJSON: () => {},
+      toJSON: () => undefined,
     });
     engine = new GameEngine(canvas);
     bossSystem = engine.bossSystem;

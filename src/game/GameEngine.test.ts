@@ -218,7 +218,7 @@ describe('GameEngine', () => {
     ProgressionManager.craftItem('repair_kit', { scrap: 30, alloy: 10 });
     engine.health = 40;
 
-    expect(engine.useConsumable('repair_kit')).toBe(true);
+    expect(engine.consumeConsumable('repair_kit')).toBe(true);
     expect(engine.health).toBeGreaterThan(40);
   });
 
@@ -253,7 +253,7 @@ describe('GameEngine', () => {
     (engine.waveManager as any).spawnBug();
     expect(engine.bugs.length).toBe(2);
 
-    expect(engine.useConsumable('emp_generator')).toBe(true);
+    expect(engine.consumeConsumable('emp_generator')).toBe(true);
     expect(engine.bugs.every((bug) => bug.type !== 'boss' ? bug.hp === 0 : true)).toBe(true);
   });
 

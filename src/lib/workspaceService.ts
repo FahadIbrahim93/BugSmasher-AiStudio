@@ -2,11 +2,9 @@ import { UserStats } from '../game/StatsManager';
 
 // Helper for Google API Requests
 async function apiCall(accessToken: string, url: string, options: RequestInit = {}) {
-  const headers = {
-    'Authorization': `Bearer ${accessToken}`,
-    'Content-Type': 'application/json',
-    ...(options.headers || {})
-  };
+  const headers = new Headers(options.headers);
+  headers.set('Authorization', `Bearer ${accessToken}`);
+  headers.set('Content-Type', 'application/json');
   const res = await fetch(url, { ...options, headers });
   if (!res.ok) {
     const errBody = await res.json().catch(() => ({}));

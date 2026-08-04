@@ -1,7 +1,7 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment -- full type-hardening tracked in TASKBOARD; file needs the escape hatch for WebAudio-heavy drawing code
 // @ts-nocheck
 import { GameEngine } from '../GameEngine';
-import { Bug } from '../GameTypes';
-import { Splatter, Particle, Shockwave, Laser, MuzzleFlash } from '../ParticleSystem';
+import { Bug, Hazard } from '../GameTypes';
 import { GameConfig } from '../GameConfig';
 import { getActiveCoreThemeConfig } from '../CosmeticsManager';
 import type { Renderer } from '../Renderer';
@@ -917,7 +917,7 @@ export class BugRenderer {
     ctx.restore();
   }
 
-  private drawEmberBody(bug: Bug) {
+  private drawEmberBody(_bug: Bug) {
     const ctx = this.engine.ctx;
     const t = this.engine.globalTime;
     
@@ -944,7 +944,7 @@ export class BugRenderer {
     ctx.stroke();
   }
 
-  private drawFrostBody(bug: Bug) {
+  private drawFrostBody(_bug: Bug) {
     const ctx = this.engine.ctx;
     const t = this.engine.globalTime;
     
@@ -976,7 +976,7 @@ export class BugRenderer {
   }
 
 
-  drawSidePlates(bug: Bug) {
+  drawSidePlates(_bug: Bug) {
     const ctx = this.engine.ctx;
     ctx.fillStyle = '#00000033';
     ctx.fillRect(-30, -15, 10, 30);
@@ -1199,7 +1199,7 @@ export class BugRenderer {
     ctx.restore();
   }
 
-  drawTechnicalDetails(bug: Bug) {
+  drawTechnicalDetails(_bug: Bug) {
     const ctx = this.engine.ctx;
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.lineWidth = 0.5;

@@ -50,41 +50,45 @@ export class ProgressionManager {
     return { ...INITIAL_PROGRESSION };
   }
 
-  static async initCloudSync() {
+  static initCloudSync() {
     if (!auth || !db) return; // Firebase not configured — local-only mode
-    auth.onAuthStateChanged(async (user) => {
+    auth.onAuthStateChanged((user) => {
       if (user) {
-        try {
-          const docRef = doc(db, 'users', user.uid, 'private', 'progression');
-          
-          // Initial fetch with try/catch safeguard
-          const snap = await getDoc(docRef);
-          if (snap.exists()) {
-            this.data = snap.data() as ProgressionData;
-            this.saveLocal();
-            this.notify();
-          } else {
-            // Upload local data to cloud if new user
-            await setDoc(docRef, this.data);
-          }
-
-          // Real-time listener with a robust error callback
-          onSnapshot(docRef, (doc) => {
-            if (doc.exists() && !this.isSyncing) {
-              this.data = doc.data() as ProgressionData;
-              this.saveLocal();
-              this.notify();
-            }
-          }, (err) => {
-            console.warn("Progression real-time listener offline or blocked:", err);
-            handleFirestoreError(err, OperationType.GET, `users/${user.uid}/private/progression`, false);
-          });
-        } catch (error) {
-          console.warn("Could not synchronize Progression with cloud, playing offline:", error);
-          handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/private/progression`);
-        }
+        void this.syncProgressionFromCloud(user);
       }
     });
+  }
+
+  private static async syncProgressionFromCloud(user: { uid: string }) {
+    try {
+      const docRef = doc(db, 'users', user.uid, 'private', 'progression');
+      
+      // Initial fetch with try/catch safeguard
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        this.data = snap.data() as ProgressionData;
+        this.saveLocal();
+        this.notify();
+      } else {
+        // Upload local data to cloud if new user
+        await setDoc(docRef, this.data);
+      }
+
+      // Real-time listener with a robust error callback
+      onSnapshot(docRef, (doc) => {
+        if (doc.exists() && !this.isSyncing) {
+          this.data = doc.data() as ProgressionData;
+          this.saveLocal();
+          this.notify();
+        }
+      }, (err) => {
+        console.warn("Progression real-time listener offline or blocked:", err);
+        handleFirestoreError(err, OperationType.GET, `users/${user.uid}/private/progression`, false);
+      });
+    } catch (error) {
+      console.warn("Could not synchronize Progression with cloud, playing offline:", error);
+      handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/private/progression`);
+    }
   }
 
   static getData(): ProgressionData {
@@ -167,7 +171,7 @@ export class ProgressionManager {
     return false;
   }
 
-  static useConsumable(id: string): boolean {
+  static consumeConsumable(id: string): boolean {
     if ((this.data.consumables[id] || 0) > 0) {
       this.data.consumables[id] -= 1;
       this.save();

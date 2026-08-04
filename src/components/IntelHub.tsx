@@ -843,13 +843,12 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
                           <FileSpreadsheet className="mx-auto text-cyan-500/40 mb-3" size={40} />
                           <h4 className="text-sm font-bold uppercase text-white mb-1 leading-none">No Chronological Logs Located</h4>
                           <p className="text-xs text-zinc-400 max-w-sm mx-auto mb-6 leading-normal">
-                            We haven't found any logged combat sessions in your Google Sheets. Create or append custom records to initialize telemetry mapping!
-                          </p>
-                          <button
-                            onClick={async () => { soundManager.uiClick(); await handleTriggerSheetsAppend(); }}
-                            className="px-5 py-2.5 bg-cyan-500 text-black font-mono font-bold text-xs uppercase rounded-xl hover:bg-cyan-400 transition-all flex items-center gap-1.5 mx-auto active:scale-95 disabled:opacity-50 cursor-pointer"
-                            disabled={isActionLoading}
-                          >
+                            We haven&apos;t found any logged combat sessions in your Google Sheets. Create or append custom records to initialize telemetry mapping!
+                          </p>                            <button
+                              onClick={() => { soundManager.uiClick(); void handleTriggerSheetsAppend(); }}
+                              className="px-5 py-2.5 bg-cyan-500 text-black font-mono font-bold text-xs uppercase rounded-xl hover:bg-cyan-400 transition-all flex items-center gap-1.5 mx-auto active:scale-95 disabled:opacity-50 cursor-pointer"
+                              disabled={isActionLoading}
+                            >
                             <UploadCloud size={14} />
                             Deploy Initial Core Metrics to sheet
                           </button>
@@ -913,9 +912,9 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
 
                           {/* Quick Append Tool */}
                           <div className="pt-2 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-zinc-500 font-mono select-none border-t border-cyan-500/10">
-                            <span>Interactive charts drawn dynamically from 'BUGSMASHER Combat Log & Metrics' sheet</span>
+                            <span>Interactive charts drawn dynamically from &apos;BUGSMASHER Combat Log &amp; Metrics&apos; sheet</span>
                             <button
-                              onClick={async () => { soundManager.uiClick(); await handleTriggerSheetsAppend(); }}
+                              onClick={() => { soundManager.uiClick(); void handleTriggerSheetsAppend(); }}
                               className="px-3 py-1.5 bg-cyan-950/20 hover:bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-mono text-[10px] uppercase rounded flex items-center gap-1 transition-all cursor-pointer"
                               disabled={isActionLoading}
                             >
@@ -944,14 +943,14 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
                         
                         <div className="pt-2 flex flex-col sm:flex-row gap-3">
                           <button
-                            onClick={handleBackupDrive}
+                            onClick={() => { void handleBackupDrive(); }}
                             className="flex-1 py-2.5 bg-cyan-950/45 hover:bg-cyan-500/15 border border-cyan-500/45 text-cyan-400 text-xs font-mono font-bold uppercase rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                             disabled={isActionLoading}
                           >
                             <UploadCloud size={14} /> Back-up to Drive
                           </button>
                           <button
-                            onClick={handleRestoreDrive}
+                            onClick={() => { void handleRestoreDrive(); }}
                             className="flex-1 py-2.5 bg-cyan-950/45 hover:bg-cyan-500/15 border border-cyan-500/45 text-cyan-400 text-xs font-mono font-bold uppercase rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                             disabled={isActionLoading}
                           >
@@ -987,8 +986,9 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
                         </p>
 
                         <div className="space-y-2">
-                          <label className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest block font-extrabold text-cyan-500">Recipient Dispatch Email</label>
+                          <label htmlFor="recipient-email" className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest block font-extrabold text-cyan-500">Recipient Dispatch Email</label>
                           <input
+                            id="recipient-email"
                             type="email"
                             value={recipientEmail}
                             onChange={(e) => { setRecipientEmail(e.target.value); }}
@@ -998,7 +998,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
                         </div>
 
                         <button
-                          onClick={handleSendGmailReport}
+                          onClick={() => { void handleSendGmailReport(); }}
                           className="w-full py-2.5 bg-cyan-500 text-black text-xs font-mono font-bold uppercase rounded-xl hover:bg-cyan-400 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
                           disabled={isActionLoading || !recipientEmail}
                         >

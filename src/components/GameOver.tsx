@@ -178,14 +178,11 @@ export function GameOver({ score, wave, onRetry, onMainMenu }: { score: number, 
 
         <div className="flex flex-col space-y-4">
           <button
-            onClick={async () => {
+            onClick={() => {
               soundManager.uiClick();
-              try {
-                const blob = await generateShareCardImage({ score, wave });
-                downloadShareCard(blob);
-              } catch (e) {
-                console.warn('Share card failed', e);
-              }
+              void generateShareCardImage({ score, wave })
+                .then(downloadShareCard)
+                .catch((e: unknown) => { console.warn('Share card failed', e); });
             }}
             className="w-full py-4 bg-zinc-950 border border-white/10 text-cyan-300 font-mono text-xs uppercase tracking-widest hover:bg-white/5 rounded-full font-bold flex items-center justify-center gap-2"
           >

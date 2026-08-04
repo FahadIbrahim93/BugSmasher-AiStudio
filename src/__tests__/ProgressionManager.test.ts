@@ -235,7 +235,7 @@ describe('ProgressionManager', () => {
     });
   });
 
-  describe('useConsumable', () => {
+  describe('consumeConsumable', () => {
     beforeEach(() => {
       ProgressionManager.addResource('scrap', 100);
       ProgressionManager.addResource('alloy', 50);
@@ -243,19 +243,19 @@ describe('ProgressionManager', () => {
     });
 
     it('should consume one unit of the specified item', () => {
-      const result = ProgressionManager.useConsumable('repair_kit');
+      const result = ProgressionManager.consumeConsumable('repair_kit');
       expect(result).toBe(true);
       expect(ProgressionManager.getData().consumables.repair_kit).toBe(0);
     });
 
     it('should return false when item count is 0', () => {
-      ProgressionManager.useConsumable('repair_kit');
-      const result = ProgressionManager.useConsumable('repair_kit');
+      ProgressionManager.consumeConsumable('repair_kit');
+      const result = ProgressionManager.consumeConsumable('repair_kit');
       expect(result).toBe(false);
     });
 
     it('should return false for non-existent item', () => {
-      const result = ProgressionManager.useConsumable('nonexistent');
+      const result = ProgressionManager.consumeConsumable('nonexistent');
       expect(result).toBe(false);
     });
   });

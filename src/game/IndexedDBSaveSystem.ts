@@ -37,7 +37,7 @@ export class IndexedDBSaveSystem {
         let hasIndexedDB = false;
         try {
           hasIndexedDB = 'indexedDB' in window && window.indexedDB !== undefined && window.indexedDB !== null;
-        } catch (e) {
+        } catch {
           hasIndexedDB = false;
         }
 
@@ -119,7 +119,7 @@ export class IndexedDBSaveSystem {
       }
 
       const db = await this.getDB();
-      return new Promise((resolve) => {
+      return await new Promise((resolve) => {
         const transaction = db.transaction([STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
         const request = store.put(slot);
@@ -146,7 +146,7 @@ export class IndexedDBSaveSystem {
       }
 
       const db = await this.getDB();
-      return new Promise((resolve) => {
+      return await new Promise((resolve) => {
         const transaction = db.transaction([STORE_NAME], 'readonly');
         const store = transaction.objectStore(STORE_NAME);
         const request = store.get(id);
@@ -174,7 +174,7 @@ export class IndexedDBSaveSystem {
       }
 
       const db = await this.getDB();
-      return new Promise((resolve) => {
+      return await new Promise((resolve) => {
         const transaction = db.transaction([STORE_NAME], 'readonly');
         const store = transaction.objectStore(STORE_NAME);
         const request = store.getAll();
@@ -199,13 +199,14 @@ export class IndexedDBSaveSystem {
   static async deleteSlot(id: string): Promise<boolean> {
     try {
       if (this.useFallback) {
-        delete this.memoryStorage[id];
+        const { [id]: _removed, ...rest } = this.memoryStorage;
+        this.memoryStorage = rest;
         this.persistFallbackToLocalStorage();
         return true;
       }
 
       const db = await this.getDB();
-      return new Promise((resolve) => {
+      return await new Promise((resolve) => {
         const transaction = db.transaction([STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
         const request = store.delete(id);
@@ -219,7 +220,8 @@ export class IndexedDBSaveSystem {
     } catch (e) {
       console.warn('IDB delete failed, using fallback.', e);
       this.useFallback = true;
-      delete this.memoryStorage[id];
+      const { [id]: _removed, ...rest } = this.memoryStorage;
+      this.memoryStorage = rest;
       this.persistFallbackToLocalStorage();
       return true;
     }

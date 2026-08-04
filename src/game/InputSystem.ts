@@ -86,7 +86,7 @@ export class InputSystem {
     if (fire && !this.lastGamepadClick) {
       this.processClick(this.lastMouseX + (this.engine.canvas.getBoundingClientRect?.()?.left ?? 0), this.lastMouseY + (this.engine.canvas.getBoundingClientRect?.()?.top ?? 0));
     }
-    this.lastGamepadClick = !!fire;
+    this.lastGamepadClick = fire;
   }
 
   private handleKeyDown(e: KeyboardEvent) {

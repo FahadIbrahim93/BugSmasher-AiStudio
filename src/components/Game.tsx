@@ -134,7 +134,7 @@ export function Game({
     if (accessToken) {
       pushPerformanceRow(accessToken, StatsManager.getStats())
         .then(() => { console.log('Real-time Google Sheets update complete on run end.'); })
-        .catch(err => { console.warn('Background spreadsheet sync failed:', err); });
+        .catch((err: unknown) => { console.warn('Background spreadsheet sync failed:', err); });
     }
   }, [accessToken]);
 
@@ -220,7 +220,7 @@ export function Game({
     }
   }, [isGameOver, isUpgrading, isSettingsOpen]);
 
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(() => {
     if (engineRef.current) {
       const state = engineRef.current.exportState();
       setGameStateToSave(state);
@@ -228,7 +228,7 @@ export function Game({
     }
   }, []);
 
-  const handleLoad = useCallback(async () => {
+  const handleLoad = useCallback(() => {
     setSaveSlotMode('load');
   }, []);
 

@@ -81,7 +81,7 @@ export function CustomCursor() {
     const biomeVal = status.currentBiome || 'neon_core';
     const intensityVal = Math.round((status.intensity || 1) * 100) / 100;
     setWeaponHeat(status.weaponHeat || 0);
-    setFuryActive(!!status.furyActive);
+    setFuryActive(status.furyActive);
     setDashCooldownTimer(status.dashCooldownTimer || 0);
     setDashCooldown(status.dashCooldown || 3.0);
     setRapidFireActive(!!(status.rapidFireTimer && status.rapidFireTimer > 0));

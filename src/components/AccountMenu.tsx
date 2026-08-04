@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { User as LucideUser, X, Shield, History, Cloud, AlertCircle, BarChart3, Clock, Target, Zap, Cpu } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../contexts/AuthContext';
@@ -13,19 +13,13 @@ export function AccountMenu({ onClose }: { onClose: () => void }) {
   
   const isIframe = window.self !== window.top;
 
-  useEffect(() => {
-    if (user) {
-      setActiveTab('profile');
-    } else {
-      setActiveTab('auth');
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (activeTab === 'stats') {
-      setStats(StatsManager.getStats());
-    }
-  }, [activeTab]);
+  // Sync the active tab to auth state without setState-in-effect:
+  // adjust state during render (React-recommended pattern for prop→state sync).
+  const [prevUser, setPrevUser] = useState(user);
+  if (user !== prevUser) {
+    setPrevUser(user);
+    setActiveTab(user ? 'profile' : 'auth');
+  }
 
   const handleLogin = async () => {
     setLoading(true);
@@ -103,7 +97,7 @@ export function AccountMenu({ onClose }: { onClose: () => void }) {
                     )}
 
                     <button 
-                      onClick={handleLogin}
+                      onClick={() => { void handleLogin(); }}
                       disabled={loading || authLoading}
                       className="w-full py-4 bg-white text-black rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-zinc-200 transition-all flex items-center justify-center space-x-3 disabled:opacity-50 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
                     >
@@ -159,7 +153,7 @@ export function AccountMenu({ onClose }: { onClose: () => void }) {
                   </div>
 
                   <button 
-                    onClick={handleLogout}
+                    onClick={() => { void handleLogout(); }}
                     className="w-full py-4 text-red-400 hover:text-red-300 border border-red-500/10 hover:bg-red-500/5 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all mt-4"
                   >
                     Terminate Session

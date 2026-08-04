@@ -42,7 +42,7 @@ export class GameEngineStatusBus {
   static subscribe(listener: GameEngineStatusListener): () => void {
     if (typeof window === 'undefined') {
       listener(this.current);
-      return () => {};
+      return () => undefined;
     }
 
     const handler = (e: Event) => {

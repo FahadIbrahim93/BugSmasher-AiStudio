@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { MainMenu } from './components/MainMenu';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Preloader } from './components/Preloader';
@@ -17,17 +17,15 @@ export default function App() {
   const [isIntelOpen, setIsIntelOpen] = useState(false);
   const [challengeModifiers, setChallengeModifiers] = useState<ChallengeModifierId[] | undefined>(undefined);
   const [gameMode, setGameMode] = useState<GameModeId>('standard');
-  const [friendChallenge, setFriendChallenge] = useState<{ score: number; wave: number } | null>(null);
-  const [customBiome, setCustomBiome] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const score = parseInt(params.get('challengeScore') || '', 10);
-    const wave = parseInt(params.get('challengeWave') || '', 10);
-    if (!isNaN(score) && !isNaN(wave)) {
-      setFriendChallenge({ score, wave });
+  const [friendChallenge] = useState<{ score: number; wave: number } | null>(
+    () => {
+      const params = new URLSearchParams(window.location.search);
+      const score = parseInt(params.get('challengeScore') || '', 10);
+      const wave = parseInt(params.get('challengeWave') || '', 10);
+      return !isNaN(score) && !isNaN(wave) ? { score, wave } : null;
     }
-  }, []);
+  );
+  const [customBiome, setCustomBiome] = useState<string | undefined>(undefined);
 
   return (
     <ErrorBoundary>

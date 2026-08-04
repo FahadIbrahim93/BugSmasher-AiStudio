@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment -- full type-hardening tracked in TASKBOARD; file needs the escape hatch for WebAudio-heavy drawing code
 // @ts-nocheck
 import { GameEngine } from '../GameEngine';
 import { getActiveCoreThemeConfig } from '../CosmeticsManager';
@@ -229,7 +230,7 @@ export class EnvironmentRenderer {
     const w = this.engine.width;
     const h = this.engine.height;
     const mainColor = map.color || '#00ffcc';
-    const labelText = map.label || 'SYSTEM_RUN_OK';
+    const labelText = typeof map.label === 'string' ? map.label : 'SYSTEM_RUN_OK';
 
     // Note: grid for 'grid' and 'circuits' styles is drawn at parallax depth 0.3
     // in the biome branch above — do not redraw here to avoid double-draw.

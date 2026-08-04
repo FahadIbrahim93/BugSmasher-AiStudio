@@ -85,7 +85,7 @@ export function subscribeAccessibility(
 ): () => void {
   if (typeof window === 'undefined') {
     listener(loadAccessibilitySettings());
-    return () => {};
+    return () => undefined;
   }
   const handler = (e: Event) => {
     const detail = (e as CustomEvent<AccessibilitySettings>).detail;

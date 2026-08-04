@@ -5,7 +5,7 @@ const firebaseMocks = vi.hoisted(() => ({
   currentUser: null as { uid: string; displayName: string } | null,
   submitScore: vi.fn(() => Promise.resolve(true)),
   startSession: vi.fn(() => Promise.resolve({ sessionId: 'test-session-123', expiresAt: Date.now() + 600_000 })),
-  getDoc: vi.fn(async () => ({
+  getDoc: vi.fn(() => Promise.resolve({
     exists: () => false,
     data: () => ({}),
   })),

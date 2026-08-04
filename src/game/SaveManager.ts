@@ -305,7 +305,7 @@ export class SaveManager {
     try {
       if (typeof window === 'undefined') return false;
       return localStorage.getItem(this.STORAGE_KEY) !== null || localStorage.getItem('bugsmasher_active_slot_id') !== null;
-    } catch (e) {
+    } catch {
       return false;
     }
   }
@@ -326,7 +326,7 @@ export class SaveManager {
       if (typeof window === 'undefined') return 0;
       const val = localStorage.getItem(this.HIGH_SCORE_KEY);
       return val ? parseInt(val) : 0;
-    } catch (e) {
+    } catch {
       return 0;
     }
   }

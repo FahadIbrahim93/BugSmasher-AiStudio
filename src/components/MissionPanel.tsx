@@ -85,7 +85,7 @@ export const MissionPanel: React.FC<MissionPanelProps> = ({ onClaim }) => {
           Daily Missions <span className="mission-counter">{dailyStats.completed}/{dailyStats.total}</span>
         </h3>
         {state.daily.map(m => (
-          <MissionRow key={m.id} mission={m} onClaim={onClaim || (() => {})} />
+          <MissionRow key={m.id} mission={m} onClaim={onClaim || (() => undefined)} />
         ))}
       </div>
 
@@ -94,7 +94,7 @@ export const MissionPanel: React.FC<MissionPanelProps> = ({ onClaim }) => {
           Weekly Missions <span className="mission-counter">{weeklyStats.completed}/{weeklyStats.total}</span>
         </h3>
         {state.weekly.map(m => (
-          <MissionRow key={m.id} mission={m} onClaim={onClaim || (() => {})} />
+          <MissionRow key={m.id} mission={m} onClaim={onClaim || (() => undefined)} />
         ))}
       </div>
     </div>

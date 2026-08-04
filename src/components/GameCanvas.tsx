@@ -72,3 +72,6 @@ export const GameCanvas = forwardRef<GameEngine | null, GameCanvasProps>(({
     />
   );
 });
+
+GameCanvas.displayName = 'GameCanvas';
+
