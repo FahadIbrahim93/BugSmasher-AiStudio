@@ -91,6 +91,9 @@ export class GameEngine {
   furyTimer = 0;
   /** Seconds remaining in the post-FURY ignition cooldown (once-per-wave cadence) */
   furyCooldownTimer = 0;
+  /** Per-second rage intake budget — spend in addRage, refilled at maxGainPerSecond/s */
+  private rageGainBudget = GameConfig.rage.maxGainPerSecond;
+  readonly rageGainBudgetMax: number = GameConfig.rage.maxGainPerSecond;
   readonly furyDuration: number = GameConfig.rage.furyDuration;
 
   // Ground Slam (hold-to-charge) state
@@ -353,6 +356,7 @@ export class GameEngine {
     this.furyActive = false;
     this.furyTimer = 0;
     this.furyCooldownTimer = 0;
+    this.rageGainBudget = GameConfig.rage.maxGainPerSecond;
     this.slamCharging = false;
     this.slamCharge = 0;
     this.furyTriggers = 0;
@@ -399,7 +403,11 @@ export class GameEngine {
    */
   addRage(amount: number) {
     if (this.furyActive) return; // already raging
-    this.weaponHeat = Math.min(GameConfig.rage.maxHeat, this.weaponHeat + amount);
+    // Per-second gain cap: rage intake is budgeted so even max-APM play can't
+    // insta-fill the meter — it refills over roughly the cooldown window.
+    const applied = Math.min(amount, this.rageGainBudget);
+    this.rageGainBudget -= applied;
+    this.weaponHeat = Math.min(GameConfig.rage.maxHeat, this.weaponHeat + applied);
     // Post-FURY ignition cooldown: the meter keeps refilling, but FURY waits
     // until the cooldown clears so eruptions land roughly once per wave.
     if (this.weaponHeat >= GameConfig.rage.maxHeat && this.furyCooldownTimer <= 0) {
@@ -957,6 +965,13 @@ export class GameEngine {
         if (this.weaponHeat < 0) this.weaponHeat = 0;
       }
     }
+
+    // Refill the per-second rage gain budget (both during FURY and after, so
+    // the meter is ready to charge the moment an eruption ends)
+    this.rageGainBudget = Math.min(
+      this.rageGainBudgetMax,
+      this.rageGainBudget + this.rageGainBudgetMax * dt
+    );
 
     if (this.shakeTime > 0) this.shakeTime -= dt;
     if (this.shieldTimer > 0) this.shieldTimer -= dt;

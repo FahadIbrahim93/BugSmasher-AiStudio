@@ -104,6 +104,12 @@ export const GameConfig = {
     hitWithOverdrive: 4.5, // overdrive chip: optimized cooling buffer
     furyDuration: 4.0,
     maxHeat: 100,
+    // Per-second rage intake cap — the second cadence governor. The meter only
+    // gains this much rage per second no matter how fast the player clicks, so
+    // max-APM play refills over ~most of the cooldown window instead of in a
+    // couple of seconds. Must be >= the largest single gain (perHit) so a lone
+    // smash is never throttled.
+    maxGainPerSecond: 15.0,
     // Post-FURY ignition cooldown — the meter keeps refilling during it, but
     // FURY waits until it clears (then auto-ignites if the meter is full). This
     // is the once-per-wave cadence governor: even max-APM play erupts ~every

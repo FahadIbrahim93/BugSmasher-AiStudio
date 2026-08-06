@@ -558,6 +558,28 @@ describe('GameEngine', () => {
       engine.update(engine.furyCooldownTimer + 0.1);
       expect(engine.furyActive).toBe(true);
     });
+
+    it('caps rage intake to maxGainPerSecond for same-instant bursts', () => {
+      engine.weaponHeat = 0;
+      // A burst of hits in one instant must not exceed the per-second budget
+      for (let i = 0; i < 20; i++) engine.addRage(GameConfig.rage.perHit);
+      expect(engine.weaponHeat).toBe(GameConfig.rage.maxGainPerSecond);
+      expect(engine.furyActive).toBe(false); // nowhere near 100 yet
+    });
+
+    it('refills the rage gain budget over time', () => {
+      engine.weaponHeat = 0;
+      engine.addRage(GameConfig.rage.perHit); // full 15 applied, budget now empty
+      const afterFirst = engine.weaponHeat;
+      engine.addRage(GameConfig.rage.perHit); // budget empty -> 0 applied
+      expect(engine.weaponHeat).toBe(afterFirst);
+
+      // Advance time to refill part of the budget (decay also lowers the meter)
+      engine.update(0.5);
+      const beforeSecond = engine.weaponHeat;
+      engine.addRage(GameConfig.rage.perHit); // applies min(15, ~7.5 refilled)
+      expect(engine.weaponHeat).toBeGreaterThan(beforeSecond);
+    });
   });
 
   describe('GROUND SLAM', () => {
@@ -679,6 +701,8 @@ describe('GameEngine', () => {
       expect(GameConfig.rage.perSlam).toBe(8);
       expect(GameConfig.rage.furyDuration).toBe(4.0);
       expect(GameConfig.rage.maxHeat).toBe(100);
+      // Per-second intake cap — second cadence governor (>= perHit so lone smashes are never throttled)
+      expect(GameConfig.rage.maxGainPerSecond).toBe(15.0);
       // Post-FURY ignition cooldown — the once-per-wave cadence governor
       expect(GameConfig.rage.furyCooldown).toBe(14.0);
       // Tuned so a typical wave nets ~100 heat (once-per-wave eruption)
@@ -730,7 +754,8 @@ describe('GameEngine', () => {
       // Fury must fully drain before it can re-trigger
       engine.furyTimer = 0;
       engine.furyActive = false;
-      engine.weaponHeat = 90;
+      engine.update(1.0); // refill the per-second gain budget for the next burst
+      engine.weaponHeat = 95;
       engine.addRage(15);
       expect(engine.furyTriggers).toBe(2);
     });
