@@ -143,6 +143,7 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
     let lastMaxHealth = -1;
     let lastRage = -1;
     let lastFury = false;
+    let lastFuryCd = -1;
     let lastGoo = -1;
     let lastGooHeavy = false;
     let lastGooCollecting = false;
@@ -337,18 +338,31 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
         if (rageBarRef.current && rageTextRef.current) {
           const rage = Math.max(0, Math.min(100, engine.weaponHeat || 0));
           const furyNow = engine.furyActive;
+          const recharging = !furyNow && (engine.furyCooldownTimer || 0) > 0;
+          const furyCd = recharging ? engine.furyCooldownTimer : 0;
           const crossedRageThreshold = lastRage >= 0 && rage >= 75 && lastRage < 75;
           const furyIgnited = furyNow && !lastFury;
-          if (rage !== lastRage || furyNow !== lastFury) {
+          if (rage !== lastRage || furyNow !== lastFury || furyCd !== lastFuryCd) {
             rageBarRef.current.style.width = `${rage}%`;
             rageTextRef.current.textContent = furyNow ? 'FURY' : `${Math.ceil(rage)}`;
             rageBarRef.current.className = furyNow
               ? 'h-full bg-gradient-to-r from-red-600 via-orange-500 to-amber-400 shadow-[0_0_10px_rgba(255,60,0,0.6)] animate-pulse'
-              : rage > 75
-                ? 'h-full bg-gradient-to-r from-red-700 to-orange-500'
-                : 'h-full bg-gradient-to-r from-orange-900 to-red-700';
+              : recharging
+                ? 'h-full bg-gradient-to-r from-zinc-700 to-amber-800'
+                : rage > 75
+                  ? 'h-full bg-gradient-to-r from-red-700 to-orange-500'
+                  : 'h-full bg-gradient-to-r from-orange-900 to-red-700';
             if (furyBadgeRef.current) {
-              furyBadgeRef.current.classList.toggle('opacity-0', !furyNow);
+              if (furyNow) {
+                furyBadgeRef.current.textContent = 'FURY MODE ACTIVE';
+                furyBadgeRef.current.classList.remove('text-amber-500/70');
+                furyBadgeRef.current.classList.add('text-amber-400');
+              } else if (recharging) {
+                furyBadgeRef.current.textContent = `RECHARGING ${Math.ceil(furyCd)}S`;
+                furyBadgeRef.current.classList.remove('text-amber-400');
+                furyBadgeRef.current.classList.add('text-amber-500/70');
+              }
+              furyBadgeRef.current.classList.toggle('opacity-0', !(furyNow || recharging));
             }
             // Scanline pulse sweeps down the meter when RAGE crosses 75% or FURY ignites
             if ((crossedRageThreshold || furyIgnited) && rageScanRef.current) {
@@ -375,6 +389,7 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
             }
             lastRage = rage;
             lastFury = furyNow;
+            lastFuryCd = furyCd;
           }
         }
 

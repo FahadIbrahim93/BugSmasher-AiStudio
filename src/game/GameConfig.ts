@@ -104,6 +104,11 @@ export const GameConfig = {
     hitWithOverdrive: 4.5, // overdrive chip: optimized cooling buffer
     furyDuration: 4.0,
     maxHeat: 100,
+    // Post-FURY ignition cooldown — the meter keeps refilling during it, but
+    // FURY waits until it clears (then auto-ignites if the meter is full). This
+    // is the once-per-wave cadence governor: even max-APM play erupts ~every
+    // cooldown + duration (≈ one per wave) instead of every couple seconds.
+    furyCooldown: 14.0,
     // Passive cooldown when NOT in FURY. Tuned so average play nets ~100 heat
     // per wave (once-per-wave eruption); too high and FURY becomes unreachable.
     decayPerSecond: 6.0,

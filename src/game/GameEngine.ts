@@ -89,6 +89,8 @@ export class GameEngine {
   // RAGE METER — fills from clicks/misses; at 100 it ignites FURY MODE instead of locking out
   furyActive = false;
   furyTimer = 0;
+  /** Seconds remaining in the post-FURY ignition cooldown (once-per-wave cadence) */
+  furyCooldownTimer = 0;
   readonly furyDuration: number = GameConfig.rage.furyDuration;
 
   // Ground Slam (hold-to-charge) state
@@ -350,6 +352,7 @@ export class GameEngine {
     this.weaponHeat = 0;
     this.furyActive = false;
     this.furyTimer = 0;
+    this.furyCooldownTimer = 0;
     this.slamCharging = false;
     this.slamCharge = 0;
     this.furyTriggers = 0;
@@ -397,7 +400,9 @@ export class GameEngine {
   addRage(amount: number) {
     if (this.furyActive) return; // already raging
     this.weaponHeat = Math.min(GameConfig.rage.maxHeat, this.weaponHeat + amount);
-    if (this.weaponHeat >= GameConfig.rage.maxHeat) {
+    // Post-FURY ignition cooldown: the meter keeps refilling, but FURY waits
+    // until the cooldown clears so eruptions land roughly once per wave.
+    if (this.weaponHeat >= GameConfig.rage.maxHeat && this.furyCooldownTimer <= 0) {
       this.triggerFury();
     }
   }
@@ -496,6 +501,7 @@ export class GameEngine {
       performanceFactor: this.performanceFactor || 1.0,
       weaponHeat: this.weaponHeat,
       furyActive: this.furyActive,
+      furyCooldown: this.furyCooldownTimer,
       dashCooldownTimer: this.dashCooldownTimer,
       dashCooldown: this.dashCooldown,
       rapidFireTimer: this.rapidFireTimer,
@@ -933,10 +939,23 @@ export class GameEngine {
         this.furyActive = false;
         this.furyTimer = 0;
         this.weaponHeat = 0;
+        // Start the post-FURY ignition cooldown (once-per-wave cadence)
+        this.furyCooldownTimer = GameConfig.rage.furyCooldown;
       }
-    } else if (this.weaponHeat > 0) {
-      this.weaponHeat -= GameConfig.rage.decayPerSecond * dt;
-      if (this.weaponHeat < 0) this.weaponHeat = 0;
+    } else {
+      // Post-FURY cooldown: meter refills but FURY waits; auto-ignites the
+      // moment the cooldown clears if the meter is already full
+      if (this.furyCooldownTimer > 0) {
+        this.furyCooldownTimer -= dt;
+        if (this.furyCooldownTimer <= 0) {
+          this.furyCooldownTimer = 0;
+          if (this.weaponHeat >= GameConfig.rage.maxHeat) this.triggerFury();
+        }
+      }
+      if (!this.furyActive && this.weaponHeat > 0) {
+        this.weaponHeat -= GameConfig.rage.decayPerSecond * dt;
+        if (this.weaponHeat < 0) this.weaponHeat = 0;
+      }
     }
 
     if (this.shakeTime > 0) this.shakeTime -= dt;

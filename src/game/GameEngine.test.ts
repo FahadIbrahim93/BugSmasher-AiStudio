@@ -511,9 +511,52 @@ describe('GameEngine', () => {
     it('resetEntities clears FURY MODE state', () => {
       engine.furyActive = true;
       engine.furyTimer = 2;
+      engine.furyCooldownTimer = 9;
       engine.resetEntities();
       expect(engine.furyActive).toBe(false);
       expect(engine.furyTimer).toBe(0);
+      expect(engine.furyCooldownTimer).toBe(0);
+    });
+
+    it('starts the ignition cooldown when FURY drains out', () => {
+      engine.weaponHeat = 100;
+      engine.furyActive = true;
+      engine.furyTimer = engine.furyDuration;
+      for (let i = 0; i < 40; i++) engine.update(0.1); // 4s = full duration
+      expect(engine.furyActive).toBe(false);
+      expect(engine.furyCooldownTimer).toBe(GameConfig.rage.furyCooldown);
+    });
+
+    it('blocks re-ignition while the cooldown is active (meter still refills)', () => {
+      engine.weaponHeat = 90;
+      engine.addRage(15);
+      expect(engine.furyActive).toBe(true);
+
+      // Let FURY drain fully and the cooldown start
+      for (let i = 0; i < 60; i++) engine.update(0.1);
+      expect(engine.furyActive).toBe(false);
+      expect(engine.furyCooldownTimer).toBeGreaterThan(0);
+
+      // Refill to 100 during the cooldown — meter fills but must NOT ignite
+      engine.weaponHeat = 90;
+      engine.addRage(15);
+      expect(engine.weaponHeat).toBe(100);
+      expect(engine.furyActive).toBe(false);
+    });
+
+    it('auto-ignites the moment the cooldown clears with the meter full', () => {
+      engine.weaponHeat = 90;
+      engine.addRage(15);
+      for (let i = 0; i < 60; i++) engine.update(0.1);
+      expect(engine.furyActive).toBe(false);
+
+      engine.weaponHeat = 90;
+      engine.addRage(15); // full again, still gated by the cooldown
+      expect(engine.furyActive).toBe(false);
+
+      // Advance past the remaining cooldown — a full meter erupts immediately
+      engine.update(engine.furyCooldownTimer + 0.1);
+      expect(engine.furyActive).toBe(true);
     });
   });
 
@@ -636,6 +679,8 @@ describe('GameEngine', () => {
       expect(GameConfig.rage.perSlam).toBe(8);
       expect(GameConfig.rage.furyDuration).toBe(4.0);
       expect(GameConfig.rage.maxHeat).toBe(100);
+      // Post-FURY ignition cooldown — the once-per-wave cadence governor
+      expect(GameConfig.rage.furyCooldown).toBe(14.0);
       // Tuned so a typical wave nets ~100 heat (once-per-wave eruption)
       expect(GameConfig.rage.decayPerSecond).toBe(6.0);
     });

@@ -12,6 +12,8 @@ export interface GameEngineStatus {
   weaponHeat: number;
   /** FURY MODE active — rage meter filled; smashes become guaranteed crits + AoE */
   furyActive: boolean;
+  /** Seconds remaining in the post-FURY ignition cooldown (0 = can ignite) */
+  furyCooldown: number;
   dashCooldownTimer: number;
   dashCooldown: number;
   rapidFireTimer: number;

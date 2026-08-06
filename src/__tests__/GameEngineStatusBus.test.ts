@@ -11,6 +11,7 @@ describe('GameEngineStatusBus', () => {
       performanceFactor: 1,
       weaponHeat: 10,
       furyActive: false,
+      furyCooldown: 0,
       dashCooldownTimer: 0,
       dashCooldown: 3,
       rapidFireTimer: 0,
