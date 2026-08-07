@@ -80,7 +80,12 @@ test.describe('wave transition', () => {
     // --- Phase D: the transition must NOT have reset the meter to 0 ---
     const atMenu = Number(rageAtMenu);
     const after = Number(rageAfter);
-    if (Number.isFinite(atMenu) && Number.isFinite(after) && atMenu > 15) {
+    const rageIsFuryAfter = hudAfter.rage === 'FURY';
+    if (rageIsFuryAfter) {
+      // Meter shows FURY text = it reached 100 and ignited right after resume
+      // — the transition clearly did NOT reset it. Fully functional.
+      console.log('RAGE AFTER RESUME: FURY (meter at 100 — no reset)');
+    } else if (Number.isFinite(atMenu) && Number.isFinite(after) && atMenu > 15) {
       // Strong regression check: only natural decay (~6/s) for the 1-2s of
       // menu close + resume may elapse; a hard reset would show 0 here.
       expect(after, 'rage must persist across the wave transition (no reset to 0)').toBeGreaterThan(
@@ -93,7 +98,10 @@ test.describe('wave transition', () => {
     } else {
       // Edge case (FURY drained right as the menu appeared): meter may be low,
       // but it must still be alive — verified by the Phase E climb.
-      expect(after, 'rage must not be stuck at a reset value of 0').toBeGreaterThanOrEqual(0);
+      expect(
+        Number.isFinite(after) ? after : -1,
+        'rage must not be stuck at a reset value of 0',
+      ).toBeGreaterThanOrEqual(0);
     }
 
     // --- Phase E: wave 2 is live — smashing feeds the meter again ---
