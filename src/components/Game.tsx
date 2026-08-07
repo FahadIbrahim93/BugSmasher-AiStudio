@@ -147,6 +147,19 @@ export function Game({
     [accessToken],
   );
 
+  useEffect(() => {
+    const handleForcedGameOver = (event: Event) => {
+      const detail = (event as CustomEvent<{ score?: number }>).detail;
+      const score = typeof detail?.score === 'number' ? detail.score : 0;
+      handleGameOver(score);
+    };
+
+    window.addEventListener('bugsmasher:force-game-over', handleForcedGameOver as EventListener);
+    return () => {
+      window.removeEventListener('bugsmasher:force-game-over', handleForcedGameOver as EventListener);
+    };
+  }, [handleGameOver]);
+
   const handleWaveComplete = useCallback(() => {
     if (engineRef.current) {
       setFinalScore(engineRef.current.score);
