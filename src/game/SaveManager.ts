@@ -20,6 +20,10 @@ export interface GameSaveData {
   playedStoryBeats?: string[];
   checksum?: string;
   biome?: string;
+  // RAGE METER / FURY cadence state — persisted so a mid-run save/load
+  // restores the vent meter exactly where the player left off.
+  weaponHeat?: number;
+  furyCooldownTimer?: number;
 }
 
 export type SaveSyncStatus = 'idle' | 'syncing' | 'synced' | 'error';
@@ -42,7 +46,7 @@ export class SaveManager {
 
   private static notifySync(status: SaveSyncStatus) {
     this.currentStatus = status;
-    this.syncListeners.forEach(listener => {
+    this.syncListeners.forEach((listener) => {
       try {
         listener(status);
       } catch (err) {
@@ -95,7 +99,7 @@ export class SaveManager {
         name: slotName,
         timestamp: Date.now(),
         data: fullData,
-        biome
+        biome,
       });
 
       if (!success) {
@@ -122,12 +126,16 @@ export class SaveManager {
       }
 
       this.notifySync('synced');
-      setTimeout(() => { this.notifySync('idle'); }, 3000);
+      setTimeout(() => {
+        this.notifySync('idle');
+      }, 3000);
       return true;
     } catch (e) {
       console.error(`Failed to save to slot ${slotId}`, e);
       this.notifySync('error');
-      setTimeout(() => { this.notifySync('idle'); }, 3000);
+      setTimeout(() => {
+        this.notifySync('idle');
+      }, 3000);
       return false;
     }
   }
@@ -191,17 +199,20 @@ export class SaveManager {
       } catch (e) {
         console.warn('localStorage write failed in save:', e);
       }
-      
+
       // Also save to currently active slot in IndexedDB
       const activeSlotId = this.getActiveSlotId() || 'slot_default';
-      const slotName = activeSlotId === 'slot_default' ? 'Quick Save' : `Save Slot ${activeSlotId.split('_')[1] || activeSlotId}`;
+      const slotName =
+        activeSlotId === 'slot_default'
+          ? 'Quick Save'
+          : `Save Slot ${activeSlotId.split('_')[1] || activeSlotId}`;
       const biome = data.biome || 'neon_core';
       await IndexedDBSaveSystem.saveSlot({
         id: activeSlotId,
         name: slotName,
         timestamp: Date.now(),
         data: fullData,
-        biome
+        biome,
       });
 
       const user = auth?.currentUser;
@@ -217,14 +228,18 @@ export class SaveManager {
         // No user logged in, but save is successful locally
         this.notifySync('synced');
       }
-      
+
       // Auto return to idle after some delay
-      setTimeout(() => { this.notifySync('idle'); }, 3000);
+      setTimeout(() => {
+        this.notifySync('idle');
+      }, 3000);
       return true;
     } catch (e) {
       console.error('Failed to save game data', e);
       this.notifySync('error');
-      setTimeout(() => { this.notifySync('idle'); }, 3000);
+      setTimeout(() => {
+        this.notifySync('idle');
+      }, 3000);
       return false;
     }
   }
@@ -250,7 +265,10 @@ export class SaveManager {
             isCloud = true;
           }
         } catch (cloudError) {
-          console.warn('Could not download save from cloud, falling back to local storage:', cloudError);
+          console.warn(
+            'Could not download save from cloud, falling back to local storage:',
+            cloudError,
+          );
         }
       }
 
@@ -265,7 +283,7 @@ export class SaveManager {
       }
 
       if (!dataStr) return null;
-      
+
       const parsed = JSON.parse(dataStr) as GameSaveData;
       const { checksum, ...pureData } = parsed;
 
@@ -282,7 +300,7 @@ export class SaveManager {
       }
 
       if (parsed.stats) StatsManager.setStats(parsed.stats);
-      
+
       // If we loaded from cloud and it was valid, sync local
       if (isCloud) {
         try {
@@ -304,7 +322,10 @@ export class SaveManager {
   static hasSave(): boolean {
     try {
       if (typeof window === 'undefined') return false;
-      return localStorage.getItem(this.STORAGE_KEY) !== null || localStorage.getItem('bugsmasher_active_slot_id') !== null;
+      return (
+        localStorage.getItem(this.STORAGE_KEY) !== null ||
+        localStorage.getItem('bugsmasher_active_slot_id') !== null
+      );
     } catch {
       return false;
     }
@@ -341,14 +362,16 @@ export class SaveManager {
       } catch (e) {
         console.warn('localStorage write failed for high score:', e);
       }
-      
+
       const user = auth?.currentUser;
       if (user && db) {
         try {
           // Get username from profile
           const userRef = doc(db, 'users', user.uid);
           const userSnap = await getDoc(userRef);
-          const username = userSnap.exists() ? userSnap.data().username : (user.displayName || 'Anonymous User');
+          const username = userSnap.exists()
+            ? userSnap.data().username
+            : user.displayName || 'Anonymous User';
           // Obtain a session token for anti-cheat replay protection
           const session = await FirebaseService.startSession();
           if (session) {

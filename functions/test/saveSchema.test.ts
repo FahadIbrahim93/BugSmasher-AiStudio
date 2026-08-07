@@ -21,7 +21,9 @@ describe('saveDataSchema', () => {
   });
 
   it('rejects extra fields', () => {
-    expect(() => parseSaveData({ ...valid, injected: true })).toThrow(/Save data failed validation/);
+    expect(() => parseSaveData({ ...valid, injected: true })).toThrow(
+      /Save data failed validation/,
+    );
   });
 
   it('allows optional stats', () => {
@@ -30,5 +32,20 @@ describe('saveDataSchema', () => {
       stats: { totalKills: 42, totalWaves: 3 },
     };
     expect(saveDataSchema.safeParse(withStats).success).toBe(true);
+  });
+
+  it('allows optional rage meter fields (mid-run save/load)', () => {
+    const withRage = {
+      ...valid,
+      weaponHeat: 64,
+      furyCooldownTimer: 9,
+    };
+    expect(saveDataSchema.safeParse(withRage).success).toBe(true);
+  });
+
+  it('rejects out-of-range rage values', () => {
+    expect(() => parseSaveData({ ...valid, weaponHeat: 101 })).toThrow(
+      /Save data failed validation/,
+    );
   });
 });

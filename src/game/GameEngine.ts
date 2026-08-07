@@ -16,7 +16,11 @@ import { HazardSystem } from './HazardSystem';
 import { PCGSystem } from './PCGSystem';
 import { GooSystem } from './GooSystem';
 import { CustomMapManager } from './CustomMapManager';
-import { computeModifierState, type ChallengeModifierId, type ChallengeModifierState } from './DailyChallengeManager';
+import {
+  computeModifierState,
+  type ChallengeModifierId,
+  type ChallengeModifierState,
+} from './DailyChallengeManager';
 import { GameEngineStatusBus } from './GameEngineStatusBus';
 import {
   loadAccessibilitySettings,
@@ -189,7 +193,10 @@ export class GameEngine {
 
   onGameOver?: (score: number) => void;
   onWaveComplete?: () => void;
-  onStoryTrigger?: (type: 'wave_start' | 'boss_kill' | 'game_start' | 'prestige', value: number) => void;
+  onStoryTrigger?: (
+    type: 'wave_start' | 'boss_kill' | 'game_start' | 'prestige',
+    value: number,
+  ) => void;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -254,10 +261,14 @@ export class GameEngine {
   }
 
   syncVfxSettings() {
-    this.isMobile = (window.innerWidth < 768) ||
-      (typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) ||
+    this.isMobile =
+      window.innerWidth < 768 ||
+      (typeof navigator !== 'undefined' &&
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent,
+        )) ||
       (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0) ||
-      ('ontouchstart' in window);
+      'ontouchstart' in window;
 
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('nexus_high_fidelity_vfx');
@@ -514,7 +525,9 @@ export class GameEngine {
       dashCooldown: this.dashCooldown,
       rapidFireTimer: this.rapidFireTimer,
       spikeBurstTimer: this.spikeBurstTimer,
-      shakeIntensity: this.threatShakeIntensity + (this.shakeTime > 0 ? this.shakeMagnitude * (this.shakeTime / 0.5) * 0.5 : 0),
+      shakeIntensity:
+        this.threatShakeIntensity +
+        (this.shakeTime > 0 ? this.shakeMagnitude * (this.shakeTime / 0.5) * 0.5 : 0),
     };
     GameEngineStatusBus.publish(status);
     GameEngineStatusBus.syncLegacyWindowGlobal(status);
@@ -563,7 +576,7 @@ export class GameEngine {
     if (this.challengeModifiers?.speedDemonActive && this.totalKills > 0) {
       this.challengeBugSpeedBonus = Math.min(
         this.challengeModifiers.speedDemonMax,
-        this.totalKills * this.challengeModifiers.speedDemonPerKill
+        this.totalKills * this.challengeModifiers.speedDemonPerKill,
       );
     }
 
@@ -750,17 +763,25 @@ export class GameEngine {
     this.score += bug.scoreValue * mult;
 
     // Dispatch smashed event for large bugs (size >= 20 or specific large types)
-    if (bug.size >= 20 || bug.type === 'boss' || bug.type === 'tank' || bug.type === 'healer' || bug.type === 'ember') {
+    if (
+      bug.size >= 20 ||
+      bug.type === 'boss' ||
+      bug.type === 'tank' ||
+      bug.type === 'healer' ||
+      bug.type === 'ember'
+    ) {
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('nexus_bug_smashed', {
-          detail: {
-            type: bug.type,
-            color: bug.color,
-            size: bug.size,
-            scoreValue: bug.scoreValue * mult,
-            streak: this.streakCount
-          }
-        }));
+        window.dispatchEvent(
+          new CustomEvent('nexus_bug_smashed', {
+            detail: {
+              type: bug.type,
+              color: bug.color,
+              size: bug.size,
+              scoreValue: bug.scoreValue * mult,
+              streak: this.streakCount,
+            },
+          }),
+        );
       }
     }
 
@@ -769,7 +790,13 @@ export class GameEngine {
     this.triggerHitStop(0.04);
 
     const isBoss = bug.type === 'boss';
-    const intensity = isBoss ? 4.0 : ((bug.type === 'tank' || bug.type === 'swarmer') ? 1.4 : (bug.type === 'scout' ? 0.7 : 0.9));
+    const intensity = isBoss
+      ? 4.0
+      : bug.type === 'tank' || bug.type === 'swarmer'
+        ? 1.4
+        : bug.type === 'scout'
+          ? 0.7
+          : 0.9;
     this.shake(isBoss ? 0.6 : 0.15 * intensity, isBoss ? 40 : 8 * intensity);
 
     // Reduce particle count on low-end or during surge — skip splatters (most expensive)
@@ -797,7 +824,11 @@ export class GameEngine {
       this.impactFrame = 1.0;
 
       for (let i = 0; i < 3; i++) {
-        this.spawnPowerup(bug.x + (Math.random() - 0.5) * 50, bug.y + (Math.random() - 0.5) * 50, true);
+        this.spawnPowerup(
+          bug.x + (Math.random() - 0.5) * 50,
+          bug.y + (Math.random() - 0.5) * 50,
+          true,
+        );
       }
 
       // Cap boss death particles based on current FPS
@@ -812,7 +843,7 @@ export class GameEngine {
     if (shouldSplit && (bug.type === 'swarmer' || this.currentBiome === 'golden_cache')) {
       const splitCount = this.currentBiome === 'golden_cache' ? 2 : 3;
       for (let i = 0; i < splitCount; i++) {
-        const angle = (Math.PI * 2 / splitCount) * i;
+        const angle = ((Math.PI * 2) / splitCount) * i;
         const dist = 20;
         const miniConf = GameConfig.bugs.mini;
         this.bugs.push({
@@ -820,7 +851,7 @@ export class GameEngine {
           x: bug.x + Math.cos(angle) * dist,
           y: bug.y + Math.sin(angle) * dist,
           type: 'mini',
-          speed: miniConf.baseSpeed + (this.wave * miniConf.speedPerWave),
+          speed: miniConf.baseSpeed + this.wave * miniConf.speedPerWave,
           color: miniConf.color,
           size: miniConf.size,
           scoreValue: miniConf.score,
@@ -865,6 +896,9 @@ export class GameEngine {
       radiusLevel: this.radiusLevel,
       timestamp: Date.now(),
       biome: this.currentBiome,
+      // Persist the rage meter + FURY cooldown so a saved run restores the vent state.
+      weaponHeat: this.weaponHeat,
+      furyCooldownTimer: this.furyCooldownTimer,
     };
   }
 
@@ -882,12 +916,17 @@ export class GameEngine {
     }
 
     this.resetEntities();
+    // Restore the rage meter + FURY ignition cooldown AFTER resetEntities()
+    // (which zeroes them) so a mid-run save/load carries the vent state forward.
+    this.weaponHeat = Math.min(GameConfig.rage.maxHeat, Math.max(0, data.weaponHeat ?? 0));
+    this.furyCooldownTimer = Math.max(0, data.furyCooldownTimer ?? 0);
     this.waveManager.waveActive = false;
   }
 
   syncSkills() {
     const data = ProgressionManager.getData();
-    this.maxHealth = GameConfig.player.maxHealth + ProgressionManager.getSkillBonus('hardened_hull');
+    this.maxHealth =
+      GameConfig.player.maxHealth + ProgressionManager.getSkillBonus('hardened_hull');
     this.clickRadiusMultiplier = 1 + ProgressionManager.getSkillBonus('amplified_pulse');
     this.damageMultiplier = 1 + ProgressionManager.getSkillBonus('kinetic_amplifier');
     this.prestigeLevel = data.prestigeLevel;
@@ -916,7 +955,7 @@ export class GameEngine {
         soundManager.skillUpgrade();
         break;
       case 'emp_generator':
-        this.bugs.forEach(b => {
+        this.bugs.forEach((b) => {
           if (b.type !== 'boss') {
             b.hp = 0;
             this.particleSystem.spawnExplosion(b.x, b.y, b.color);
@@ -942,7 +981,10 @@ export class GameEngine {
     if (this.furyActive) {
       this.furyTimer -= dt;
       // Drain the meter to match the advertised duration: 100 / 4s = 25/s
-      this.weaponHeat = Math.max(0, this.weaponHeat - (GameConfig.rage.maxHeat / this.furyDuration) * dt);
+      this.weaponHeat = Math.max(
+        0,
+        this.weaponHeat - (GameConfig.rage.maxHeat / this.furyDuration) * dt,
+      );
       if (this.furyTimer <= 0 || this.weaponHeat <= 0) {
         this.furyActive = false;
         this.furyTimer = 0;
@@ -970,7 +1012,7 @@ export class GameEngine {
     // the meter is ready to charge the moment an eruption ends)
     this.rageGainBudget = Math.min(
       this.rageGainBudgetMax,
-      this.rageGainBudget + this.rageGainBudgetMax * dt
+      this.rageGainBudget + this.rageGainBudgetMax * dt,
     );
 
     if (this.shakeTime > 0) this.shakeTime -= dt;
@@ -992,12 +1034,18 @@ export class GameEngine {
     }
 
     // Decrement active ability cooldowns and durations
-    if (this.bioshieldCooldown > 0) this.bioshieldCooldown = Math.max(0, this.bioshieldCooldown - dt);
-    if (this.bioshieldActiveTime > 0) this.bioshieldActiveTime = Math.max(0, this.bioshieldActiveTime - dt);
-    if (this.overdriveCooldown > 0) this.overdriveCooldown = Math.max(0, this.overdriveCooldown - dt);
-    if (this.overdriveActiveTime > 0) this.overdriveActiveTime = Math.max(0, this.overdriveActiveTime - dt);
-    if (this.empShatterCooldown > 0) this.empShatterCooldown = Math.max(0, this.empShatterCooldown - dt);
-    if (this.empShatterActiveTime > 0) this.empShatterActiveTime = Math.max(0, this.empShatterActiveTime - dt);
+    if (this.bioshieldCooldown > 0)
+      this.bioshieldCooldown = Math.max(0, this.bioshieldCooldown - dt);
+    if (this.bioshieldActiveTime > 0)
+      this.bioshieldActiveTime = Math.max(0, this.bioshieldActiveTime - dt);
+    if (this.overdriveCooldown > 0)
+      this.overdriveCooldown = Math.max(0, this.overdriveCooldown - dt);
+    if (this.overdriveActiveTime > 0)
+      this.overdriveActiveTime = Math.max(0, this.overdriveActiveTime - dt);
+    if (this.empShatterCooldown > 0)
+      this.empShatterCooldown = Math.max(0, this.empShatterCooldown - dt);
+    if (this.empShatterActiveTime > 0)
+      this.empShatterActiveTime = Math.max(0, this.empShatterActiveTime - dt);
   }
 
   private updateMetrics(dt: number) {
@@ -1012,7 +1060,7 @@ export class GameEngine {
     }
     const safetyBonus = Math.min(1.0, (this.globalTime - this.lastHitTime) / 20);
     const streakBonus = Math.min(1.0, this.streakCount / 50);
-    this.performanceFactor = 0.8 + (safetyBonus * 0.7) + (streakBonus * 1.0);
+    this.performanceFactor = 0.8 + safetyBonus * 0.7 + streakBonus * 1.0;
     this.playTimeAccumulator += dt;
     if (this.playTimeAccumulator >= 10) {
       StatsManager.updateStats({ totalPlayTime: 10 });
@@ -1025,11 +1073,19 @@ export class GameEngine {
   }
 
   private updateTurrets(dt: number) {
-    if (this.autoTurretLevel > 0 || this.rapidFireTimer > 0 || this.overdriveTimer > 0 || this.overdriveActiveTime > 0) {
+    if (
+      this.autoTurretLevel > 0 ||
+      this.rapidFireTimer > 0 ||
+      this.overdriveTimer > 0 ||
+      this.overdriveActiveTime > 0
+    ) {
       this.autoTurretTimer += dt * this.hazardSlowdown;
       const baseFireRate = GameConfig.upgrades.turret.baseFireRate;
-      let fireRate = Math.max(GameConfig.upgrades.turret.minFireRate,
-        baseFireRate - this.autoTurretLevel * GameConfig.upgrades.turret.fireRateReduction - ProgressionManager.getSkillBonus('sentry_optimization')
+      let fireRate = Math.max(
+        GameConfig.upgrades.turret.minFireRate,
+        baseFireRate -
+          this.autoTurretLevel * GameConfig.upgrades.turret.fireRateReduction -
+          ProgressionManager.getSkillBonus('sentry_optimization'),
       );
       if (this.overdriveTimer > 0 || this.overdriveActiveTime > 0) fireRate *= 0.2;
       if (this.rapidFireTimer > 0) fireRate = 0.05;
@@ -1045,7 +1101,7 @@ export class GameEngine {
         this.missileSentryTimer += dt;
         if (this.missileSentryTimer >= 10.0) {
           this.missileSentryTimer = 0;
-          const threatTargets = this.bugs.filter(b => b.active && b.hp > 0);
+          const threatTargets = this.bugs.filter((b) => b.active && b.hp > 0);
           if (threatTargets.length > 0) {
             const target = threatTargets[0];
             this.particleSystem.spawnLaser(this.coreX, this.coreY, target.x, target.y, '#fd8432');
@@ -1147,7 +1203,7 @@ export class GameEngine {
     if (this.challengeModifiers) {
       speed *= this.challengeModifiers.bugSpeedMultiplier;
       if (this.challengeModifiers.speedDemonActive) {
-        speed *= (1 + this.challengeBugSpeedBonus);
+        speed *= 1 + this.challengeBugSpeedBonus;
       }
       if (this.challengeModifiers.frostbiteActive) {
         // Slow to 20% speed when close to core, speed up over time
@@ -1159,7 +1215,8 @@ export class GameEngine {
     let vx = (dx / dist) * speed;
     let vy = (dy / dist) * speed;
     if (bug.type === 'scout' || bug.type === 'swarmer') {
-      const erratic = Math.sin(this.globalTime * 10 + bug.offsetTime) * (bug.type === 'swarmer' ? 1.2 : 0.5);
+      const erratic =
+        Math.sin(this.globalTime * 10 + bug.offsetTime) * (bug.type === 'swarmer' ? 1.2 : 0.5);
       vx += -vy * erratic;
       vy += (dx / dist) * speed * erratic;
     }
@@ -1219,7 +1276,7 @@ export class GameEngine {
     if (this.dashTimer > 0) {
       this.dashTimer -= dt;
 
-      const t = 1 - (this.dashTimer / this.dashDuration);
+      const t = 1 - this.dashTimer / this.dashDuration;
       const ease = t * (2 - t);
       this.coreX = this.dashStartX + (this.dashTargetX - this.dashStartX) * ease;
       this.coreY = this.dashStartY + (this.dashTargetY - this.dashStartY) * ease;

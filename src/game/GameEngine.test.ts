@@ -40,7 +40,7 @@ vi.mock('./SoundManager', () => ({
     miss: vi.fn(),
     comboBreak: vi.fn(),
     setReducedMotion: vi.fn(),
-  }
+  },
 }));
 
 describe('GameEngine', () => {
@@ -68,27 +68,28 @@ describe('GameEngine', () => {
     const cappedPerf = Math.min(engine.performanceFactor, 1.5);
     const perfBonus = Math.floor(cappedPerf * 3);
     expect(engine.waveManager.bugsToSpawn).toBe(expectedBase + perfBonus);
-    
+
     (engine.waveManager as any).spawnBug();
     expect(engine.bugs.length).toBe(1);
     expect(engine.waveManager.bugsToSpawn).toBe(expectedBase + perfBonus - 1);
-    
+
     const bug = engine.bugs[0];
     expect(bug.active).toBe(true);
     expect(['basic', 'scout', 'tank', 'swarmer', 'ghost']).toContain(bug.type);
-  });    it('should damage and kill bugs', () => {
+  });
+  it('should damage and kill bugs', () => {
     engine.startWave();
     (engine.waveManager as any).spawnBug();
     const bug = engine.bugs[0];
-    
+
     // Force bug type to basic for predictable HP
     bug.type = 'basic';
     bug.hp = 1;
     bug.maxHp = 1;
     bug.scoreValue = 10;
-    
+
     engine.damageBug(bug, 1);
-    
+
     expect(bug.hp).toBeLessThanOrEqual(0);
     expect(engine.bugs.length).toBe(0);
     expect(engine.score).toBe(10);
@@ -114,11 +115,11 @@ describe('GameEngine', () => {
     (engine.waveManager as any).spawnBug();
     (engine.waveManager as any).spawnBug();
     (engine.waveManager as any).spawnBug();
-    
+
     expect(engine.bugs.length).toBe(3);
-    
+
     engine.activatePowerup('nuke');
-    
+
     expect(engine.bugs.length).toBe(0);
     expect(engine.score).toBeGreaterThan(0);
   });
@@ -126,19 +127,19 @@ describe('GameEngine', () => {
   it('should handle bug reaching the base', () => {
     engine.startWave();
     (engine.waveManager as any).spawnBug();
-    
+
     const bug = engine.bugs[0];
     // Align bug with core position
     engine.coreX = engine.width / 2;
     engine.coreY = engine.height / 2;
     bug.x = engine.width / 2;
     bug.y = engine.height / 2;
-    
+
     const initialHealth = engine.health;
-    
+
     // Trigger update to process collision
     engine.update(0.1);
-    
+
     expect(engine.bugs.length).toBe(0); // Bug should be destroyed
     expect(engine.health).toBe(initialHealth - GameConfig.player.hitDamage);
   });
@@ -146,18 +147,18 @@ describe('GameEngine', () => {
   it('should protect base when shield is active', () => {
     engine.startWave();
     (engine.waveManager as any).spawnBug();
-    
+
     const bug = engine.bugs[0];
     engine.coreX = engine.width / 2;
     engine.coreY = engine.height / 2;
     bug.x = engine.width / 2;
     bug.y = engine.height / 2;
-    
+
     engine.activatePowerup('shield');
     const initialHealth = engine.health;
-    
+
     engine.update(0.1);
-    
+
     expect(engine.bugs.length).toBe(0); // Bug should be destroyed
     expect(engine.health).toBe(initialHealth); // Health should not decrease
   });
@@ -205,6 +206,31 @@ describe('GameEngine', () => {
     expect(engine.waveManager.waveActive).toBe(false);
   });
 
+  it('exports and imports the rage meter + FURY cooldown so a saved run restores the vent state', () => {
+    engine.weaponHeat = 64;
+    engine.furyCooldownTimer = 9;
+
+    const exported = engine.exportState();
+    expect(exported.weaponHeat).toBe(64);
+    expect(exported.furyCooldownTimer).toBe(9);
+
+    // Simulate a fresh run mid-load: rage state gone
+    engine.weaponHeat = 0;
+    engine.furyCooldownTimer = 0;
+    engine.importState(exported);
+
+    // resetEntities() zeroes the meter inside importState — the restore must
+    // run AFTER it so the saved vent value survives the round trip.
+    expect(engine.weaponHeat).toBe(64);
+    expect(engine.furyCooldownTimer).toBe(9);
+  });
+
+  it('clamps out-of-range rage values on import', () => {
+    engine.importState({ ...engine.exportState(), weaponHeat: 500, furyCooldownTimer: -3 });
+    expect(engine.weaponHeat).toBe(GameConfig.rage.maxHeat);
+    expect(engine.furyCooldownTimer).toBe(0);
+  });
+
   it('applies daily challenge modifiers to combat stats', () => {
     engine.setChallengeModifiers(['glass_cannon', 'fast_bugs']);
     expect(engine.challengeModifiers?.playerDamageMultiplier).toBe(2);
@@ -244,9 +270,9 @@ describe('GameEngine', () => {
     ProgressionManager.addResource('scrap', 200);
     ProgressionManager.addResource('alloy', 50);
     ProgressionManager.addResource('flux', 10);
-    expect(
-      ProgressionManager.craftItem('emp_generator', { scrap: 100, alloy: 10, flux: 2 })
-    ).toBe(true);
+    expect(ProgressionManager.craftItem('emp_generator', { scrap: 100, alloy: 10, flux: 2 })).toBe(
+      true,
+    );
 
     engine.startWave();
     (engine.waveManager as any).spawnBug();
@@ -254,7 +280,7 @@ describe('GameEngine', () => {
     expect(engine.bugs.length).toBe(2);
 
     expect(engine.consumeConsumable('emp_generator')).toBe(true);
-    expect(engine.bugs.every((bug) => bug.type !== 'boss' ? bug.hp === 0 : true)).toBe(true);
+    expect(engine.bugs.every((bug) => (bug.type !== 'boss' ? bug.hp === 0 : true))).toBe(true);
   });
 
   it('should trigger game over when health reaches zero', () => {
@@ -684,7 +710,7 @@ describe('GameEngine', () => {
     const simulateWave = (
       eng: GameEngine,
       actions: ('hit' | 'miss' | 'slam')[],
-      seconds: number
+      seconds: number,
     ) => {
       const dt = seconds / Math.max(1, actions.length);
       for (const action of actions) {
@@ -712,8 +738,27 @@ describe('GameEngine', () => {
     it('a typical wave (15 hits, 5 misses, 1 slam over ~25s) erupts FURY exactly once', () => {
       // 15 hits / 5 misses / 1 slam, interleaved like real play, 21 actions over 25s
       const actions: ('hit' | 'miss' | 'slam')[] = [
-        'hit', 'miss', 'hit', 'hit', 'miss', 'hit', 'hit', 'miss', 'hit', 'hit',
-        'miss', 'hit', 'hit', 'miss', 'hit', 'slam', 'hit', 'hit', 'hit', 'hit', 'hit',
+        'hit',
+        'miss',
+        'hit',
+        'hit',
+        'miss',
+        'hit',
+        'hit',
+        'miss',
+        'hit',
+        'hit',
+        'miss',
+        'hit',
+        'hit',
+        'miss',
+        'hit',
+        'slam',
+        'hit',
+        'hit',
+        'hit',
+        'hit',
+        'hit',
       ];
       expect(actions.filter((a) => a === 'hit').length).toBe(15);
       expect(actions.filter((a) => a === 'miss').length).toBe(5);
@@ -728,7 +773,16 @@ describe('GameEngine', () => {
 
     it('sparse play (8 hits, 2 misses over 30s) never erupts — decay wins', () => {
       const actions: ('hit' | 'miss' | 'slam')[] = [
-        'hit', 'hit', 'miss', 'hit', 'hit', 'miss', 'hit', 'hit', 'hit', 'hit',
+        'hit',
+        'hit',
+        'miss',
+        'hit',
+        'hit',
+        'miss',
+        'hit',
+        'hit',
+        'hit',
+        'hit',
       ];
       simulateWave(engine, actions, 30);
       expect(engine.furyTriggers).toBe(0);
@@ -737,8 +791,27 @@ describe('GameEngine', () => {
     it('double the input over two waves erupts roughly twice (cadence scales with volume)', () => {
       // Two copies of the typical wave schedule over 50s
       const wave: ('hit' | 'miss' | 'slam')[] = [
-        'hit', 'miss', 'hit', 'hit', 'miss', 'hit', 'hit', 'miss', 'hit', 'hit',
-        'miss', 'hit', 'hit', 'miss', 'hit', 'slam', 'hit', 'hit', 'hit', 'hit', 'hit',
+        'hit',
+        'miss',
+        'hit',
+        'hit',
+        'miss',
+        'hit',
+        'hit',
+        'miss',
+        'hit',
+        'hit',
+        'miss',
+        'hit',
+        'hit',
+        'miss',
+        'hit',
+        'slam',
+        'hit',
+        'hit',
+        'hit',
+        'hit',
+        'hit',
       ];
       simulateWave(engine, [...wave, ...wave], 50);
       expect(engine.furyTriggers).toBeGreaterThanOrEqual(2);
