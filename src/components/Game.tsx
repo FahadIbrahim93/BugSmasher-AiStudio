@@ -154,9 +154,9 @@ export function Game({
       handleGameOver(score);
     };
 
-    window.addEventListener('bugsmasher:force-game-over', handleForcedGameOver as EventListener);
+    window.addEventListener('bugsmasher:force-game-over', handleForcedGameOver);
     return () => {
-      window.removeEventListener('bugsmasher:force-game-over', handleForcedGameOver as EventListener);
+      window.removeEventListener('bugsmasher:force-game-over', handleForcedGameOver);
     };
   }, [handleGameOver]);
 
