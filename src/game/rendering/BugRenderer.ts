@@ -6,8 +6,11 @@ import { GameConfig } from '../GameConfig';
 import { getActiveCoreThemeConfig } from '../CosmeticsManager';
 import type { Renderer } from '../Renderer';
 import type { PerformanceScaler } from './PerformanceScaler';
+import { BugSpriteCache } from './BugSpriteCache';
 
 export class BugRenderer {
+  private readonly bugSpriteCache = new BugSpriteCache();
+
   constructor(
     protected engine: GameEngine,
     protected parent: Renderer,
@@ -354,8 +357,6 @@ export class BugRenderer {
 
     ctx.rotate(bug.rotation);
     
-    const legSwing = Math.sin(bug.walkCycle) * 0.8;
-    
     ctx.fillStyle = bug.color;
     ctx.strokeStyle = bug.color;
     ctx.lineWidth = 1;
@@ -391,8 +392,7 @@ export class BugRenderer {
       ctx.shadowBlur = 10;
     }
 
-    // Body Detailing
-    this.drawBugBody(bug, legSwing);
+    this.drawBugBody(bug, 0);
 
     if (this.engine.accessibility?.showEnemyShapes) {
       this.drawEnemyShapeMarker(bug);
@@ -419,6 +419,10 @@ export class BugRenderer {
     // Technical overlay (circuit patterns) - skip on low FPS
     if ((bug.type === 'boss' || bug.type === 'tank') && this.currentFps > 40) {
         this.drawTechnicalDetails(bug);
+    }
+
+    if (bug.type === 'boss') {
+      this.drawBossSpriteOverlays(bug);
     }
 
     // Mandible boss special armor visualization - skip on low FPS
@@ -472,6 +476,16 @@ export class BugRenderer {
         ctx.fillRect(bx, by, barW * hpRatio, barH);
       }
     }
+  }
+
+
+  private drawBugSprite(bug: Bug) {
+    const ctx = this.engine.ctx;
+    const sprite = this.bugSpriteCache.getSprite(bug);
+    const spriteScale = 30 / sprite.width;
+    ctx.save();
+    ctx.drawImage(sprite, -sprite.width * spriteScale / 2, -sprite.height * spriteScale / 2, sprite.width * spriteScale, sprite.height * spriteScale);
+    ctx.restore();
   }
 
   private drawEnemyShapeMarker(bug: Bug) {
@@ -534,11 +548,9 @@ export class BugRenderer {
     ctx.restore();
   }
 
-  drawBugBody(bug: Bug, legSwing: number) {
+  drawBugBody(bug: Bug, _legSwing: number) {
     const ctx = this.engine.ctx;
-    const _t = this.engine.globalTime; // may be used in full fn
 
-    // Skip detailed body rendering on critically low FPS — use simple circle
     if (this.currentFps < 25) {
       ctx.fillStyle = bug.color;
       ctx.beginPath();
@@ -550,548 +562,12 @@ export class BugRenderer {
       return;
     }
 
-    if (bug.type === 'scout') {
-      this.drawScoutBody(bug, legSwing);
-    } else if (bug.type === 'tank') {
-      this.drawTankBody(bug, legSwing);
-    } else if (bug.type === 'healer') {
-      this.drawHealerBody(bug);
-    } else if (bug.type === 'boss') {
-      this.drawBossBody(bug);
-    } else if (bug.type === 'swarmer' || bug.type === 'mini') {
-      this.drawSwarmerBody(bug);
-    } else if (bug.type === 'phase') {
-      this.drawPhaseBody(bug);
-    } else if (bug.type === 'ember') {
-      this.drawEmberBody(bug);
-    } else if (bug.type === 'frost') {
-      this.drawFrostBody(bug);
-    } else {
-      this.drawBeetleBody(bug, legSwing);
-    }
+    this.drawBugSprite(bug);
   }
 
-  private drawLegSegment(x: number, y: number, side: number, swing: number, joint1: number, joint2: number) {
-    const ctx = this.engine.ctx;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    
-    const midX = x + side * joint1;
-    const midY = y + swing * 15;
-    const endX = x + side * (joint1 + joint2);
-    const endY = y + swing * 5;
-    
-    ctx.quadraticCurveTo(midX, midY, endX, endY);
-    ctx.stroke();
-    
-    // Joint dot
-    ctx.fillStyle = ctx.strokeStyle;
-    ctx.beginPath(); ctx.arc(midX, midY, 1.5, 0, Math.PI * 2); ctx.fill();
-  }
-
-  private drawBeetleBody(bug: Bug, legSwing: number) {
-    const ctx = this.engine.ctx;
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = bug.color;
-
-    // Legs
-    for (let i = 0; i < 3; i++) {
-      const y = -10 + i * 15;
-      const swing = (i % 2 === 0 ? legSwing : -legSwing);
-      this.drawLegSegment(-10, y, -1, swing, 15, 10);
-      this.drawLegSegment(10, y, 1, -swing, 15, 10);
-    }
-
-    // Body segments with solid fill (avoids expensive gradient per bug)
-    ctx.fillStyle = bug.color;
-    
-    // Abdomen (Large back)
-    ctx.beginPath();
-    ctx.ellipse(0, 15, 18, 22, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.4)';
-    ctx.stroke();
-
-    // Thorax (Middle)
-    ctx.beginPath();
-    ctx.ellipse(0, -5, 15, 12, 0, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Head
-    ctx.beginPath();
-    ctx.arc(0, -22, 11, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Wings/Shell line
-    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 35); ctx.stroke();
-  }
-
-  private drawScoutBody(bug: Bug, _legSwing: number) {
+  private drawBossSpriteOverlays(bug: Bug) {
     const ctx = this.engine.ctx;
     const t = this.engine.globalTime;
-    const wingVibe = Math.sin(t * 80) * 15; // Extremely rapid flutter
-
-    // 1. Transparent Wings
-    ctx.save();
-    ctx.globalAlpha = 0.55;
-    ctx.fillStyle = 'rgba(240, 240, 255, 0.6)';
-    ctx.strokeStyle = bug.color;
-    ctx.lineWidth = 1;
-
-    // Left wings
-    ctx.beginPath();
-    ctx.ellipse(-12, -8, 22, 10, -Math.PI/6 + wingVibe/80, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-    ctx.beginPath();
-    ctx.ellipse(-15, 2, 16, 7, -Math.PI/4 + wingVibe/100, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-
-    // Right wings
-    ctx.beginPath();
-    ctx.ellipse(12, -8, 22, 10, Math.PI/6 - wingVibe/80, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-    ctx.beginPath();
-    ctx.ellipse(15, 2, 16, 7, Math.PI/4 - wingVibe/100, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-    ctx.restore();
-
-    // 2. Organic Segmented Body
-    // Abdomen (gummy egg-shaped back)
-    const animScale = 1.0 + Math.sin(t * 10) * 0.05;
-    ctx.fillStyle = bug.color;
-    ctx.beginPath();
-    ctx.ellipse(0, 14 * animScale, 10, 18 * animScale, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Stripe detailing across abdomen
-    ctx.strokeStyle = '#050505';
-    ctx.lineWidth = 1.5;
-    for (let i = -1; i <= 2; i++) {
-      const sy = 14 + i * 5;
-      ctx.beginPath();
-      ctx.arc(0, sy, 9, Math.PI * 0.15, Math.PI * 0.85);
-      ctx.stroke();
-    }
-
-    // Thorax (midpart)
-    ctx.fillStyle = bug.color;
-    ctx.beginPath();
-    ctx.ellipse(0, -5, 8, 8, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Head
-    ctx.beginPath();
-    ctx.arc(0, -18, 6, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Red bug eyes
-    ctx.fillStyle = '#ff3333';
-    ctx.beginPath();
-    ctx.arc(-4, -19, 2, 0, Math.PI * 2);
-    ctx.arc(4, -19, 2, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Antennae
-    ctx.strokeStyle = bug.color;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(-3, -22);
-    ctx.quadraticCurveTo(-8, -32, -12, -35);
-    ctx.moveTo(3, -22);
-    ctx.quadraticCurveTo(8, -32, 12, -35);
-    ctx.stroke();
-  }
-
-  private drawTankBody(bug: Bug, legSwing: number) {
-    const ctx = this.engine.ctx;
-    ctx.lineWidth = 2.5;
-    ctx.strokeStyle = bug.color;
-
-    // Heavy segmented scuttling legs
-    for (let i = 0; i < 3; i++) {
-        const y = -12 + i * 16;
-        const swing = (i % 2 === 0 ? legSwing : -legSwing) * 0.6;
-        this.drawLegSegment(-18, y, -1, swing, 18, 12);
-        this.drawLegSegment(18, y, 1, -swing, 18, 12);
-    }
-
-    // Heavy armor beetle shell plates
-    ctx.fillStyle = bug.color;
-    for (let i = 0; i < 4; i++) {
-        const y = -28 + i * 16;
-        const width = 22 - Math.abs(i - 1.5) * 3;
-        ctx.beginPath();
-        ctx.ellipse(0, y, width, 12, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        
-        // Highlight on carapace plates
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
-        ctx.beginPath();
-        ctx.ellipse(0, y - 4, width * 0.8, 4, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = bug.color;
-    }
-
-    // Massive organic Mandibles at the head
-    ctx.strokeStyle = bug.color;
-    ctx.lineWidth = 3.5;
-    const mandibleOpen = Math.sin(this.engine.globalTime * 8) * 0.15 + 0.15;
-    
-    ctx.save();
-    ctx.translate(0, -32);
-    // Left mandible curving inwards
-    ctx.beginPath();
-    ctx.arc(-6, 0, 15, Math.PI * 1.1 + mandibleOpen, Math.PI * 1.7 + mandibleOpen);
-    ctx.stroke();
-    // Right mandible
-    ctx.beginPath();
-    ctx.arc(6, 0, 15, Math.PI * 1.9 - mandibleOpen, Math.PI * 1.3 - mandibleOpen, true);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  private drawHealerBody(bug: Bug) {
-    const ctx = this.engine.ctx;
-    const t = this.engine.globalTime;
-
-    // Glimmering Healing Aura
-    const auraAlpha = 0.2 + Math.sin(t * 8) * 0.08;
-    ctx.beginPath();
-    ctx.arc(0, 0, 60, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(0, 255, 150, ${auraAlpha})`;
-    ctx.fill();
-
-    // 1. Fluttering wings
-    const swing = Math.sin(t * 30) * 12;
-    ctx.save();
-    ctx.globalAlpha = 0.7;
-    ctx.fillStyle = 'rgba(210, 255, 240, 0.55)';
-    ctx.strokeStyle = '#00ffcc';
-    ctx.lineWidth = 1;
-
-    ctx.beginPath();
-    ctx.ellipse(-14, -6, 25, 12, -Math.PI/6 + swing/100, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-    ctx.beginPath();
-    ctx.ellipse(14, -6, 25, 12, Math.PI/6 - swing/100, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-    ctx.restore();
-
-    // 2. Pulsing bio-luminescent abdomen (the medicine sac)
-    const glowScale = 1.0 + Math.sin(t * 12) * 0.12;
-    ctx.fillStyle = bug.color;
-    ctx.beginPath();
-    ctx.ellipse(0, 16, 11 * glowScale, 18 * glowScale, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Active glow light center
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.ellipse(0, 16, 6 * glowScale, 10 * glowScale, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Thorax
-    ctx.fillStyle = bug.color;
-    ctx.beginPath();
-    ctx.ellipse(0, -6, 8, 8, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Head
-    ctx.beginPath();
-    ctx.arc(0, -18, 6, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Glowing green bug eyes
-    ctx.fillStyle = '#00ffcc';
-    ctx.beginPath();
-    ctx.arc(-3, -19, 1.8, 0, Math.PI * 2);
-    ctx.arc(3, -19, 1.8, 0, Math.PI * 2);
-    ctx.fill();
-
-    if (bug.isHealing) {
-      this.drawHealingPulses(bug);
-    }
-  }
-
-  private drawHealingPulses(bug: Bug) {
-    const ctx = this.engine.ctx;
-    const t = this.engine.globalTime;
-    const pulse = (t % 0.8) / 0.8;
-    ctx.strokeStyle = `rgba(100, 255, 200, ${1 - pulse})`;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(0, 0, 20 + pulse * 80, 0, Math.PI * 2);
-    ctx.stroke();
-
-    const healerScale = bug.size / 15;
-    this.engine.bugs.forEach(other => {
-      if (other !== bug && other.active) {
-          const dx = other.x - bug.x;
-          const dy = other.y - bug.y;
-          const distSq = dx * dx + dy * dy;
-          if (distSq < 150 * 150) {
-            this.drawHealingBeam(0, 0, dx / healerScale, dy / healerScale, bug.color);
-          }
-      }
-    });
-  }
-
-  private drawSwarmerBody(bug: Bug) {
-    const ctx = this.engine.ctx;
-    const t = this.engine.globalTime;
-
-    // Organic little spider/ant body
-    ctx.fillStyle = bug.color;
-    ctx.strokeStyle = '#050505';
-    ctx.lineWidth = 1.5;
-
-    // 1. Leg motion
-    const legsCount = 4; // 4 pairs of legs
-    const legVibe = Math.sin(t * 22) * 8;
-    for (let i = 0; i < legsCount; i++) {
-        const y = -8 + i * 8;
-        const swing = (i % 2 === 0 ? legVibe : -legVibe);
-        
-        ctx.beginPath();
-        ctx.moveTo(-10, y);
-        ctx.quadraticCurveTo(-18, y - 5 + swing, -28, y - 2 + swing);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(10, y);
-        ctx.quadraticCurveTo(18, y - 5 - swing, 28, y - 2 - swing);
-        ctx.stroke();
-    }
-
-    // 2. Abdomen segment (egg shaped)
-    ctx.beginPath();
-    ctx.ellipse(0, 10, 8, 12, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    // 3. Thorax & Head
-    ctx.beginPath();
-    ctx.arc(0, -5, 6, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.arc(0, -14, 4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-  }
-
-  private drawPhaseBody(bug: Bug) {
-    const ctx = this.engine.ctx;
-    const t = this.engine.globalTime;
-    const alpha = 0.45 + Math.sin(t * 12) * 0.25;
-    
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = bug.color;
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-    ctx.lineWidth = 1.5;
-
-    // Head-Thorax-Abdomen Ghost contours
-    ctx.beginPath();
-    ctx.ellipse(0, 12, 11, 15, 0, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-
-    ctx.beginPath();
-    ctx.ellipse(0, -4, 9, 8, 0, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-
-    ctx.beginPath();
-    ctx.arc(0, -16, 7, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
-
-    // Subtle shifting ghost shield ring
-    ctx.strokeStyle = bug.color;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(0, 0, 24 + Math.sin(t * 8) * 4, 0, Math.PI * 2);
-    ctx.stroke();
-
-    ctx.restore();
-  }
-
-  private drawEmberBody(_bug: Bug) {
-    const ctx = this.engine.ctx;
-    const t = this.engine.globalTime;
-    
-    // Inner Glow
-    const glow = 20 + Math.sin(t * 15) * 10;
-    const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, glow);
-    grad.addColorStop(0, '#ffcc00');
-    grad.addColorStop(1, 'transparent');
-    ctx.fillStyle = grad;
-    ctx.beginPath(); ctx.arc(0, 0, Math.max(0, glow), 0, Math.PI * 2); ctx.fill();
-
-    // Magma Shell
-    ctx.fillStyle = '#441100';
-    ctx.beginPath();
-    ctx.roundRect(-18, -18, 36, 36, 6);
-    ctx.fill();
-    
-    // Glowing Cracks
-    ctx.strokeStyle = '#ff4400';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-10, -10); ctx.lineTo(10, 10);
-    ctx.moveTo(10, -10); ctx.lineTo(-10, 10);
-    ctx.stroke();
-  }
-
-  private drawFrostBody(_bug: Bug) {
-    const ctx = this.engine.ctx;
-    const t = this.engine.globalTime;
-    
-    // Ice Lattice
-    ctx.strokeStyle = '#8bd8ff';
-    ctx.lineWidth = 1;
-    for (let i = 0; i < 6; i++) {
-        const angle = (i / 6) * Math.PI * 2 + (t * 0.5);
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(Math.cos(angle) * 30, Math.sin(angle) * 30);
-        ctx.stroke();
-    }
-
-    // Crystalline Core
-    ctx.fillStyle = '#00ccff';
-    ctx.beginPath();
-    ctx.moveTo(0, -22);
-    ctx.lineTo(18, 0);
-    ctx.lineTo(0, 22);
-    ctx.lineTo(-18, 0);
-    ctx.closePath();
-    ctx.fill();
-    
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.beginPath();
-    ctx.moveTo(0, -22); ctx.lineTo(10, 0); ctx.lineTo(0, 5); ctx.closePath();
-    ctx.fill();
-  }
-
-
-  drawSidePlates(_bug: Bug) {
-    const ctx = this.engine.ctx;
-    ctx.fillStyle = '#00000033';
-    ctx.fillRect(-30, -15, 10, 30);
-    ctx.fillRect(20, -15, 10, 30);
-  }
-
-  drawTankLegs(bug: Bug) {
-    const ctx = this.engine.ctx;
-    ctx.strokeStyle = bug.color;
-    for (let i = 0; i < 3; i++) {
-      const y = -15 + i * 15;
-      ctx.beginPath();
-      ctx.moveTo(-25, y); ctx.lineTo(-40, y + (i-1)*5);
-      ctx.moveTo(25, y); ctx.lineTo(40, y + (i-1)*5);
-      ctx.stroke();
-    }
-  }
-
-  drawBossBody(bug: Bug) {
-    const ctx = this.engine.ctx;
-    const t = this.engine.globalTime;
-    
-    // VARIANT: Arachne Spindly Legs
-    if (bug.variantId === 'arachne') {
-      const pulse = Math.sin(t * 8) * 0.5 + 0.5;
-      ctx.strokeStyle = bug.color;
-      ctx.lineWidth = 2 + pulse * 2;
-      ctx.shadowBlur = 10 + pulse * 10;
-      ctx.shadowColor = bug.color;
-      
-      for (let i = 0; i < 8; i++) {
-        const angle = (i / 8) * Math.PI * 2 + Math.sin(t * 5 + i) * 0.2;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        const r1 = 35; 
-        const r2 = 110 + Math.sin(t * 12 + i) * 15;
-        // Jointed leg look
-        const midX = Math.cos(angle - 0.2) * r1 * 1.5;
-        const midY = Math.sin(angle - 0.2) * r1 * 1.5;
-        ctx.lineTo(midX, midY);
-        ctx.lineTo(Math.cos(angle + 0.1) * r2, Math.sin(angle + 0.1) * r2);
-        ctx.stroke();
-      }
-      ctx.shadowBlur = 0;
-    }
-
-    // VARIANT: Steel Mandible
-    if (bug.variantId === 'mandible') {
-      const open = bug.armor === 1.0; 
-      const angle = open ? 0.9 : 0.15;
-      const vibrato = !open ? Math.sin(t * 50) * 2 : 0;
-      
-      // Armored shell look
-      ctx.fillStyle = '#1a1a1a';
-      ctx.strokeStyle = bug.color;
-      ctx.lineWidth = 3;
-      
-      // Mandibles
-      for (const side of [-1, 1]) {
-        ctx.save();
-        ctx.rotate(side * angle + vibrato * 0.01);
-        
-        ctx.fillStyle = bug.color;
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 1;
-        
-        ctx.beginPath();
-        ctx.moveTo(0, -20);
-        ctx.quadraticCurveTo(side * 50, -50, side * 30, -110);
-        ctx.lineTo(side * 10, -40);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-        
-        // Inner "teeth"
-        ctx.fillStyle = '#fff';
-        for (let j = 0; j < 3; j++) {
-            ctx.beginPath();
-            ctx.arc(side * (15 + j * 5), -40 - j * 15, 2, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        ctx.restore();
-      }
-    }
-
-    // VARIANT: Moth Wings
-    if (bug.variantId === 'moth') {
-      const wingVibe = Math.sin(t * 45) * 35;
-      const shift = Math.sin(t * 2) * 20;
-      
-      ctx.shadowBlur = 15;
-      ctx.shadowColor = bug.color;
-      
-      // Layered ethereal wings with patterns
-      for (let layer = 0; layer < 2; layer++) {
-        ctx.globalAlpha = layer === 0 ? 0.2 : 0.5;
-        const sizeMod = layer === 0 ? 1.3 : 1.0;
-        ctx.fillStyle = bug.color;
-        
-        // Top Wings
-        ctx.beginPath();
-        ctx.ellipse(-55, -15 + shift, (100 + wingVibe) * sizeMod, 45 * sizeMod, 0.4, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(55, -15 + shift, (100 + wingVibe) * sizeMod, 45 * sizeMod, -0.4, 0, Math.PI * 2); ctx.fill();
-        
-        // Wing Eye Patterns
-        if (layer === 1) {
-            ctx.fillStyle = '#fff';
-            ctx.beginPath(); ctx.arc(-70, -20 + shift, 10, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(70, -20 + shift, 10, 0, Math.PI * 2); ctx.fill();
-        }
-      }
-      ctx.globalAlpha = 1.0;
-      ctx.shadowBlur = 0;
-    }
 
     ctx.strokeStyle = bug.color;
     ctx.setLineDash([5, 12]);
@@ -1100,75 +576,54 @@ export class BugRenderer {
     ctx.arc(0, 0, 85, t * 0.5, t * 0.5 + Math.PI * 2);
     ctx.stroke();
     ctx.setLineDash([]);
-    
+
     for (let i = 0; i < 3; i++) {
-        const offset = t * 2 + (i * Math.PI * 2 / 3);
-        ctx.save();
-        ctx.rotate(offset);
-        ctx.fillStyle = bug.isShielded ? '#00ffff44' : '#ffffff22';
-        ctx.fillRect(90, -8, 4, 16);
-        ctx.restore();
+      const offset = t * 2 + (i * Math.PI * 2 / 3);
+      ctx.save();
+      ctx.rotate(offset);
+      ctx.fillStyle = bug.isShielded ? '#00ffff44' : '#ffffff22';
+      ctx.fillRect(90, -8, 4, 16);
+      ctx.restore();
     }
 
-    // Main Chassis
-    ctx.fillStyle = bug.color;
-    ctx.beginPath();
-    ctx.moveTo(0, -70);
-    ctx.bezierCurveTo(60, -20, 40, 70, 0, 50);
-    ctx.bezierCurveTo(-40, 70, -60, -20, 0, -70);
-    ctx.fill();
-    
-    // Core Glow
-    const pulse = Math.abs(Math.sin(t * 5)) * 0.5 + 0.5;
-    const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, 30);
-    grad.addColorStop(0, '#fff');
-    grad.addColorStop(0.4, bug.color);
-    grad.addColorStop(1, 'transparent');
-    ctx.fillStyle = grad;
-    ctx.globalAlpha = pulse;
-    ctx.beginPath(); ctx.arc(0, 0, 30, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = 1.0;
-
-    // Ability Charging Indicators
     const conf = GameConfig.bugs.boss;
-    const barrageCharge = bug.phase >= 2 ? Math.min(1, bug.abilityTimer! / conf.barrageRate) : 0;
-    
+    const phase = bug.phase ?? 1;
+    const abilityTimer = bug.abilityTimer ?? 0;
+    const barrageCharge = phase >= 2 ? Math.min(1, abilityTimer / conf.barrageRate) : 0;
+
     if (barrageCharge > 0.7) {
-        const warningAlpha = (barrageCharge - 0.7) / 0.3;
-        ctx.save();
-        ctx.strokeStyle = `rgba(255, 0, 0, ${warningAlpha * (Math.sin(t * 20) * 0.5 + 0.5)})`;
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.arc(0, 0, 95, 0, Math.PI * 2);
-        ctx.stroke();
-        
-        ctx.fillStyle = '#ff0000';
-        ctx.font = '900 12px "JetBrains Mono", monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText('BARRAGE_IMMINENT', 0, -110);
-        ctx.restore();
+      const warningAlpha = (barrageCharge - 0.7) / 0.3;
+      ctx.save();
+      ctx.strokeStyle = `rgba(255, 0, 0, ${warningAlpha * (Math.sin(t * 20) * 0.5 + 0.5)})`;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(0, 0, 95, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = '#ff0000';
+      ctx.font = '900 12px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('BARRAGE_IMMINENT', 0, -110);
+      ctx.restore();
     }
 
     if (bug.isShielded) {
-        ctx.save();
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(0, 0, 105, 0, Math.PI * 2);
+      const shieldPulse = Math.sin(t * 10) * 0.2 + 0.8;
+      ctx.strokeStyle = `rgba(0, 255, 255, ${0.4 * shieldPulse})`;
+      ctx.lineWidth = 8;
+      ctx.stroke();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = `rgba(0, 255, 255, ${0.8 * shieldPulse})`;
+      for (let i = 0; i < 6; i++) {
+        const angle = i * Math.PI / 3 + t;
         ctx.beginPath();
-        ctx.arc(0, 0, 105, 0, Math.PI * 2);
-        
-        const sPulse = Math.sin(t * 10) * 0.2 + 0.8;
-        ctx.strokeStyle = `rgba(0, 255, 255, ${0.4 * sPulse})`;
-        ctx.lineWidth = 8;
+        ctx.moveTo(Math.cos(angle) * 105, Math.sin(angle) * 105);
+        ctx.lineTo(Math.cos(angle + Math.PI / 3) * 105, Math.sin(angle + Math.PI / 3) * 105);
         ctx.stroke();
-        
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = `rgba(0, 255, 255, ${0.8 * sPulse})`;
-        for(let i=0; i<6; i++) {
-            const ang = i * Math.PI / 3 + t;
-            ctx.beginPath();
-            ctx.moveTo(Math.cos(ang) * 105, Math.sin(ang) * 105);
-            ctx.lineTo(Math.cos(ang + Math.PI/3) * 105, Math.sin(ang + Math.PI/3) * 105);
-            ctx.stroke();
-        }
-        ctx.restore();
+      }
+      ctx.restore();
     }
   }
 
