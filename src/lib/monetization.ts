@@ -1,5 +1,10 @@
 /**
- * Cosmetics monetization stub — Stripe/RevenueCat integration point (P3-04).
+ * Cosmetics monetization stub — de-scoped for release.
+ *
+ * The game stays 100% free with no paywalls. Cosmetics monetization is a
+ * future growth feature, not part of the 10/10 production release. This module
+ * is kept as a no-op placeholder so the rest of the codebase compiles without
+ * monetization-specific imports.
  */
 
 const SUPPORTER_KEY = 'bugsmasher_supporter_pack';

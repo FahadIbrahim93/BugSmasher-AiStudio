@@ -1,5 +1,9 @@
 /**
- * Rewarded ads facade — no-op until AdMob/AdSense integration (TASKBOARD P3-05).
+ * Rewarded ads facade — de-scoped for release.
+ *
+ * The game stays 100% free with no paywalls. Ads are a future growth feature,
+ * not part of the 10/10 production release. This module is kept as a no-op
+ * placeholder so the rest of the codebase compiles without ads-specific imports.
  */
 
 export interface AdReward {

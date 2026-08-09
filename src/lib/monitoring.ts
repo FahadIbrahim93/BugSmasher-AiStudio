@@ -1,9 +1,10 @@
 /**
- * Monitoring & Error Tracking Module
- * 
- * Provides production-grade error tracking, performance monitoring,
- * and structured logging. Provider-agnostic — wire to Sentry, Datadog,
- * or similar in production via env vars.
+ * Monitoring & Error Tracking Module — de-scoped for release.
+ *
+ * The game stays 100% free with no paywalls. Crash reporting and runtime
+ * monitoring are future growth features, not part of the 10/10 production
+ * release. This module is kept as a no-op placeholder so the rest of the
+ * codebase compiles without monitoring-specific imports.
  */
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal';

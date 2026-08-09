@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Firestore rules: deny direct client writes to `private/saves` and `leaderboard`
 - Server-authoritative save/score paths (no more client-trusted leaderboard)
 - Coverage thresholds: engine/lib at 77/61/75/76 (interim, Phase 2b target: 80/70/75/80)
+- De-scoped analytics, monetization, ads, crash reporting, and monitoring from the 10/10 production release (game stays 100% free with no paywalls)
 
 ### Fixed
 

@@ -174,15 +174,17 @@
 
 ## Phase 7 — Business & Production (P1)
 
-| ID   | Task                                     | Pri | Status | Acceptance                                           |
-| ---- | ---------------------------------------- | --- | ------ | ---------------------------------------------------- |
-| B-01 | Analytics — real provider or de-scope    | P1  | [ ]    | PostHog/Mixpanel OR remove production claims         |
-| B-02 | Monetization — real provider or de-scope | P1  | [ ]    | Stripe/etc. OR cosmetics stay free-only in docs      |
-| B-03 | Ads — real provider or de-scope          | P1  | [ ]    | AdMob/etc. OR remove from release scope              |
-| B-04 | Crash reporting (Sentry/etc.)            | P1  | [ ]    | Production DSN + source maps                         |
-| B-05 | Runtime monitoring + alerting            | P2  | [ ]    | Uptime, error rate, function latency                 |
-| B-06 | Privacy policy + consent for telemetry   | P1  | [ ]    | Legal review before analytics ship                   |
-| B-07 | Product acceptance criteria doc          | P2  | [ ]    | Saves, leaderboard, offline, daily challenge defined |
+> **De-scoped for release.** Analytics, monetization, ads, and crash reporting are future growth features, not part of the 10/10 production release. The game stays 100% free with no paywalls.
+
+| ID   | Task                                     | Pri | Status | Acceptance                                                |
+| ---- | ---------------------------------------- | --- | ------ | --------------------------------------------------------- |
+| B-01 | Analytics — real provider or de-scope    | P1  | [x]    | De-scoped: no analytics in release scope                  |
+| B-02 | Monetization — real provider or de-scope | P1  | [x]    | De-scoped: cosmetics stay free-only in docs               |
+| B-03 | Ads — real provider or de-scope          | P1  | [x]    | De-scoped: no ads in release scope                        |
+| B-04 | Crash reporting (Sentry/etc.)            | P1  | [x]    | De-scoped: no crash reporting in release scope            |
+| B-05 | Runtime monitoring + alerting            | P2  | [x]    | De-scoped: no monitoring in release scope                 |
+| B-06 | Privacy policy + consent for telemetry   | P1  | [x]    | De-scoped: no telemetry in release scope                  |
+| B-07 | Product acceptance criteria doc          | P2  | [~]    | Partial: core gameplay defined; growth features de-scoped |
 
 ---
 

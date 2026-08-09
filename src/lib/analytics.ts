@@ -1,6 +1,10 @@
 /**
- * Analytics facade — provider-agnostic event tracking.
- * Wire to PostHog/Mixpanel in production via VITE_ANALYTICS_PROVIDER.
+ * Analytics facade — de-scoped for release.
+ *
+ * The game stays 100% free with no paywalls. Analytics are a future growth
+ * feature, not part of the 10/10 production release. This module is kept as a
+ * no-op placeholder so the rest of the codebase compiles without analytics-
+ * specific imports.
  */
 
 export type AnalyticsEvent =
