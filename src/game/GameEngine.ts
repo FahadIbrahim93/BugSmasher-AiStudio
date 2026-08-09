@@ -717,7 +717,7 @@ export class GameEngine {
 
     if (finalAmount >= 1) {
       this.triggerHitStop(0.05);
-      this.shake(0.05, 2);
+      this.shake(isCrit ? 0.09 : 0.05, isCrit ? 7 : 2);
     }
 
     // Reactive bug: scouts dive away from the strike point when they survive

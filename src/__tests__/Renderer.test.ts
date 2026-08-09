@@ -325,6 +325,15 @@ describe('Renderer', () => {
       expect(() => { renderer.drawBugBody(bug, 0); }).not.toThrow();
     });
 
+    it('should blit cached sprites for normal bug bodies', () => {
+      const bug = { type: 'scout', color: '#00ff00', size: 15, walkCycle: 0, rotation: 0 } as any;
+      vi.mocked(ctx.drawImage).mockClear();
+
+      renderer.drawBugBody(bug, 0);
+
+      expect(ctx.drawImage).toHaveBeenCalledTimes(1);
+    });
+
     it('should draw tank body', () => {
       const bug = { type: 'tank', color: '#ff6600', size: 25, walkCycle: 0, rotation: 0 } as any;
       expect(() => { renderer.drawBugBody(bug, 0); }).not.toThrow();

@@ -534,6 +534,23 @@ describe('GameEngine', () => {
       expect(soundManager.critHit).toHaveBeenCalled();
     });
 
+
+    it('adds a stronger juice shake on critical hits', () => {
+      engine.startWave();
+      (engine.waveManager as any).spawnBug();
+      const bug = engine.bugs[0];
+      bug.hp = 100;
+      bug.maxHp = 100;
+      bug.type = 'basic';
+      const shakeSpy = vi.spyOn(engine, 'shake');
+
+      const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0);
+      engine.damageBug(bug, 1);
+      randomSpy.mockRestore();
+
+      expect(shakeSpy).toHaveBeenCalledWith(0.09, 7);
+    });
+
     it('resetEntities clears FURY MODE state', () => {
       engine.furyActive = true;
       engine.furyTimer = 2;
