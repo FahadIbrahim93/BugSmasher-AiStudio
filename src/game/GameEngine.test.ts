@@ -877,20 +877,20 @@ describe('GameEngine', () => {
         });
 
         it('handles dash timer decay and shockwave at dash completion', () => {
-              engine.isRunning = true;
-              engine.coreX = 400;
-              engine.coreY = 300;
-              engine.dashStartX = 400;
-              engine.dashStartY = 300;
-              engine.dashTargetX = 500;
-              engine.dashTargetY = 300;
-              engine.dashTimer = engine.dashDuration;
+          engine.isRunning = true;
+          engine.coreX = 400;
+          engine.coreY = 300;
+          engine.dashStartX = 400;
+          engine.dashStartY = 300;
+          engine.dashTargetX = 500;
+          engine.dashTargetY = 300;
+          engine.dashTimer = engine.dashDuration;
 
-              // Advance past dash duration to trigger shockwave
-              engine.updateCorePhysics(engine.dashDuration + 0.5);
+          // Advance past dash duration to trigger shockwave
+          engine.updateCorePhysics(engine.dashDuration + 0.5);
 
-              expect(engine.dashTimer).toBeLessThanOrEqual(0);
-            });
+          expect(engine.dashTimer).toBeLessThanOrEqual(0);
+        });
 
         it('slides core back to center when not dashing', () => {
           engine.coreX = 300;
