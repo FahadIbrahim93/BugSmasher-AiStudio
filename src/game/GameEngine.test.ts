@@ -858,15 +858,59 @@ describe('GameEngine', () => {
     });
 
     it('resets venting counters on resetEntities', () => {
-      engine.weaponHeat = 100;
-      engine.addRage(10);
-      engine.triggerGroundSlam(400, 300, 1);
-      expect(engine.furyTriggers).toBeGreaterThan(0);
-      expect(engine.slamsUsed).toBeGreaterThan(0);
+          engine.weaponHeat = 100;
+          engine.addRage(10);
+          engine.triggerGroundSlam(400, 300, 1);
+          expect(engine.furyTriggers).toBeGreaterThan(0);
+          expect(engine.slamsUsed).toBeGreaterThan(0);
 
-      engine.resetEntities();
-      expect(engine.furyTriggers).toBe(0);
-      expect(engine.slamsUsed).toBe(0);
+          engine.resetEntities();
+          expect(engine.furyTriggers).toBe(0);
+          expect(engine.slamsUsed).toBe(0);
+        });
+
+        it('handles dash cooldown timer decay in updateCorePhysics', () => {
+          engine.dashCooldownTimer = 5;
+          const timerBefore = engine.dashCooldownTimer;
+          engine.updateCorePhysics(0.5);
+          expect(engine.dashCooldownTimer).toBeLessThan(timerBefore);
+        });
+
+        it('handles dash timer decay and shockwave at dash completion', () => {
+              engine.isRunning = true;
+              engine.coreX = 400;
+              engine.coreY = 300;
+              engine.dashStartX = 400;
+              engine.dashStartY = 300;
+              engine.dashTargetX = 500;
+              engine.dashTargetY = 300;
+              engine.dashTimer = engine.dashDuration;
+
+              // Advance past dash duration to trigger shockwave
+              engine.updateCorePhysics(engine.dashDuration + 0.5);
+
+              expect(engine.dashTimer).toBeLessThanOrEqual(0);
+            });
+
+        it('slides core back to center when not dashing', () => {
+          engine.coreX = 300;
+          engine.coreY = 250;
+
+          engine.updateCorePhysics(0.1);
+
+          // Core should slide toward center (400, 300)
+          expect(engine.coreX).toBeGreaterThan(300);
+          expect(engine.coreY).toBeGreaterThan(250);
+        });
+
+        it('snaps core to center when already close', () => {
+          engine.coreX = 399;
+          engine.coreY = 299;
+
+          engine.updateCorePhysics(0.1);
+
+          expect(engine.coreX).toBe(400);
+          expect(engine.coreY).toBe(300);
+        });
+      });
     });
-  });
-});
