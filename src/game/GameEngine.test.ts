@@ -198,6 +198,7 @@ describe('GameEngine', () => {
     engine.autoTurretLevel = 2;
 
     const exported = engine.exportState();
+
     engine.importState({ ...exported, score: 1200, wave: 8, health: 80 });
 
     expect(engine.score).toBe(1200);
@@ -796,8 +797,6 @@ describe('GameEngine', () => {
         'hit',
         'hit',
         'miss',
-        'hit',
-        'hit',
         'hit',
         'hit',
       ];
