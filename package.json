@@ -24,7 +24,7 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "test:e2e": "npm run build && playwright test",
-    "ci": "npm run typecheck && npm run validate:functions && npm run test:coverage && npm run test:emulator && npm run build && (npm run lint:eslint || echo \"ESLint advisory: tracked debt remains (see AGENTS.md)\")",
+    "ci": "npm run typecheck && npm run validate:functions && npm run test:coverage && npm run test:emulator && npm run build && npm run lint:eslint",
     "validate:functions": "cd functions && npm ci && npm run build && npm run test:unit",
     "test:emulator": "firebase emulators:exec --only firestore \"cd functions && npm run test:emulator\"",
     "deploy:hosting": "npm run build && firebase deploy --only hosting",

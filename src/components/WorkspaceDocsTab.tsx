@@ -2,7 +2,7 @@ import { FileText } from 'lucide-react';
 
 interface WorkspaceDocsTabProps {
   loading: boolean;
-  onCompileDoc: () => void;
+  onCompileDoc: () => Promise<void>;
 }
 
 export function WorkspaceDocsTab({ loading, onCompileDoc }: WorkspaceDocsTabProps) {

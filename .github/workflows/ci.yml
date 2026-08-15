@@ -32,11 +32,8 @@ jobs:
       - name: Typecheck (tsc — hard gate)
         run: npm run typecheck
 
-      # ESLint debt is tracked as a known-open gate (see AGENTS.md). Keep it visible
-      # and running on every push, but advisory so it cannot block deploys.
-      - name: Lint (eslint — advisory, tracked debt)
+      - name: Lint (eslint — hard gate)
         run: npm run lint:eslint
-        continue-on-error: true
 
       - name: Typecheck Functions (Cloud Functions for server validation)
         run: |

@@ -13,7 +13,7 @@ function MetricCard({ label, value }: { label: string; value: string }) {
 interface WorkspaceSheetsTabProps {
   stats: { totalBugsKilled: number; totalWavesCompleted: number; totalPlayTime: number };
   loading: boolean;
-  onExportSheets: () => void;
+  onExportSheets: () => Promise<void>;
 }
 
 export function WorkspaceSheetsTab({ stats, loading, onExportSheets }: WorkspaceSheetsTabProps) {

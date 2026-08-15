@@ -3,7 +3,7 @@ import { ClipboardList, Zap } from 'lucide-react';
 interface WorkspaceTasksTabProps {
   challenge: { winCondition: { label: string }; modifiers: string[] };
   loading: boolean;
-  onSyncTasks: () => void;
+  onSyncTasks: () => Promise<void>;
 }
 
 export function WorkspaceTasksTab({ challenge, loading, onSyncTasks }: WorkspaceTasksTabProps) {

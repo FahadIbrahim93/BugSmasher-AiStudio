@@ -63,6 +63,7 @@
 | ST-02 | Prettier after ESLint green            | P2  | [ ]    | No mixed noisy diffs                       |
 | ST-03 | Remove `@ts-nocheck` from renderers    | P1  | [x]    | Environment/Bug/Particle/UIRenderer typed  |
 | ST-03b | Remove `@ts-nocheck` from audio modules  | P1  | [x]    | AudioGraph/MusicSystem/VoiceSystem/SoundManager/SoundEffects typed |
+| ST-01b | Burn down ESLint errors to zero          | P1  | [x]    | `eslint .` = 0 errors; re-promoted to blocking CI gate |
 | ST-04 | Lighthouse CI budget                   | P2  | [ ]    | Performance + a11y scores documented       |
 | ST-05 | Husky pre-commit (lint-staged)         | P2  | [ ]    | Optional; only after ESLint stable         |
 

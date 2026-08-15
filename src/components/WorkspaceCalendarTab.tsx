@@ -2,7 +2,7 @@ import { Calendar as CalendarIcon } from 'lucide-react';
 
 interface WorkspaceCalendarTabProps {
   loading: boolean;
-  onScheduleCalendar: (type: 'daily' | 'boss') => void;
+  onScheduleCalendar: (type: 'daily' | 'boss') => Promise<void>;
 }
 
 export function WorkspaceCalendarTab({ loading, onScheduleCalendar }: WorkspaceCalendarTabProps) {
