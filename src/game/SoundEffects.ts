@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * SoundEffects — procedural SFX synthesis and the oscillator budget.
  * Split out of SoundManager (A-07): audio / voice / music. Hosted by the

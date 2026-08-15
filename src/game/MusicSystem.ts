@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * MusicSystem — adaptive soundtrack: biome themes, intensity layering,
  * reduced-motion flattening. Split out of SoundManager (A-07): audio /
@@ -109,17 +108,11 @@ export class MusicSystem {
   };
 
   private musicLayers: MusicLayer[] = [];
-  private currentBiome = 'neon_core';
   private targetIntensity = 1.0;
-  private currentIntensity = 1.0;
   private isBossActive = false;
   private isLowHealth = false;
   private isSurgeActive = false;
   private musicUpdateTimer = 0;
-  private arpeggioTimer = 0;
-  private arpeggioIndex = 0;
-  private beatTimer = 0;
-  private _beatPhase = false;
   private musicUpdateTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   constructor(host: { ctx: AudioContext | null; musicGain: GainNode | null; enabled: boolean; reducedMotion: boolean }) {
@@ -153,9 +146,6 @@ export class MusicSystem {
       });
     });
     this.musicLayers = [];
-    this.currentIntensity = 1.0;
-    this.arpeggioIndex = 0;
-    this._beatPhase = false;
   }
 
   playBiomeMusic(biome: string) {
@@ -163,7 +153,6 @@ export class MusicSystem {
     
     // Fade out current music
     this.stopMusic();
-    this.currentBiome = biome;
 
     const config = BIOME_MUSIC[biome] || BIOME_MUSIC.neon_core;
     const now = this.host.ctx.currentTime;
@@ -211,7 +200,6 @@ export class MusicSystem {
 
     // Start periodic modulation timer
     this.musicUpdateTimer = 0;
-    this.arpeggioTimer = 0;
     
     // Start music update loop
     this.scheduleMusicUpdate();

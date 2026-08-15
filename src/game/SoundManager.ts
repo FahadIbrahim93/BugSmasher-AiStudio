@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment -- full type-hardening tracked in TASKBOARD; WebAudio synthesis needs the escape hatch
-// @ts-nocheck
 import { audioAssets } from './AudioAssetLoader';
 import { ReverbProcessor, CompressorProcessor } from './AudioGraph';
 import { SoundEffects } from './SoundEffects';
@@ -29,7 +27,6 @@ export class SoundManager {
   // Audio processing chain
   private compressor: CompressorProcessor | null = null;
   private reverb: ReverbProcessor | null = null;
-  private sfxBus: GainNode | null = null;
   private preMaster: GainNode | null = null;
 
   // Settings

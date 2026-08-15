@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * AudioGraph — WebAudio effects processors for the master chain.
  * Reverb (send/return convolver) + master compressor. Built by
