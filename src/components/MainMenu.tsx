@@ -9,7 +9,7 @@ import { AccountMenu } from './AccountMenu';
 import { Leaderboard } from './Leaderboard';
 import { Armory } from './Armory';
 import { DailyChallengeModal } from './DailyChallengeModal';
-import { isTodaysChallengeCompleted, getStreakInfo } from '../game/DailyChallengeManager';
+import { generateDailyChallenge, isTodaysChallengeCompleted, getStreakInfo } from '../game/DailyChallengeManager';
 import { isSupporter } from '../game/CosmeticsManager';
 import { type ChallengeModifierId } from '../game/DailyChallengeManager';
 import type { GameModeId } from '../game/GameMode';
@@ -82,11 +82,8 @@ export function MainMenu({
         <DailyChallengeModal 
           onStart={() => {
             setIsDailyChallengeOpen(false);
-            // Import daily challenge manager to get modifiers and pass them to game start
-            void import('../game/DailyChallengeManager').then(({ generateDailyChallenge }) => {
-              const challenge = generateDailyChallenge();
-              onStart(challenge.modifiers);
-            });
+            const challenge = generateDailyChallenge();
+            onStart(challenge.modifiers);
           }}
           onClose={() => { setIsDailyChallengeOpen(false); }}
         />
