@@ -1,11 +1,10 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment -- full type-hardening tracked in TASKBOARD; file needs the escape hatch for WebAudio-heavy drawing code
-// @ts-nocheck
 import { GameEngine } from '../GameEngine';
 import { getActiveCoreThemeConfig } from '../CosmeticsManager';
 import type { Renderer } from '../Renderer';
 import type { PerformanceScaler } from './PerformanceScaler';
 import { OffscreenEnvironmentCache } from './OffscreenEnvironmentCache';
-import { CustomMapManager } from '../CustomMapManager';
+import { CustomMapManager, type CustomMapConfig } from '../CustomMapManager';
+import type { PCGMapConfig } from '../PCGSystem';
 
 export class EnvironmentRenderer {
   private staticLayerCache = new OffscreenEnvironmentCache();
@@ -226,7 +225,7 @@ export class EnvironmentRenderer {
     this.drawDynamicMesh();
   }
 
-  private paintCustomMapDetails(ctx: CanvasRenderingContext2D, map: { id?: string; seed?: string; color?: string; [k: string]: unknown }) {
+  private paintCustomMapDetails(ctx: CanvasRenderingContext2D, map: CustomMapConfig | PCGMapConfig) {
     const w = this.engine.width;
     const h = this.engine.height;
     const mainColor = map.color || '#00ffcc';
@@ -290,7 +289,7 @@ export class EnvironmentRenderer {
       ctx.fillText(labelText, w - 170, h - 30);
     } 
     else if (map.visualStyle === 'nebula') {
-      this.paintStarfield(ctx, map.particleCount || 60);
+      this.paintStarfield(ctx, 'particleCount' in map ? map.particleCount : 60);
       
       // Draw beautiful gaseous dust colored by mainColor
       const grad = ctx.createRadialGradient(w/2, h/2, 50, w/2, h/2, w * 0.6);

@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment -- full type-hardening tracked in TASKBOARD; file needs the escape hatch for WebAudio-heavy drawing code
-// @ts-nocheck
 import { GameEngine } from '../GameEngine';
 import { Powerup, ResourcePickup } from '../GameTypes';
 import { Splatter, Particle, Shockwave, Laser, MuzzleFlash, HeatShimmer } from '../ParticleSystem';
@@ -327,8 +325,6 @@ export class ParticleRenderer {
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
     
-    // Pulsing intensity based on game surge and boss presence
-    const _surge = Math.min(1, this.engine.performanceFactor * 0.2 + this.parent.fireAlpha * 0.5);
     const bossFactor = isBoss ? 1.5 : 1.0;
     
     // Cache cloud gradients — recreate only on dimension or boss-state change

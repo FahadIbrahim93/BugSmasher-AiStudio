@@ -61,7 +61,7 @@
 | ----- | -------------------------------------- | --- | ------ | ------------------------------------------ |
 | ST-01 | ESLint flat config (TS + React + a11y) | P1  | [ ]    | `npm run lint` = ESLint; `typecheck` = tsc |
 | ST-02 | Prettier after ESLint green            | P2  | [ ]    | No mixed noisy diffs                       |
-| ST-03 | Remove `@ts-nocheck` from renderers    | P1  | [ ]    | Environment/Bug/Particle/UIRenderer typed  |
+| ST-03 | Remove `@ts-nocheck` from renderers    | P1  | [x]    | Environment/Bug/Particle/UIRenderer typed  |
 | ST-04 | Lighthouse CI budget                   | P2  | [ ]    | Performance + a11y scores documented       |
 | ST-05 | Husky pre-commit (lint-staged)         | P2  | [ ]    | Optional; only after ESLint stable         |
 

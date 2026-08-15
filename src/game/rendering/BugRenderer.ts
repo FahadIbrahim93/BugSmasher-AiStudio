@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment -- full type-hardening tracked in TASKBOARD; file needs the escape hatch for WebAudio-heavy drawing code
-// @ts-nocheck
 import { GameEngine } from '../GameEngine';
 import { Bug, Hazard } from '../GameTypes';
 import { GameConfig } from '../GameConfig';
