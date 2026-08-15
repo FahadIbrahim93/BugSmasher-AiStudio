@@ -1,15 +1,14 @@
 import { soundManager } from './SoundManager';
 import { GameConfig } from './GameConfig';
 import { Renderer } from './Renderer';
-import { analytics } from '../lib/analytics';
 import { ParticleSystem } from './ParticleSystem';
 import { WaveManager } from './WaveManager';
 import { GameSaveData } from './SaveManager';
-import { StatsManager } from './StatsManager';
 import { ProgressionManager } from './ProgressionManager';
 import { InputSystem } from './InputSystem';
 import { Bug, Hazard, Powerup, ResourcePickup } from './GameTypes';
 import { CollisionSystem } from './CollisionSystem';
+import { CombatSystem } from './CombatSystem';
 import { BossSystem } from './BossSystem';
 import { PowerupSystem } from './PowerupSystem';
 import { HazardSystem } from './HazardSystem';
@@ -46,6 +45,7 @@ export class GameEngine {
   waveManager: WaveManager;
 
   // Extracted Systems
+  combatSystem: CombatSystem;
   collisionSystem: CollisionSystem;
   bossSystem: BossSystem;
   powerupSystem: PowerupSystem;
@@ -96,7 +96,7 @@ export class GameEngine {
   /** Seconds remaining in the post-FURY ignition cooldown (once-per-wave cadence) */
   furyCooldownTimer = 0;
   /** Per-second rage intake budget — spend in addRage, refilled at maxGainPerSecond/s */
-  private rageGainBudget = GameConfig.rage.maxGainPerSecond;
+  rageGainBudget = GameConfig.rage.maxGainPerSecond;
   readonly rageGainBudgetMax: number = GameConfig.rage.maxGainPerSecond;
   readonly furyDuration: number = GameConfig.rage.furyDuration;
 
@@ -220,6 +220,7 @@ export class GameEngine {
     this.inputSystem = new InputSystem(this);
 
     // Initialize extracted systems
+    this.combatSystem = new CombatSystem(this);
     this.collisionSystem = new CollisionSystem(this);
     this.bossSystem = new BossSystem(this);
     this.powerupSystem = new PowerupSystem(this);
@@ -363,15 +364,7 @@ export class GameEngine {
     this.hazards = [];
     this.particleSystem.reset();
     this.powerups = [];
-    this.weaponHeat = 0;
-    this.furyActive = false;
-    this.furyTimer = 0;
-    this.furyCooldownTimer = 0;
-    this.rageGainBudget = GameConfig.rage.maxGainPerSecond;
-    this.slamCharging = false;
-    this.slamCharge = 0;
-    this.furyTriggers = 0;
-    this.slamsUsed = 0;
+    this.combatSystem.reset();
     this.gooSystem.reset();
   }
 
@@ -404,100 +397,6 @@ export class GameEngine {
 
   triggerHitStop(duration: number) {
     this.hitStopTimer = duration;
-  }
-
-  /**
-   * RAGE METER — every click/miss feeds the vent. At 100 the player erupts
-   * into FURY MODE (guaranteed crits, AoE smashes, ×2 damage) instead of
-   * being punished with a lockout. No cooling-down penalty for venting.
-   */
-  addRage(amount: number) {
-    if (this.furyActive) return; // already raging
-    // Per-second gain cap: rage intake is budgeted so even max-APM play can't
-    // insta-fill the meter — it refills over roughly the cooldown window.
-    const applied = Math.min(amount, this.rageGainBudget);
-    this.rageGainBudget -= applied;
-    this.weaponHeat = Math.min(GameConfig.rage.maxHeat, this.weaponHeat + applied);
-    // Post-FURY ignition cooldown: the meter keeps refilling, but FURY waits
-    // until the cooldown clears so eruptions land roughly once per wave.
-    if (this.weaponHeat >= GameConfig.rage.maxHeat && this.furyCooldownTimer <= 0) {
-      this.triggerFury();
-    }
-  }
-
-  /** Ignite FURY MODE — the venting power fantasy. */
-  triggerFury() {
-    if (this.furyActive) return;
-    this.furyActive = true;
-    this.furyTimer = this.furyDuration;
-    this.weaponHeat = GameConfig.rage.maxHeat;
-    this.furyTriggers++;
-    soundManager.nuke();
-    this.shake(0.6, 30);
-    this.renderer.clickFlash = 0.8;
-    this.particleSystem.spawnShockwave(this.width / 2, this.height / 2, '#ff4400', 400);
-    this.particleSystem.spawnStarburst(this.width / 2, this.height / 2, '#ff6a00');
-    analytics.track('fury_triggered', { trigger: this.furyTriggers, wave: this.wave });
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('nexus_fury_active'));
-    }
-  }
-
-  /** AoE smash on a click while FURY MODE is active. */
-  applyFurySplash(x: number, y: number) {
-    if (!this.furyActive) return;
-    const radius = 150;
-    const radiusSq = radius * radius;
-    this.particleSystem.spawnShockwave(x, y, '#ff4400', radius);
-    for (let i = this.bugs.length - 1; i >= 0; i--) {
-      const b = this.bugs[i];
-      const dx = b.x - x;
-      const dy = b.y - y;
-      if (dx * dx + dy * dy < radiusSq) {
-        this.damageBug(b, 1);
-      }
-    }
-  }
-
-  /** Hold-to-charge Ground Slam — release for a crushing AoE. */
-  triggerGroundSlam(x: number, y: number, charge: number) {
-    this.slamCharging = false;
-    this.slamCharge = 0;
-    this.slamsUsed++;
-    analytics.track('slam_used', { charge: Math.round(charge * 100), wave: this.wave });
-    const radius = 90 + charge * 180;
-    const radiusSq = radius * radius;
-    const dmg = 1 + Math.round(charge * 3);
-
-    this.particleSystem.spawnShockwave(x, y, '#ff8800', radius);
-    this.particleSystem.spawnShockwave(x, y, '#ffffff', radius * 0.6);
-    this.particleSystem.spawnGibs(x, y, '#ff8800', 12);
-    this.shake(0.35, 20);
-    this.triggerHitStop(0.1);
-    soundManager.bossDeath();
-    this.renderer.clickFlash = 0.6;
-
-    for (let i = this.bugs.length - 1; i >= 0; i--) {
-      const b = this.bugs[i];
-      const dx = b.x - x;
-      const dy = b.y - y;
-      if (dx * dx + dy * dy < radiusSq) {
-        this.damageBug(b, dmg);
-      }
-    }
-
-    // Slamming is cathartic — the impact itself feeds the rage meter a little
-    this.addRage(GameConfig.rage.perSlam);
-  }
-
-  /** Rage-refund pickup: when a streak breaks, drop a consolation powerup near the core. */
-  spawnRageRefund() {
-    const angle = Math.random() * Math.PI * 2;
-    const dist = 40 + Math.random() * 60;
-    const x = this.coreX + Math.cos(angle) * dist;
-    const y = this.coreY + Math.sin(angle) * dist;
-    this.powerupSystem.spawn(x, y, true);
-    this.particleSystem.spawnShockwave(x, y, '#22c55e', 60);
   }
 
   get threatShakeIntensity(): number {
@@ -561,6 +460,38 @@ export class GameEngine {
     this.powerupSystem.spawnResource(x, y, bugType);
   }
 
+  // Combat delegation — logic lives in CombatSystem (A-01)
+  addRage(amount: number) {
+    this.combatSystem.addRage(amount);
+  }
+  triggerFury() {
+    this.combatSystem.triggerFury();
+  }
+  applyFurySplash(x: number, y: number) {
+    this.combatSystem.applyFurySplash(x, y);
+  }
+  triggerGroundSlam(x: number, y: number, charge: number) {
+    this.combatSystem.triggerGroundSlam(x, y, charge);
+  }
+  spawnRageRefund() {
+    this.combatSystem.spawnRageRefund();
+  }
+  fireAutoTurret(isRapidFire = false) {
+    this.combatSystem.fireAutoTurret(isRapidFire);
+  }
+  triggerUpgradeEffect() {
+    this.combatSystem.triggerUpgradeEffect();
+  }
+  damageBug(bug: Bug, amount: number) {
+    this.combatSystem.damageBug(bug, amount);
+  }
+  consumeConsumable(id: string): boolean {
+    return this.combatSystem.consumeConsumable(id);
+  }
+  triggerActiveAbility(id: string): boolean {
+    return this.combatSystem.triggerActiveAbility(id);
+  }
+
   private musicUpdateTimer = 0;
 
   update(dt: number) {
@@ -579,13 +510,13 @@ export class GameEngine {
     }
 
     // Core Logic Systems
-    this.updateTimers(dt);
+    this.combatSystem.updateTimers(dt);
     this.updateCorePhysics(dt);
-    this.updateMetrics(dt);
+    this.combatSystem.updateMetrics(dt);
     this.waveManager.update(dt);
 
     // Entity Systems
-    this.updateTurrets(dt);
+    this.combatSystem.updateTurrets(dt);
     this.updateBugs(dt);
     this.hazardSystem.update(dt);
 
@@ -596,11 +527,6 @@ export class GameEngine {
     this.gooSystem.update(dt);
     if (this.pcgSystem) {
       this.pcgSystem.update(dt);
-    }
-
-    // Ground Slam charge accumulation (charged while held, released on pointerup)
-    if (this.slamCharging) {
-      this.slamCharge = Math.min(this.slamChargeMax, this.slamCharge + dt * 1.4);
     }
 
     // Adaptive Music State Sync (every 500ms) — FURY MODE surges the soundtrack
@@ -614,263 +540,6 @@ export class GameEngine {
         isSurgeActive: this.waveManager.surgeActive || this.furyActive,
       });
     }
-  }
-
-  fireAutoTurret(isRapidFire = false) {
-    let closest = null;
-    let minDistSq = Infinity;
-    const cx = this.coreX;
-    const cy = this.coreY;
-
-    for (const bug of this.bugs) {
-      const dx = bug.x - cx;
-      const dy = bug.y - cy;
-      const distSq = dx * dx + dy * dy;
-      if (distSq < minDistSq) {
-        minDistSq = distSq;
-        closest = bug;
-      }
-    }
-
-    if (closest) {
-      soundManager.shoot();
-      this.renderer.fireAlpha = 1.0;
-      this.renderer.clickFlash = 0.3;
-      this.particleSystem.spawnMuzzleFlash(cx, cy, 30);
-
-      this.baseScale = 1.1;
-      this.baseRecoil = 5;
-      this.baseRecoilAngle = Math.atan2(closest.y - cy, closest.x - cx);
-
-      if (isRapidFire) {
-        this.shake(0.05, 3);
-        this.particleSystem.spawnLaser(cx, cy, closest.x, closest.y, '#ff00ff', 4);
-      } else {
-        this.particleSystem.spawnLaser(cx, cy, closest.x, closest.y, '#00ffcc', 2);
-      }
-      this.damageBug(closest, 1);
-    }
-  }
-
-  triggerUpgradeEffect() {
-    this.upgradeFlash = 1.0;
-    this.shake(0.2, 10);
-    this.particleSystem.spawnShockwave(this.coreX, this.coreY, '#00ffff', 400);
-    soundManager.skillUpgrade();
-  }
-
-  damageBug(bug: Bug, amount: number) {
-    let finalAmount = amount * this.damageMultiplier;
-
-    let isCrit = false;
-    // Boss Vulnerability Strategy: Core Exposure
-    if (bug.type === 'boss') {
-      if (bug.isShielded) {
-        this.particleSystem.spawnShockwave(bug.x, bug.y, '#00ffff', 40);
-        soundManager.uiError();
-        return;
-      }
-      soundManager.bossHit();
-      const pulse = Math.sin(this.globalTime * 10);
-      if (pulse > 0.8) {
-        isCrit = true;
-        finalAmount *= 2;
-        this.particleSystem.spawnShockwave(bug.x, bug.y, '#ffffff', 60);
-        this.triggerHitStop(0.05);
-        this.renderer.chromaticOffset = 10;
-      } else if (pulse < -0.8) {
-        finalAmount *= 0.5;
-      }
-    } else {
-      const critChance = 0.05 + ProgressionManager.getSkillBonus('crit_hit');
-      if (Math.random() < critChance) {
-        isCrit = true;
-        finalAmount *= 2.0;
-        this.particleSystem.spawnShockwave(bug.x, bug.y, '#ffd700', 80);
-        this.renderer.chromaticOffset = 12;
-      }
-    }
-
-    // FURY MODE: every hit is a guaranteed crit at ×2 damage — the venting reward
-    const furyCrit = this.furyActive;
-    if (furyCrit) {
-      isCrit = true;
-      finalAmount *= 2.0;
-      this.particleSystem.spawnShockwave(bug.x, bug.y, '#ff6a00', 90);
-    }
-
-    if (isCrit) {
-      soundManager.critHit();
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('nexus_crit_hit'));
-      }
-    }
-
-    if (bug.armor && bug.armor < 1.0 && bug.armor > 0) {
-      finalAmount *= bug.armor;
-    }
-
-    bug.hp -= finalAmount;
-    bug.hitTimer = 0.1;
-
-    if (finalAmount >= 1) {
-      this.triggerHitStop(0.05);
-      this.shake(isCrit ? 0.09 : 0.05, isCrit ? 7 : 2);
-    }
-
-    // Reactive bug: scouts dive away from the strike point when they survive
-    if (bug.type === 'scout' && bug.hp > 0 && !bug.dodgeTimer) {
-      const fromX = this.inputSystem?.lastMouseX ?? bug.x + 1;
-      const fromY = this.inputSystem?.lastMouseY ?? bug.y;
-      const dx = bug.x - fromX;
-      const dy = bug.y - fromY;
-      const dist = Math.hypot(dx, dy) || 1;
-      bug.dodgeTimer = 0.35;
-      bug.dodgeDirX = dx / dist;
-      bug.dodgeDirY = dy / dist;
-      this.particleSystem.spawnSmoke(bug.x, bug.y, 'rgba(200, 200, 255, 0.4)');
-    }
-
-    if (bug.hp <= 0) {
-      this.killBug(bug);
-    } else {
-      // Crits already announce via critHit() above — avoid double-firing the plain shot
-      if (!isCrit) soundManager.shoot();
-      this.particleSystem.spawnGibs(bug.x, bug.y, bug.color, 3);
-      this.particleSystem.spawnShockwave(bug.x, bug.y, '#ffffff', 30);
-    }
-  }
-
-  private killBug(bug: Bug) {
-    const idx = this.bugs.indexOf(bug);
-    if (idx < 0) return;
-
-    if (bug.type === 'swarmer') this.swarmerKills++;
-    if (bug.type === 'healer') this.healerKills++;
-    this.killsInSubwave++;
-
-    this.totalKills++;
-    this.streakCount++;
-    this.streakTimer = 2.0;
-
-    const isBossKill = bug.type === 'boss';
-
-    StatsManager.updateStats({ totalBugsKilled: 1, bossesKilled: isBossKill ? 1 : 0 });
-
-    const mult = this.multiplierTimer > 0 ? 2 : 1;
-    this.score += bug.scoreValue * mult;
-
-    // Dispatch smashed event for large bugs (size >= 20 or specific large types)
-    if (
-      bug.size >= 20 ||
-      bug.type === 'boss' ||
-      bug.type === 'tank' ||
-      bug.type === 'healer' ||
-      bug.type === 'ember'
-    ) {
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(
-          new CustomEvent('nexus_bug_smashed', {
-            detail: {
-              type: bug.type,
-              color: bug.color,
-              size: bug.size,
-              scoreValue: bug.scoreValue * mult,
-              streak: this.streakCount,
-            },
-          }),
-        );
-      }
-    }
-
-    soundManager.splat(bug.type);
-
-    this.triggerHitStop(0.04);
-
-    const isBoss = bug.type === 'boss';
-    const intensity = isBoss
-      ? 4.0
-      : bug.type === 'tank' || bug.type === 'swarmer'
-        ? 1.4
-        : bug.type === 'scout'
-          ? 0.7
-          : 0.9;
-    this.shake(isBoss ? 0.6 : 0.15 * intensity, isBoss ? 40 : 8 * intensity);
-
-    // Reduce particle count on low-end or during surge — skip splatters (most expensive)
-    if (this.renderer.currentFps > 30) {
-      this.particleSystem.spawnSplatter(bug.x, bug.y, bug.color);
-    }
-    this.particleSystem.spawnExplosion(bug.x, bug.y, bug.color, bug.type);
-
-    // Splatter accumulation loop — every smash leaves persistent goo on the field
-    this.gooSystem.addGoo(bug.x, bug.y, bug.size, bug.color);
-
-    this.spawnResource(bug.x, bug.y, bug.type);
-
-    if (isBoss) {
-      soundManager.bossDeath();
-      this.particleSystem.spawnShockwave(bug.x, bug.y, '#ff0000', 800);
-
-      this.onStoryTrigger?.('boss_kill', this.wave);
-
-      const dx = (bug.x - this.coreX) / (this.width / 2);
-      const dy = (bug.y - this.coreY) / (this.height / 2);
-      this.shake(1.5, 60, dx, dy);
-      this.triggerHitStop(0.2);
-      this.renderer.chromaticOffset = 40;
-      this.impactFrame = 1.0;
-
-      for (let i = 0; i < 3; i++) {
-        this.spawnPowerup(
-          bug.x + (Math.random() - 0.5) * 50,
-          bug.y + (Math.random() - 0.5) * 50,
-          true,
-        );
-      }
-
-      // Cap boss death particles based on current FPS
-      const bossParticleCount = this.renderer.currentFps > 30 ? 40 : 15;
-      for (let i = 0; i < bossParticleCount; i++) {
-        this.particleSystem.spawnParticle(bug.x, bug.y, bug.color);
-      }
-    }
-
-    // Swarmer splitting logic — skip on low FPS to prevent entity explosion
-    const shouldSplit = this.renderer.currentFps >= 25;
-    if (shouldSplit && (bug.type === 'swarmer' || this.currentBiome === 'golden_cache')) {
-      const splitCount = this.currentBiome === 'golden_cache' ? 2 : 3;
-      for (let i = 0; i < splitCount; i++) {
-        const angle = ((Math.PI * 2) / splitCount) * i;
-        const dist = 20;
-        const miniConf = GameConfig.bugs.mini;
-        this.bugs.push({
-          active: true,
-          x: bug.x + Math.cos(angle) * dist,
-          y: bug.y + Math.sin(angle) * dist,
-          type: 'mini',
-          speed: miniConf.baseSpeed + this.wave * miniConf.speedPerWave,
-          color: miniConf.color,
-          size: miniConf.size,
-          scoreValue: miniConf.score,
-          hp: miniConf.baseHp,
-          maxHp: miniConf.baseHp,
-          walkCycle: Math.random() * 10,
-          rotation: 0,
-          offsetTime: Math.random() * 100,
-          hitTimer: 0,
-        });
-      }
-    }
-
-    if (this.forceNextPowerup) {
-      this.forceNextPowerup = false;
-      this.spawnPowerup(bug.x, bug.y, true);
-    } else {
-      this.spawnPowerup(bug.x, bug.y);
-    }
-
-    this.bugs.splice(idx, 1);
   }
 
   draw() {
@@ -941,218 +610,6 @@ export class GameEngine {
     this.isChallengeMode = true;
     this.challengeModifiers = computeModifierState(modifiers);
     this.syncSkills(); // Apply glass_cannon health/damage multipliers immediately
-  }
-
-  consumeConsumable(id: string): boolean {
-    if (!ProgressionManager.consumeConsumable(id)) return false;
-
-    switch (id) {
-      case 'repair_kit':
-        this.health = Math.min(this.maxHealth, this.health + this.maxHealth * 0.25);
-        this.particleSystem.spawnShockwave(this.width / 2, this.height / 2, '#00ffaa', 300);
-        soundManager.skillUpgrade();
-        break;
-      case 'emp_generator':
-        this.bugs.forEach((b) => {
-          if (b.type !== 'boss') {
-            b.hp = 0;
-            this.particleSystem.spawnExplosion(b.x, b.y, b.color);
-          }
-        });
-        this.shake(1.5, 40);
-        this.particleSystem.spawnShockwave(this.width / 2, this.height / 2, '#ffffff', 1000);
-        soundManager.bossDeath();
-        break;
-      case 'overdrive_chip':
-        this.overdriveTimer = 20;
-        soundManager.powerup('overdrive');
-        break;
-    }
-    return true;
-  }
-
-  private updateTimers(dt: number) {
-    if (this.clickCooldown > 0) this.clickCooldown -= dt;
-
-    // RAGE METER — FURY MODE drains the meter over its full duration;
-    // otherwise it cools down slowly so the player can vent again
-    if (this.furyActive) {
-      this.furyTimer -= dt;
-      // Drain the meter to match the advertised duration: 100 / 4s = 25/s
-      this.weaponHeat = Math.max(
-        0,
-        this.weaponHeat - (GameConfig.rage.maxHeat / this.furyDuration) * dt,
-      );
-      if (this.furyTimer <= 0 || this.weaponHeat <= 0) {
-        this.furyActive = false;
-        this.furyTimer = 0;
-        this.weaponHeat = 0;
-        // Start the post-FURY ignition cooldown (once-per-wave cadence)
-        this.furyCooldownTimer = GameConfig.rage.furyCooldown;
-      }
-    } else {
-      // Post-FURY cooldown: meter refills but FURY waits; auto-ignites the
-      // moment the cooldown clears if the meter is already full
-      if (this.furyCooldownTimer > 0) {
-        this.furyCooldownTimer -= dt;
-        if (this.furyCooldownTimer <= 0) {
-          this.furyCooldownTimer = 0;
-          if (this.weaponHeat >= GameConfig.rage.maxHeat) this.triggerFury();
-        }
-      }
-      if (!this.furyActive && this.weaponHeat > 0) {
-        this.weaponHeat -= GameConfig.rage.decayPerSecond * dt;
-        if (this.weaponHeat < 0) this.weaponHeat = 0;
-      }
-    }
-
-    // Refill the per-second rage gain budget (both during FURY and after, so
-    // the meter is ready to charge the moment an eruption ends)
-    this.rageGainBudget = Math.min(
-      this.rageGainBudgetMax,
-      this.rageGainBudget + this.rageGainBudgetMax * dt,
-    );
-
-    if (this.shakeTime > 0) this.shakeTime -= dt;
-    if (this.shieldTimer > 0) this.shieldTimer -= dt;
-    if (this.multiplierTimer > 0) this.multiplierTimer -= dt;
-    if (this.rapidFireTimer > 0) this.rapidFireTimer -= dt;
-    if (this.slowMoTimer > 0) this.slowMoTimer -= dt;
-    if (this.overdriveTimer > 0) this.overdriveTimer -= dt;
-    if (this.freezeTimer > 0) this.freezeTimer -= dt;
-    if (this.magnetTimer > 0) this.magnetTimer -= dt;
-    if (this.spikeBurstTimer > 0) this.spikeBurstTimer -= dt;
-    if (this.controlDistortionTimer > 0) this.controlDistortionTimer -= dt;
-    if (this.glitchTimer > 0) {
-      this.glitchTimer -= dt;
-      if (this.glitchTimer <= 0) this.renderer.isGlitching = false;
-    }
-    if (this.waveTransitionTimer > 0) {
-      this.waveTransitionTimer = Math.max(0, this.waveTransitionTimer - dt);
-    }
-
-    // Decrement active ability cooldowns and durations
-    if (this.bioshieldCooldown > 0)
-      this.bioshieldCooldown = Math.max(0, this.bioshieldCooldown - dt);
-    if (this.bioshieldActiveTime > 0)
-      this.bioshieldActiveTime = Math.max(0, this.bioshieldActiveTime - dt);
-    if (this.overdriveCooldown > 0)
-      this.overdriveCooldown = Math.max(0, this.overdriveCooldown - dt);
-    if (this.overdriveActiveTime > 0)
-      this.overdriveActiveTime = Math.max(0, this.overdriveActiveTime - dt);
-    if (this.empShatterCooldown > 0)
-      this.empShatterCooldown = Math.max(0, this.empShatterCooldown - dt);
-    if (this.empShatterActiveTime > 0)
-      this.empShatterActiveTime = Math.max(0, this.empShatterActiveTime - dt);
-  }
-
-  private updateMetrics(dt: number) {
-    if (this.streakTimer > 0) {
-      this.streakTimer -= dt;
-      if (this.streakTimer <= 0 && this.streakCount > 0) {
-        soundManager.comboBreak();
-        // Rage refund: the streak death drops a consolation powerup near the core
-        this.spawnRageRefund();
-        this.streakCount = 0;
-      }
-    }
-    const safetyBonus = Math.min(1.0, (this.globalTime - this.lastHitTime) / 20);
-    const streakBonus = Math.min(1.0, this.streakCount / 50);
-    this.performanceFactor = 0.8 + safetyBonus * 0.7 + streakBonus * 1.0;
-    this.playTimeAccumulator += dt;
-    if (this.playTimeAccumulator >= 10) {
-      StatsManager.updateStats({ totalPlayTime: 10 });
-      this.playTimeAccumulator -= 10;
-    }
-    this.baseScale += (1.0 - this.baseScale) * 0.15;
-    this.baseRecoil *= 0.85;
-    this.upgradeFlash *= 0.92;
-    this.impactFrame = Math.max(0, this.impactFrame - dt * 6);
-  }
-
-  private updateTurrets(dt: number) {
-    if (
-      this.autoTurretLevel > 0 ||
-      this.rapidFireTimer > 0 ||
-      this.overdriveTimer > 0 ||
-      this.overdriveActiveTime > 0
-    ) {
-      this.autoTurretTimer += dt * this.hazardSlowdown;
-      const baseFireRate = GameConfig.upgrades.turret.baseFireRate;
-      let fireRate = Math.max(
-        GameConfig.upgrades.turret.minFireRate,
-        baseFireRate -
-          this.autoTurretLevel * GameConfig.upgrades.turret.fireRateReduction -
-          ProgressionManager.getSkillBonus('sentry_optimization'),
-      );
-      if (this.overdriveTimer > 0 || this.overdriveActiveTime > 0) fireRate *= 0.2;
-      if (this.rapidFireTimer > 0) fireRate = 0.05;
-
-      if (this.autoTurretTimer > fireRate && this.bugs.length > 0) {
-        this.autoTurretTimer = 0;
-        this.fireAutoTurret(this.rapidFireTimer > 0 || this.overdriveActiveTime > 0);
-      }
-
-      // Tactical Missile Sentry
-      const missileLevel = ProgressionManager.getSkillLevel('missile_sentry');
-      if (missileLevel > 0) {
-        this.missileSentryTimer += dt;
-        if (this.missileSentryTimer >= 10.0) {
-          this.missileSentryTimer = 0;
-          const threatTargets = this.bugs.filter((b) => b.active && b.hp > 0);
-          if (threatTargets.length > 0) {
-            const target = threatTargets[0];
-            this.particleSystem.spawnLaser(this.coreX, this.coreY, target.x, target.y, '#fd8432');
-            this.particleSystem.spawnShockwave(target.x, target.y, '#f97316', 70);
-            this.damageBug(target, 15 * missileLevel);
-            soundManager.bossWarning();
-          }
-        }
-      }
-    }
-  }
-
-  // Active skills trigger (Progression Skill Tree)
-  triggerActiveAbility(id: string): boolean {
-    const level = ProgressionManager.getSkillLevel(id);
-    if (level <= 0) {
-      console.warn(`Ability ${id} is not unlocked!`);
-      return false;
-    }
-
-    if (id === 'nanite_bioshield') {
-      if (this.bioshieldCooldown > 0) return false;
-      this.bioshieldCooldown = GameConfig.abilities.bioshieldCooldown; // from config per audit
-      this.bioshieldActiveTime = 4; // 4s invincibility
-      this.health = Math.min(this.maxHealth, this.health + 25);
-      this.particleSystem.spawnShockwave(this.coreX, this.coreY, '#10b981', 250);
-      soundManager.heal();
-      return true;
-    }
-
-    if (id === 'turret_overdrive') {
-      if (this.overdriveCooldown > 0) return false;
-      this.overdriveCooldown = 45; // 45s cooldown
-      this.overdriveActiveTime = 8; // 8s duration
-      this.particleSystem.spawnShockwave(this.coreX, this.coreY, '#fbbf24', 200);
-      soundManager.armoryEquip();
-      return true;
-    }
-
-    if (id === 'chrono_emp_shatter') {
-      if (this.empShatterCooldown > 0) return false;
-      this.empShatterCooldown = 50; // 50s cooldown
-      this.empShatterActiveTime = 5; // 5s duration
-      this.activatePowerup('freeze', this.coreX, this.coreY);
-      this.bugs.forEach((b) => {
-        this.damageBug(b, b.hp * 0.3); // decay 30% of bug's current health
-      });
-      this.particleSystem.spawnShockwave(this.coreX, this.coreY, '#a855f7', 350);
-      soundManager.bossWarning();
-      return true;
-    }
-
-    return false;
   }
 
   private updateBugs(dt: number) {

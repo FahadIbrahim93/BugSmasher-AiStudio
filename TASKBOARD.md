@@ -71,7 +71,7 @@
 
 | ID   | Task                                            | Pri | Status | Acceptance                              |
 | ---- | ----------------------------------------------- | --- | ------ | --------------------------------------- |
-| A-01 | Extract `CombatSystem` from GameEngine          | P1  | [ ]    | GameEngine <800 lines; tests for combat |
+| A-01 | Extract `CombatSystem` from GameEngine          | P1  | [x]    | GameEngine <800 lines; tests for combat |
 | A-02 | Extract `BugBehaviorSystem`                     | P1  | [ ]    | AI/movement/abilities isolated          |
 | A-03 | DI for ProgressionManager/StatsManager          | P1  | [ ]    | Engine paths inject interfaces          |
 | A-04 | Remove `__gameEngineStatus` window bridge       | P1  | [x]    | All consumers on GameEngineStatusBus    |
