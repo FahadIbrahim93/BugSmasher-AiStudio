@@ -78,7 +78,7 @@
 | A-05 | Fix Vite circular chunk warning                 | P1  | [x]    | Clean build, no vendor↔react cycle      |
 | A-06 | Fix DailyChallengeManager static/dynamic import | P1  | [x]    | No vite reporter warning                |
 | A-07 | Split SoundManager (audio vs voice vs music)    | P2  | [x]    | File <600 lines                         |
-| A-08 | Split IntelHub / HUD / WorkspaceConsole         | P2  | [ ]    | Sub-components + lazy tabs              |
+| A-08 | Split IntelHub / HUD / WorkspaceConsole         | P2  | [x]    | Sub-components + lazy tabs              |
 
 ---
 
