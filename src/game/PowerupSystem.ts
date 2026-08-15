@@ -1,7 +1,6 @@
 import { GameEngine } from './GameEngine';
 import { GameConfig } from './GameConfig';
-import { ProgressionManager } from './ProgressionManager';
-import { StatsManager } from './StatsManager';
+
 import { RESOURCES, ResourceType } from './ResourceTypes';
 
 /**
@@ -64,7 +63,7 @@ export class PowerupSystem {
     switch (bugType) {
       case 'basic':
         type = 'scrap';
-        count = 1 + ProgressionManager.getSkillBonus('scavenger_protocol');
+        count = 1 + this.engine.progressionManager.getSkillBonus('scavenger_protocol');
         break;
       case 'scout':
         type = 'plasma';
@@ -116,7 +115,7 @@ export class PowerupSystem {
   activate(type: string, px?: number, py?: number) {
     this.engine.renderer.powerupAlpha = 1.0;
     this.engine.totalPowerupsCollected++;
-    StatsManager.updateStats({ totalPowerupsCollected: 1 });
+    this.engine.statsManager.updateStats({ totalPowerupsCollected: 1 });
     void import('./SoundManager').then(({ soundManager }) => { soundManager.powerup(type); });
     
     // Starburst celebration on powerup collection
@@ -252,7 +251,7 @@ export class PowerupSystem {
       }
 
       if (distSq < 900) {
-        ProgressionManager.addResource(r.type, 1);
+        this.engine.progressionManager.addResource(r.type, 1);
         r.active = false;
         void import('./SoundManager').then(({ soundManager }) => { soundManager.resource(r.type); });
       }

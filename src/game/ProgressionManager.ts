@@ -31,11 +31,11 @@ const INITIAL_PROGRESSION: ProgressionData = {
 };
 
 export class ProgressionManager {
-  private static data: ProgressionData = ProgressionManager.loadLocal();
-  private static listeners = new Set<() => void>();
-  private static isSyncing = false;
+  private data: ProgressionData = this.loadLocal();
+  private listeners = new Set<() => void>();
+  private isSyncing = false;
 
-  private static loadLocal(): ProgressionData {
+  private loadLocal(): ProgressionData {
     const saved = localStorage.getItem('nexus_progression');
     if (saved) {
       const parsed = JSON.parse(saved);
@@ -50,7 +50,7 @@ export class ProgressionManager {
     return { ...INITIAL_PROGRESSION };
   }
 
-  static initCloudSync() {
+  initCloudSync() {
     if (!auth || !db) return; // Firebase not configured — local-only mode
     auth.onAuthStateChanged((user) => {
       if (user) {
@@ -59,7 +59,7 @@ export class ProgressionManager {
     });
   }
 
-  private static async syncProgressionFromCloud(user: { uid: string }) {
+  private async syncProgressionFromCloud(user: { uid: string }) {
     try {
       const docRef = doc(db, 'users', user.uid, 'private', 'progression');
       
@@ -91,32 +91,32 @@ export class ProgressionManager {
     }
   }
 
-  static getData(): ProgressionData {
+  getData(): ProgressionData {
     return { ...this.data };
   }
 
-  static subscribe(listener: () => void) {
+  subscribe(listener: () => void) {
     this.listeners.add(listener);
     return () => { this.listeners.delete(listener); };
   }
 
-  private static notify() {
+  private notify() {
     this.listeners.forEach(l => { l(); });
   }
 
-  static setData(newData: ProgressionData) {
+  setData(newData: ProgressionData) {
     this.data = { ...newData };
     this.save();
     this.notify();
   }
 
-  static addResource(type: ResourceType, amount: number) {
+  addResource(type: ResourceType, amount: number) {
     this.data.inventory[type] = (this.data.inventory[type] || 0) + amount;
     this.save();
     this.notify();
   }
 
-  static spendResources(requirements: Partial<Record<ResourceType, number>>): boolean {
+  spendResources(requirements: Partial<Record<ResourceType, number>>): boolean {
     // Check if we have enough
     for (const [res, amount] of Object.entries(requirements)) {
       if ((this.data.inventory[res as ResourceType] || 0) < (amount || 0)) {
@@ -133,7 +133,7 @@ export class ProgressionManager {
     return true;
   }
 
-  static upgradeSkill(skillId: string): boolean {
+  upgradeSkill(skillId: string): boolean {
     const skill = SKILLS.find(s => s.id === skillId);
     if (!skill) return false;
 
@@ -161,7 +161,7 @@ export class ProgressionManager {
     return false;
   }
 
-  static craftItem(recipeId: string, ingredients: Partial<Record<ResourceType, number>>): boolean {
+  craftItem(recipeId: string, ingredients: Partial<Record<ResourceType, number>>): boolean {
     if (this.spendResources(ingredients)) {
       this.data.consumables[recipeId] = (this.data.consumables[recipeId] || 0) + 1;
       this.save();
@@ -171,7 +171,7 @@ export class ProgressionManager {
     return false;
   }
 
-  static consumeConsumable(id: string): boolean {
+  consumeConsumable(id: string): boolean {
     if ((this.data.consumables[id] || 0) > 0) {
       this.data.consumables[id] -= 1;
       this.save();
@@ -181,7 +181,7 @@ export class ProgressionManager {
     return false;
   }
 
-  static prestige(currentScore: number) {
+  prestige(currentScore: number) {
     const pointsEarned = Math.floor(currentScore / 10000); // 1 point per 10k score
     this.data.prestigePoints += pointsEarned;
     this.data.prestigeLevel += 1;
@@ -190,26 +190,26 @@ export class ProgressionManager {
     return pointsEarned;
   }
 
-  static getSkillLevel(skillId: string): number {
+  getSkillLevel(skillId: string): number {
     return this.data.skills[skillId] || 0;
   }
 
-  static getSkillBonus(skillId: string): number {
+  getSkillBonus(skillId: string): number {
     const skill = SKILLS.find(s => s.id === skillId);
     if (!skill) return 0;
     return skill.effect(this.getSkillLevel(skillId));
   }
 
-  private static save() {
+  private save() {
     this.saveLocal();
     void this.saveCloud();
   }
 
-  private static saveLocal() {
+  private saveLocal() {
     localStorage.setItem('nexus_progression', JSON.stringify(this.data));
   }
 
-  private static async saveCloud() {
+  private async saveCloud() {
     const user = auth?.currentUser;
     if (user && db) {
       this.isSyncing = true;
@@ -226,3 +226,6 @@ export class ProgressionManager {
     }
   }
 }
+
+/** Default app-wide instance. Engine paths receive injected instances (A-03). */
+export const progressionManager = new ProgressionManager();

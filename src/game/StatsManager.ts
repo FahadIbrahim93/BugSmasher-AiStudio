@@ -27,9 +27,9 @@ export const INITIAL_STATS: UserStats = {
 };
 
 export class StatsManager {
-  private static stats: UserStats = StatsManager.loadLocal();
+  private stats: UserStats = this.loadLocal();
 
-  private static loadLocal(): UserStats {
+  private loadLocal(): UserStats {
     const saved = localStorage.getItem('nexus_user_stats');
     if (saved) {
       return { ...INITIAL_STATS, ...JSON.parse(saved) };
@@ -37,11 +37,11 @@ export class StatsManager {
     return { ...INITIAL_STATS };
   }
 
-  static getStats(): UserStats {
+  getStats(): UserStats {
     return { ...this.stats };
   }
 
-  static updateStats(sessionStats: Partial<UserStats>) {
+  updateStats(sessionStats: Partial<UserStats>) {
     this.stats = {
       ...this.stats,
       totalBugsKilled: (this.stats.totalBugsKilled || 0) + (sessionStats.totalBugsKilled || 0),
@@ -55,17 +55,17 @@ export class StatsManager {
     this.saveLocal();
   }
 
-  static setStats(newStats: UserStats) {
+  setStats(newStats: UserStats) {
       this.stats = { ...newStats };
       this.saveLocal();
   }
 
-  static recordRunStart(): void {
+  recordRunStart(): void {
     this.stats.totalRuns = (this.stats.totalRuns || 0) + 1;
     this.saveLocal();
   }
 
-  static recordRunEnd(wave: number, score: number): void {
+  recordRunEnd(wave: number, score: number): void {
     this.stats.bestWaveReached = Math.max(this.stats.bestWaveReached || 0, wave);
     if (score > 0) {
       this.stats.totalScore = Math.max(this.stats.totalScore || 0, score);
@@ -74,7 +74,10 @@ export class StatsManager {
     this.saveLocal();
   }
 
-  private static saveLocal() {
+  private saveLocal() {
     localStorage.setItem('nexus_user_stats', JSON.stringify(this.stats));
   }
 }
+
+/** Default app-wide instance. Engine paths receive injected instances (A-03). */
+export const statsManager = new StatsManager();

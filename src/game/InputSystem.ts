@@ -2,7 +2,6 @@ import { GameEngine } from './GameEngine';
 import { soundManager } from './SoundManager';
 // (removed unused Bug/Powerup import for lint)
 import { loadControlBindings, matchesBinding } from './ControlBindings';
-import { ProgressionManager } from './ProgressionManager';
 import { GameConfig } from './GameConfig';  // Fixed: added missing import per audit (was causing ReferenceError and 3 test failures)
 
 export class InputSystem {
@@ -262,7 +261,7 @@ export class InputSystem {
     }
 
     // Gravity Well (Temporal Technomancer) click magnet effect
-    const gravityLevel = ProgressionManager.getSkillLevel('gravity_well');
+    const gravityLevel = this.engine.progressionManager.getSkillLevel('gravity_well');
     if (gravityLevel > 0) {
       const pullRadius = gravityLevel * 100 + 100;
       const pullRadiusSq = pullRadius * pullRadius;
@@ -332,7 +331,7 @@ export class InputSystem {
         engine.damageBug(bug, 1);
 
         // Nanite Lifesteal (Bio-Scavenger) passive hit restoration
-        const lifestealChance = ProgressionManager.getSkillBonus('nanite_lifesteal');
+        const lifestealChance = this.engine.progressionManager.getSkillBonus('nanite_lifesteal');
         if (lifestealChance > 0 && Math.random() < lifestealChance) {
           engine.health = Math.min(engine.maxHealth, engine.health + 1);
           engine.particleSystem.spawnShockwave(x, y, '#10b981', 30);

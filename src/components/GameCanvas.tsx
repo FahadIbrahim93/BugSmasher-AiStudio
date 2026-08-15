@@ -1,7 +1,7 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { GameEngine } from '../game/GameEngine';
 import type { GameModeId } from '../game/GameMode';
-import { StatsManager } from '../game/StatsManager';
+import { statsManager } from '../game/StatsManager';
 
 interface GameCanvasProps {
   gameMode?: GameModeId;
@@ -56,7 +56,7 @@ export const GameCanvas = forwardRef<GameEngine | null, GameCanvasProps>(({
     engine.onWaveComplete = onWaveComplete;
     engine.onStoryTrigger = onStoryTrigger;
 
-    StatsManager.recordRunStart();
+    statsManager.recordRunStart();
     engine.start();
 
     return () => {

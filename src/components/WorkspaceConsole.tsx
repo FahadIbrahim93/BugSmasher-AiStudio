@@ -19,7 +19,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { soundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
 import { getTodaysChallenge } from '../game/DailyChallengeManager';
-import { StatsManager } from '../game/StatsManager';
+import { statsManager } from '../game/StatsManager';
 
 interface WorkspaceConsoleProps {
   onClose: () => void;
@@ -38,7 +38,7 @@ export function WorkspaceConsole({ onClose }: WorkspaceConsoleProps) {
   });
 
   const challenge = getTodaysChallenge();
-  const stats = StatsManager.getStats();
+  const stats = statsManager.getStats();
 
   useEffect(() => {
     if (feedback) {

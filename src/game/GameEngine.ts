@@ -4,7 +4,8 @@ import { Renderer } from './Renderer';
 import { ParticleSystem } from './ParticleSystem';
 import { WaveManager } from './WaveManager';
 import { GameSaveData } from './SaveManager';
-import { ProgressionManager } from './ProgressionManager';
+import { StatsManager, statsManager } from './StatsManager';
+import { ProgressionManager, progressionManager } from './ProgressionManager';
 import { InputSystem } from './InputSystem';
 import { Bug, Hazard, Powerup, ResourcePickup } from './GameTypes';
 import { CollisionSystem } from './CollisionSystem';
@@ -193,6 +194,10 @@ export class GameEngine {
   renderer: Renderer;
   inputSystem: InputSystem;
 
+  // Injected dependencies (A-03) — default to app singletons
+  statsManager: StatsManager;
+  progressionManager: ProgressionManager;
+
   onGameOver?: (score: number) => void;
   onWaveComplete?: () => void;
   onStoryTrigger?: (
@@ -200,8 +205,13 @@ export class GameEngine {
     value: number,
   ) => void;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(
+    canvas: HTMLCanvasElement,
+    deps: { statsManager?: StatsManager; progressionManager?: ProgressionManager } = {},
+  ) {
     this.canvas = canvas;
+    this.statsManager = deps.statsManager ?? statsManager;
+    this.progressionManager = deps.progressionManager ?? progressionManager;
     this.ctx = canvas.getContext('2d', { alpha: false })!;
     this.width = canvas.width;
     this.height = canvas.height;
@@ -594,11 +604,11 @@ export class GameEngine {
   }
 
   syncSkills() {
-    const data = ProgressionManager.getData();
+    const data = this.progressionManager.getData();
     this.maxHealth =
-      GameConfig.player.maxHealth + ProgressionManager.getSkillBonus('hardened_hull');
-    this.clickRadiusMultiplier = 1 + ProgressionManager.getSkillBonus('amplified_pulse');
-    this.damageMultiplier = 1 + ProgressionManager.getSkillBonus('kinetic_amplifier');
+      GameConfig.player.maxHealth + this.progressionManager.getSkillBonus('hardened_hull');
+    this.clickRadiusMultiplier = 1 + this.progressionManager.getSkillBonus('amplified_pulse');
+    this.damageMultiplier = 1 + this.progressionManager.getSkillBonus('kinetic_amplifier');
     this.prestigeLevel = data.prestigeLevel;
 
     // Apply challenge modifier overrides

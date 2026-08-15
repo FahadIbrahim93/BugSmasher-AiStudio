@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Shield, Target, Zap, Pause, Play, Wrench, Cpu } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { soundManager } from '../game/SoundManager';
-import { ProgressionManager } from '../game/ProgressionManager';
+import { progressionManager } from '../game/ProgressionManager';
 import { SaveManager, type SaveSyncStatus } from '../game/SaveManager';
 import type { GameEngine } from '../game/GameEngine';
 
@@ -887,8 +887,8 @@ function ConsumableBar({ engineRef }: { engineRef: React.RefObject<GameEngine | 
     const [counts, setCounts] = useState<Record<string, number>>({});
     
     useEffect(() => {
-        return ProgressionManager.subscribe(() => {
-            setCounts(ProgressionManager.getData().consumables);
+        return progressionManager.subscribe(() => {
+            setCounts(progressionManager.getData().consumables);
         });
     }, []);
 
@@ -982,9 +982,9 @@ function ActiveSkillsBar({ engineRef }: { engineRef: React.RefObject<any> }) {
       if (!engine) return;
 
       const items = [];
-      const bioshieldLvl = ProgressionManager.getSkillLevel('nanite_bioshield');
-      const overdriveLvl = ProgressionManager.getSkillLevel('turret_overdrive');
-      const chronoLvl = ProgressionManager.getSkillLevel('chrono_emp_shatter');
+      const bioshieldLvl = progressionManager.getSkillLevel('nanite_bioshield');
+      const overdriveLvl = progressionManager.getSkillLevel('turret_overdrive');
+      const chronoLvl = progressionManager.getSkillLevel('chrono_emp_shatter');
 
       if (bioshieldLvl > 0) {
         items.push({

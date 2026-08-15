@@ -3,13 +3,13 @@ import { User as LucideUser, X, Shield, History, Cloud, AlertCircle, BarChart3, 
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../contexts/AuthContext';
 import { soundManager } from '../game/SoundManager';
-import { StatsManager, UserStats } from '../game/StatsManager';
+import { statsManager, UserStats } from '../game/StatsManager';
 
 export function AccountMenu({ onClose }: { onClose: () => void }) {
   const { user, profile, loading: authLoading, signIn, logOut } = useAuth();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'auth' | 'profile' | 'stats'>('auth');
-  const [stats, setStats] = useState<UserStats>(StatsManager.getStats());
+  const [stats, setStats] = useState<UserStats>(statsManager.getStats());
   
   const isIframe = window.self !== window.top;
 
@@ -69,7 +69,7 @@ export function AccountMenu({ onClose }: { onClose: () => void }) {
           <TabButton 
             active={activeTab === 'stats'} 
             onClick={() => {
-              setStats(StatsManager.getStats());
+              setStats(statsManager.getStats());
               setActiveTab('stats');
             }}
             icon={<BarChart3 className="w-4 h-4" />}

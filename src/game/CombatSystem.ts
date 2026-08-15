@@ -2,8 +2,6 @@ import { GameEngine } from './GameEngine';
 import { Bug } from './GameTypes';
 import { GameConfig } from './GameConfig';
 import { soundManager } from './SoundManager';
-import { StatsManager } from './StatsManager';
-import { ProgressionManager } from './ProgressionManager';
 import { analytics } from '../lib/analytics';
 
 /**
@@ -193,7 +191,7 @@ export class CombatSystem {
         finalAmount *= 0.5;
       }
     } else {
-      const critChance = 0.05 + ProgressionManager.getSkillBonus('crit_hit');
+      const critChance = 0.05 + this.engine.progressionManager.getSkillBonus('crit_hit');
       if (Math.random() < critChance) {
         isCrit = true;
         finalAmount *= 2.0;
@@ -269,7 +267,7 @@ export class CombatSystem {
 
     const isBossKill = bug.type === 'boss';
 
-    StatsManager.updateStats({ totalBugsKilled: 1, bossesKilled: isBossKill ? 1 : 0 });
+    this.engine.statsManager.updateStats({ totalBugsKilled: 1, bossesKilled: isBossKill ? 1 : 0 });
 
     const mult = engine.multiplierTimer > 0 ? 2 : 1;
     engine.score += bug.scoreValue * mult;
@@ -388,7 +386,7 @@ export class CombatSystem {
   }
 
   consumeConsumable(id: string): boolean {
-    if (!ProgressionManager.consumeConsumable(id)) return false;
+    if (!this.engine.progressionManager.consumeConsumable(id)) return false;
 
     switch (id) {
       case 'repair_kit':
@@ -512,7 +510,7 @@ export class CombatSystem {
     engine.performanceFactor = 0.8 + safetyBonus * 0.7 + streakBonus * 1.0;
     engine.playTimeAccumulator += dt;
     if (engine.playTimeAccumulator >= 10) {
-      StatsManager.updateStats({ totalPlayTime: 10 });
+      this.engine.statsManager.updateStats({ totalPlayTime: 10 });
       engine.playTimeAccumulator -= 10;
     }
     engine.baseScale += (1.0 - engine.baseScale) * 0.15;
@@ -535,7 +533,7 @@ export class CombatSystem {
         GameConfig.upgrades.turret.minFireRate,
         baseFireRate -
           engine.autoTurretLevel * GameConfig.upgrades.turret.fireRateReduction -
-          ProgressionManager.getSkillBonus('sentry_optimization'),
+          this.engine.progressionManager.getSkillBonus('sentry_optimization'),
       );
       if (engine.overdriveTimer > 0 || engine.overdriveActiveTime > 0) fireRate *= 0.2;
       if (engine.rapidFireTimer > 0) fireRate = 0.05;
@@ -546,7 +544,7 @@ export class CombatSystem {
       }
 
       // Tactical Missile Sentry
-      const missileLevel = ProgressionManager.getSkillLevel('missile_sentry');
+      const missileLevel = this.engine.progressionManager.getSkillLevel('missile_sentry');
       if (missileLevel > 0) {
         engine.missileSentryTimer += dt;
         if (engine.missileSentryTimer >= 10.0) {
@@ -567,7 +565,7 @@ export class CombatSystem {
   // Active skills trigger (Progression Skill Tree)
   triggerActiveAbility(id: string): boolean {
     const engine = this.engine;
-    const level = ProgressionManager.getSkillLevel(id);
+    const level = this.engine.progressionManager.getSkillLevel(id);
     if (level <= 0) {
       console.warn(`Ability ${id} is not unlocked!`);
       return false;

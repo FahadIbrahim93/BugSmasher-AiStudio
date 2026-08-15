@@ -6,11 +6,11 @@ import {
   type LucideProps
 } from 'lucide-react';
 import { GameConfig } from '../game/GameConfig';
-import { ProgressionManager, ProgressionData } from '../game/ProgressionManager';
+import { progressionManager, ProgressionData } from '../game/ProgressionManager';
 import { RESOURCES, SKILLS, ResourceType } from '../game/ResourceTypes';
 import { soundManager } from '../game/SoundManager';
 import { useAuth } from '../contexts/AuthContext';
-import { StatsManager } from '../game/StatsManager';
+import { statsManager } from '../game/StatsManager';
 import { SaveManager } from '../game/SaveManager';
 import { 
   fetchPerformanceHistory, 
@@ -66,7 +66,7 @@ const TREE_NODES: TreeNode[] = [
 
 export const IntelHub = ({ onBack }: IntelHubProps) => {
   const [activeTab, setActiveTab] = useState<'log' | 'tree' | 'dashboard'>('tree');
-  const [progData, setProgData] = useState<ProgressionData>(ProgressionManager.getData());
+  const [progData, setProgData] = useState<ProgressionData>(progressionManager.getData());
   const [selectedNodeId, setSelectedNodeId] = useState<string>('crit_hit');
 
   // Google Workspace States
@@ -117,7 +117,7 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
     return () => { cancelAnimationFrame(rafId); };
   }, [activeTab]);
 
-  const stats = StatsManager.getStats();
+  const stats = statsManager.getStats();
 
   // Load Spreadsheet performance points on opening dashboard
   useEffect(() => {
@@ -141,17 +141,17 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
   };
 
   useEffect(() => {
-    return ProgressionManager.subscribe(() => {
-      setProgData(ProgressionManager.getData());
+    return progressionManager.subscribe(() => {
+      setProgData(progressionManager.getData());
     });
   }, []);
 
   const bossIntel = GameConfig.bugs.boss.variants || [];
 
   const handleUpgradeNode = (nodeId: string) => {
-    if (ProgressionManager.upgradeSkill(nodeId)) {
+    if (progressionManager.upgradeSkill(nodeId)) {
       soundManager.skillUpgrade();
-      setProgData(ProgressionManager.getData());
+      setProgData(progressionManager.getData());
     } else {
       soundManager.uiError();
     }

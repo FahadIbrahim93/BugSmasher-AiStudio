@@ -1,4 +1,4 @@
-import { StatsManager, UserStats } from './StatsManager';
+import { statsManager, UserStats } from './StatsManager';
 import type { AchievementSession } from './AchievementSession';
 
 export interface Achievement {
@@ -43,7 +43,7 @@ export class AchievementManager {
   }
 
   static checkAchievements(sessionData: AchievementSession) {
-    const stats = StatsManager.getStats();
+    const stats = statsManager.getStats();
     let newlyUnlocked = false;
 
     ACHIEVEMENTS_DATA.forEach(ach => {

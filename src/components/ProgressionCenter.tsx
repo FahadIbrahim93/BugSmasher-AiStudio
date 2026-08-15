@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Hammer, BrainCircuit, Box, X, Wrench, Binary } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ProgressionManager, ProgressionData } from '../game/ProgressionManager';
+import { progressionManager, ProgressionData } from '../game/ProgressionManager';
 import { RESOURCES, RECIPES, SKILLS, ResourceType, Recipe, Skill } from '../game/ResourceTypes';
 import { soundManager } from '../game/SoundManager';
 
@@ -11,27 +11,27 @@ interface ProgressionCenterProps {
 
 export function ProgressionCenter({ onClose }: ProgressionCenterProps) {
   const [activeTab, setActiveTab] = useState<'crafting' | 'skills' | 'inventory'>('crafting');
-  const [data, setData] = useState<ProgressionData>(ProgressionManager.getData());
+  const [data, setData] = useState<ProgressionData>(progressionManager.getData());
 
   useEffect(() => {
-    return ProgressionManager.subscribe(() => {
-      setData(ProgressionManager.getData());
+    return progressionManager.subscribe(() => {
+      setData(progressionManager.getData());
     });
   }, []);
 
   const handleCraft = (recipeId: string, ingredients: Partial<Record<ResourceType, number>>) => {
-    if (ProgressionManager.craftItem(recipeId, ingredients)) {
+    if (progressionManager.craftItem(recipeId, ingredients)) {
       soundManager.skillUpgrade();
-      setData(ProgressionManager.getData());
+      setData(progressionManager.getData());
     } else {
       soundManager.uiError();
     }
   };
 
   const handleUpgradeSkill = (skillId: string) => {
-    if (ProgressionManager.upgradeSkill(skillId)) {
+    if (progressionManager.upgradeSkill(skillId)) {
       soundManager.skillUpgrade();
-      setData(ProgressionManager.getData());
+      setData(progressionManager.getData());
     } else {
       soundManager.uiError();
     }

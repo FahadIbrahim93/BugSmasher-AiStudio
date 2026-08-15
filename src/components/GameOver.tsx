@@ -2,7 +2,7 @@ import { Skull, RotateCcw, Home, Trophy, Zap, Gift, Share2 } from 'lucide-react'
 import { soundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
 import { HighScoreManager } from '../game/HighScoreManager';
-import { ProgressionManager } from '../game/ProgressionManager';
+import { progressionManager } from '../game/ProgressionManager';
 import { useEffect, useState } from 'react';
 import { isTodaysChallengeCompleted, getStreakInfo } from '../game/DailyChallengeManager';
 import { generateShareCardImage, downloadShareCard } from '../lib/shareCard';
@@ -20,7 +20,7 @@ export function GameOver({ score, wave, onRetry, onMainMenu }: { score: number, 
   const handlePrestige = () => {
     setIsPrestigeAnimation(true);
     setTimeout(() => {
-      ProgressionManager.prestige(score); // prestige side effects only
+      progressionManager.prestige(score); // prestige side effects only
       onRetry();
     }, 2000);
   };

@@ -1,7 +1,7 @@
 import { motion, type Variants } from 'motion/react';
 import { Target, Timer, Activity, ChevronRight } from 'lucide-react';
 import { soundManager } from '../game/SoundManager';
-import { StatsManager } from '../game/StatsManager';
+import { statsManager } from '../game/StatsManager';
 
 interface WaveSummaryModalProps {
   wave: number;
@@ -20,7 +20,7 @@ export function WaveSummaryModal({
   accuracy,
   onClose
 }: WaveSummaryModalProps) {
-  const lifetimeStats = StatsManager.getStats();
+  const lifetimeStats = statsManager.getStats();
 
   const handleProceed = () => {
     soundManager.uiClick();

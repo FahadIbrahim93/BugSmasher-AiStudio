@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GameEngine } from './GameEngine';
 import { GameConfig } from './GameConfig';
-import { ProgressionManager } from './ProgressionManager';
+import { progressionManager } from './ProgressionManager';
 import { soundManager } from './SoundManager';
 
 // Mock the sound manager to prevent AudioContext errors in jsdom
@@ -240,9 +240,9 @@ describe('GameEngine', () => {
 
   it('uses consumables when inventory is available', () => {
     localStorage.clear();
-    ProgressionManager.addResource('scrap', 100);
-    ProgressionManager.addResource('alloy', 50);
-    ProgressionManager.craftItem('repair_kit', { scrap: 30, alloy: 10 });
+    progressionManager.addResource('scrap', 100);
+    progressionManager.addResource('alloy', 50);
+    progressionManager.craftItem('repair_kit', { scrap: 30, alloy: 10 });
     engine.health = 40;
 
     expect(engine.consumeConsumable('repair_kit')).toBe(true);
@@ -268,10 +268,10 @@ describe('GameEngine', () => {
 
   it('uses emp consumables to clear non-boss bugs', () => {
     localStorage.clear();
-    ProgressionManager.addResource('scrap', 200);
-    ProgressionManager.addResource('alloy', 50);
-    ProgressionManager.addResource('flux', 10);
-    expect(ProgressionManager.craftItem('emp_generator', { scrap: 100, alloy: 10, flux: 2 })).toBe(
+    progressionManager.addResource('scrap', 200);
+    progressionManager.addResource('alloy', 50);
+    progressionManager.addResource('flux', 10);
+    expect(progressionManager.craftItem('emp_generator', { scrap: 100, alloy: 10, flux: 2 })).toBe(
       true,
     );
 
