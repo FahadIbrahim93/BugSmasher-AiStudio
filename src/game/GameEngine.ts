@@ -9,6 +9,7 @@ import { InputSystem } from './InputSystem';
 import { Bug, Hazard, Powerup, ResourcePickup } from './GameTypes';
 import { CollisionSystem } from './CollisionSystem';
 import { CombatSystem } from './CombatSystem';
+import { BugBehaviorSystem } from './BugBehaviorSystem';
 import { BossSystem } from './BossSystem';
 import { PowerupSystem } from './PowerupSystem';
 import { HazardSystem } from './HazardSystem';
@@ -48,6 +49,7 @@ export class GameEngine {
   combatSystem: CombatSystem;
   collisionSystem: CollisionSystem;
   bossSystem: BossSystem;
+  bugBehaviorSystem: BugBehaviorSystem;
   powerupSystem: PowerupSystem;
   hazardSystem: HazardSystem;
   pcgSystem: PCGSystem;
@@ -223,6 +225,7 @@ export class GameEngine {
     this.combatSystem = new CombatSystem(this);
     this.collisionSystem = new CollisionSystem(this);
     this.bossSystem = new BossSystem(this);
+    this.bugBehaviorSystem = new BugBehaviorSystem(this);
     this.powerupSystem = new PowerupSystem(this);
     this.hazardSystem = new HazardSystem(this);
     this.pcgSystem = new PCGSystem(this);
@@ -517,7 +520,7 @@ export class GameEngine {
 
     // Entity Systems
     this.combatSystem.updateTurrets(dt);
-    this.updateBugs(dt);
+    this.bugBehaviorSystem.update(dt);
     this.hazardSystem.update(dt);
 
     // Environmental Systems
@@ -610,117 +613,6 @@ export class GameEngine {
     this.isChallengeMode = true;
     this.challengeModifiers = computeModifierState(modifiers);
     this.syncSkills(); // Apply glass_cannon health/damage multipliers immediately
-  }
-
-  private updateBugs(dt: number) {
-    const centerX = this.coreX;
-    const centerY = this.coreY;
-    let timeScale = this.slowMoTimer > 0 ? 0.3 : 1.0;
-    if (this.freezeTimer > 0) timeScale = 0;
-
-    for (let i = this.bugs.length - 1; i >= 0; i--) {
-      const bug = this.bugs[i];
-      const dx = centerX - bug.x;
-      const dy = centerY - bug.y;
-      const distSq = dx * dx + dy * dy;
-
-      if (distSq < 900) {
-        this.collisionSystem.handleBugImpact(bug, centerX, centerY);
-        this.bugs.splice(i, 1);
-        continue;
-      }
-
-      const dist = Math.sqrt(distSq);
-      this.moveBug(bug, dx, dy, dist, dt, timeScale);
-      this.updateBugAbilities(bug, dt, timeScale, distSq);
-      if (bug.hitTimer > 0) bug.hitTimer -= dt;
-      if (bug.healEffectTimer && bug.healEffectTimer > 0) {
-        bug.healEffectTimer -= dt * timeScale;
-        if (bug.healEffectTimer <= 0) bug.isHealing = false;
-      }
-    }
-  }
-
-  private moveBug(bug: Bug, dx: number, dy: number, dist: number, dt: number, timeScale: number) {
-    // Reactive dodge — scouts burst away from the last strike for a short window
-    if (bug.dodgeTimer && bug.dodgeTimer > 0) {
-      bug.dodgeTimer -= dt;
-      const dodgeSpeed = bug.speed * 5 * timeScale;
-      bug.x += (bug.dodgeDirX ?? 0) * dodgeSpeed * dt;
-      bug.y += (bug.dodgeDirY ?? 0) * dodgeSpeed * dt;
-      bug.walkCycle += dodgeSpeed * dt * 0.2;
-      return;
-    }
-
-    let speed = bug.speed * timeScale;
-
-    // Apply challenge modifiers
-    if (this.challengeModifiers) {
-      speed *= this.challengeModifiers.bugSpeedMultiplier;
-      if (this.challengeModifiers.speedDemonActive) {
-        speed *= 1 + this.challengeBugSpeedBonus;
-      }
-      if (this.challengeModifiers.frostbiteActive) {
-        // Slow to 20% speed when close to core, speed up over time
-        const distFactor = Math.min(1, dist / 300);
-        const frostSlow = 0.2 + distFactor * 0.8;
-        speed *= frostSlow;
-      }
-    }
-    let vx = (dx / dist) * speed;
-    let vy = (dy / dist) * speed;
-    if (bug.type === 'scout' || bug.type === 'swarmer') {
-      const erratic =
-        Math.sin(this.globalTime * 10 + bug.offsetTime) * (bug.type === 'swarmer' ? 1.2 : 0.5);
-      vx += -vy * erratic;
-      vy += (dx / dist) * speed * erratic;
-    }
-    bug.rotation = Math.atan2(vy, vx) - Math.PI / 2;
-    bug.x += vx * dt;
-    bug.y += vy * dt;
-    bug.walkCycle += speed * dt * 0.2;
-  }
-
-  private updateBugAbilities(bug: Bug, dt: number, timeScale: number, distSq: number) {
-    // Biome-specific and type-specific abilities
-    if (this.currentBiome === 'void_abyss' || bug.type === 'phase') {
-      bug.lastTeleportTime = (bug.lastTeleportTime || 0) + dt * timeScale;
-      if (bug.lastTeleportTime > (bug.type === 'phase' ? 2.0 : 4.0) && distSq > 10000) {
-        bug.lastTeleportTime = 0;
-        this.particleSystem.spawnShockwave(bug.x, bug.y, bug.color, 40);
-        const angle = Math.random() * Math.PI * 2;
-        bug.x += Math.cos(angle) * 100;
-        bug.y += Math.sin(angle) * 100;
-        this.particleSystem.spawnShockwave(bug.x, bug.y, bug.color, 30);
-      }
-    }
-    if (this.currentBiome === 'golden_spire') {
-      bug.hp = Math.min(bug.maxHp, Math.max(0, bug.hp + dt * 0.5));
-    }
-    if (bug.type === 'healer') {
-      bug.healCooldown = (bug.healCooldown || 0) + dt * timeScale;
-      if (bug.healCooldown > 3.0) {
-        bug.healCooldown = 0;
-        bug.isHealing = true;
-        bug.healEffectTimer = 0.5;
-        this.particleSystem.spawnShockwave(bug.x, bug.y, '#00ff66', 150);
-
-        const HEAL_RADIUS_SQ = 22500;
-        for (const o of this.bugs) {
-          if (o !== bug && o.active) {
-            const odx = o.x - bug.x;
-            const ody = o.y - bug.y;
-            if (odx * odx + ody * ody < HEAL_RADIUS_SQ) {
-              o.hp = Math.min(o.maxHp, o.hp + o.maxHp * 0.2);
-            }
-          }
-        }
-      }
-    }
-    // Delegate boss ability updates to BossSystem
-    if (bug.type === 'boss') {
-      this.bossSystem.update(bug, dt, timeScale);
-    }
   }
 
   updateCorePhysics(dt: number) {
