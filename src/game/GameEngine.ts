@@ -385,7 +385,6 @@ export class GameEngine {
     cancelAnimationFrame(this.animationFrameId);
     this.inputSystem.stopGamepadPolling();
     GameEngineStatusBus.publish(null);
-    GameEngineStatusBus.syncLegacyWindowGlobal(null);
   }
 
   destroy() {
@@ -530,7 +529,6 @@ export class GameEngine {
         (this.shakeTime > 0 ? this.shakeMagnitude * (this.shakeTime / 0.5) * 0.5 : 0),
     };
     GameEngineStatusBus.publish(status);
-    GameEngineStatusBus.syncLegacyWindowGlobal(status);
 
     if (this.isPaused) {
       this.draw();

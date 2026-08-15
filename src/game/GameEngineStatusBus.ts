@@ -1,5 +1,5 @@
 /**
- * Typed replacement for `(window as any).__gameEngineStatus`.
+ * Typed replacement for the legacy window status bridge (removed 2026-08, A-04).
  * React/UI layers subscribe via events; GameEngine publishes each frame while running.
  */
 
@@ -56,12 +56,5 @@ export class GameEngineStatusBus {
     listener(this.current);
 
     return () => { window.removeEventListener(STATUS_EVENT, handler); };
-  }
-
-  /** @deprecated Use subscribe() — kept for one release to ease migration */
-  static syncLegacyWindowGlobal(status: GameEngineStatus | null): void {
-    if (typeof window === 'undefined') return;
-    (window as Window & { __gameEngineStatus?: GameEngineStatus | null }).__gameEngineStatus =
-      status;
   }
 }
