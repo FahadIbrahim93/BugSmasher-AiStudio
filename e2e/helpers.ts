@@ -69,6 +69,16 @@ export async function smash(page: Page, clicks: number): Promise<void> {
 
 /** Dismiss wave-complete menus (engine pause) and restart after game over. */
 export async function dismissOverlays(page: Page): Promise<void> {
+  // A stray smash() click can hit the "Technical Progression Hub" button (it sits
+  // adjacent to Proceed in the menu footer), opening the hub overlay on top of the
+  // menu. Close it first so the menu's buttons stay clickable — this flake hit both
+  // wave-transition and fury-cooldown CI runs (random full-screen clicks + z-[60]).
+  const hubHeader = page.getByText(/Authorized Access Only/).first();
+  if (await hubHeader.isVisible().catch(() => false)) {
+    await hubHeader.locator('xpath=ancestor::div[2]//button').first().click();
+    await hubHeader.waitFor({ state: 'hidden', timeout: 5_000 }).catch(() => undefined);
+  }
+
   const body = await page.evaluate(() => document.body.innerText ?? '');
   if (/DEFENSE DOWN|Core Connection Severed/.test(body)) {
     const retry = buttonByText(page, /retry|play again|try again/i);
