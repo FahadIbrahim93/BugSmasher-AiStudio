@@ -95,7 +95,7 @@ describe('HighScoreManager', () => {
 
   it('should return false when a score does not make the top 5', () => {
     for (let i = 0; i < 5; i++) {
-      HighScoreManager.submitScore(1000 - i * 100, 5, `P${i}`);
+      HighScoreManager.submitScore(1000 - i * 100, 5, `P${String(i)}`);
     }
     const qualified = HighScoreManager.submitScore(10, 1, 'Low');
     expect(qualified).toBe(false);

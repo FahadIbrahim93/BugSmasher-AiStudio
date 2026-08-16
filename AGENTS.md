@@ -7,20 +7,20 @@ It follows a modular architecture where the `GameEngine` orchestrates several sy
 
 ## Audit Status (June 30, 2026, Verified - HONEST)
 
-**Overall Rating: ~7.5/10** — Functional and improving toward production readiness. TypeScript, functions build, **507** frontend tests, **21** functions/emulator tests, coverage thresholds (engine/lib), and production build all pass locally and in CI. Cloud save and leaderboard writes route through callables with Zod schema, rate limits, and emulator proof. ESLint is a **hard CI gate** (zero errors as of 2026-08); session-token anti-cheat, dependency audit, and production-stub replacement remain release gates.
+**Overall Rating: ~8/10** — Functional and improving toward production readiness. TypeScript, functions build, **748** frontend tests, **26** functions/emulator tests, **Phase 2b coverage thresholds (80/70/75/80)** met, and production build all pass locally and in CI. Cloud save and leaderboard writes route through callables with Zod schema, rate limits, session-token anti-cheat (S-06 done), and emulator proof. ESLint is a **hard CI gate** (zero errors as of 2026-08); dependency audit follow-up and production-stub replacement remain release gates.
 
 See `docs/VERIFICATION_2026-06-30.md`, `CTO_AUDIT_2026-06-29.md`, and `PERFECT_10_REMEDIATION_PLAN.md`. Treat older 10/10 claims as stale unless revalidated with tools.
 
-| Category                      | Rating | Key Issue                                                                                                                                             |
-| ----------------------------- | -----: | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Security & Data Integrity     |   8/10 | Callable paths + emulator tests + Zod/rate limits; session-token anti-cheat still open                                                                |
-| Test Coverage & Reliability   |   7/10 | 507/507 pass; engine/lib ~78% lines / ~62% branches (interim thresholds met)                                                                          |
+| Category                      | Rating | Key Issue                                                                                              |
+| ----------------------------- | -----: | ------------------------------------------------------------------------------------------------------ |
+| Security & Data Integrity     | 8.5/10 | Callable paths + emulator tests + Zod/rate limits + session-token anti-cheat (replay-protected) done   |
+| Test Coverage & Reliability   |   8/10 | 748/748 pass; engine/lib 81.69% lines / 70.4% branches (Phase 2b targets 80/70/75/80 enforced)         |
 | Standards & Compliance        |   7/10 | TypeScript (tsc) and ESLint (zero errors) are both hard CI gates and pass; dependency audit incomplete |
-| Code Quality & Structure      |   7/10 | Systems extracted; GameEngine, SoundManager, HUD, IntelHub remain large                                                                               |
-| Performance & Scalability     |   7/10 | DPR/performance scaler exists; build warns about circular chunks and large Firebase vendor chunk                                                      |
-| Architecture & Modularity     |   7/10 | Renderer split + functions modularized; static managers and GameEngine creep remain                                                                   |
-| Team Collaboration Readiness  |   8/10 | CI, emulator docs, verification evidence; historical audit docs still need archival                                                                   |
-| Business Objectives Alignment |   7/10 | Core game substantial; monetization, ads, analytics are not production-real                                                                           |
+| Code Quality & Structure      |   7/10 | Systems extracted; GameEngine, SoundManager, HUD, IntelHub remain large                                |
+| Performance & Scalability     |   7/10 | DPR/performance scaler exists; build warns about circular chunks and large Firebase vendor chunk       |
+| Architecture & Modularity     |   7/10 | Renderer split + functions modularized; static managers and GameEngine creep remain                    |
+| Team Collaboration Readiness  |   8/10 | CI, emulator docs, verification evidence; historical audit docs still need archival                    |
+| Business Objectives Alignment |   7/10 | Core game substantial; monetization, ads, analytics are not production-real                            |
 
 **Action for agents:** Read `docs/AGENTIC_WORKFLOW.md` first. Claim one TASKBOARD ID per branch. Verify with `npm run ci`. Never push to `main` directly. Search for "SALT", "Supabase", "firebase-applet-config". Update verification docs when gates change. Fix issues; do not paper over.
 
