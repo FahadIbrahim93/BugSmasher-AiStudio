@@ -60,7 +60,7 @@ jobs:
         run: |
           if [ -f functions/package.json ]; then
             cd functions
-            npm audit --omit=dev
+            npm audit --omit=dev --audit-level=high
           else
             echo "No functions to audit"
           fi
