@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Database } from 'lucide-react';
+import { X, Database, Loader2 } from 'lucide-react';
 import { soundManager } from '../game/SoundManager';
-import IntelSkillTree from './IntelSkillTree';
-import IntelLog from './IntelLog';
-import IntelDashboard from './IntelDashboard';
+
+// Tab bodies are lazy-loaded so the recharts/workspaceService graph only
+// ships when the Detox & Recovery Metrics tab is actually opened.
+const IntelSkillTree = lazy(() => import('./IntelSkillTree'));
+const IntelLog = lazy(() => import('./IntelLog'));
+const IntelDashboard = lazy(() => import('./IntelDashboard'));
 
 interface IntelHubProps {
   onBack: () => void;
@@ -79,9 +82,15 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
         <div className="flex-1 overflow-hidden min-h-0 flex flex-col lg:flex-row">
           
           <AnimatePresence mode="wait">
-            {activeTab === 'tree' && <IntelSkillTree key="tree" />}
-            {activeTab === 'log' && <IntelLog key="log" />}
-            {activeTab === 'dashboard' && <IntelDashboard key="dashboard" />}
+            {activeTab === 'tree' && (
+              <Suspense fallback={<TabLoading />}><IntelSkillTree key="tree" /></Suspense>
+            )}
+            {activeTab === 'log' && (
+              <Suspense fallback={<TabLoading />}><IntelLog key="log" /></Suspense>
+            )}
+            {activeTab === 'dashboard' && (
+              <Suspense fallback={<TabLoading />}><IntelDashboard key="dashboard" /></Suspense>
+            )}
           </AnimatePresence>
 
         </div>
@@ -101,3 +110,11 @@ export const IntelHub = ({ onBack }: IntelHubProps) => {
     </motion.div>
   );
 };
+
+function TabLoading() {
+  return (
+    <div className="flex-1 flex items-center justify-center min-h-0">
+      <Loader2 className="w-6 h-6 text-rose-500 animate-spin" />
+    </div>
+  );
+}

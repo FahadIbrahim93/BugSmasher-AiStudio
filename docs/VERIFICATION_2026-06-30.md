@@ -61,9 +61,27 @@ Emulator tests prove:
 
 See [EMULATOR_TESTING.md](./EMULATOR_TESTING.md) for local setup and troubleshooting.
 
+## 2026-08-15 addendum — refactor backlog & gate changes
+
+Verified after the A-01…A-08 / ST-01…ST-03b refactor backlog merged to `main`:
+
+| Command                      | Result   | Notes                                                                                           |
+| ---------------------------- | -------- | ----------------------------------------------------------------------------------------------- |
+| `npm run typecheck`          | **PASS** | `tsc --noEmit`, 0 errors                                                                        |
+| `npm run lint:eslint`        | **PASS** | **0 errors** (908 advisory warnings) — now a hard CI gate                                       |
+| `npm run test:coverage`      | **PASS** | 651/651 frontend tests; thresholds met                                                          |
+| `npm run validate:functions` | **PASS** | `npm ci` + build + 6 schema unit tests                                                          |
+| `npm run test:emulator`      | **PASS** | 26 integration tests (7 rules + 19 callables)                                                   |
+| `npm run build`              | **PASS** | zero bundle warnings                                                                            |
+| `npm run test:e2e`           | **PASS** | 5/5 Playwright specs (wave transition, fury cooldown, save/load rage, endless, game-over retry) |
+
+Coverage (engine/lib gate) at 2026-08-15: lines 79.17% · statements 78.12% · functions 84.57% · branches 66.02% — all above interim thresholds (77/76/75/61).
+
+Changes since 2026-06-30: `@ts-nocheck` removed from all renderers and audio modules (zero remain in `src/`); ESLint re-promoted to a **blocking** CI step (was advisory, `continue-on-error: true`); `npm run ci` now fails on lint errors. Playwright E2E suite added and passing.
+
 ## Remaining release gates
 
 - Phase 2b: raise coverage thresholds to 80/70/75/80; deepen `GameEngine` / `WaveManager` branch tests
 - Session-token anti-cheat for competitive leaderboard (TASKBOARD P1-07)
-- Real ESLint (not tsc-only `lint`), dependency audit, Playwright E2E
-- Production stub replacement (`ads`, `monetization`, `monitoring`)
+- Dependency audit; production stub replacement (`ads`, `monetization`, `monitoring`)
+- ESLint advisory-warning burn-down (908 warnings; not a blocking gate)

@@ -18,7 +18,6 @@ export type { VoiceLine } from './VoiceSystem';
 
 export class SoundManager {
   ctx: AudioContext | null = null;
-  masterGain: GainNode | null = null;
   sfxGain: GainNode | null = null;
   musicGain: GainNode | null = null;
   voiceGain: GainNode | null = null;
