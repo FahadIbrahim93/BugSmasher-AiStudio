@@ -4,47 +4,55 @@
 2026-08-16
 
 ## Session Mode
-Planning only. No source code changes are authorized in this phase.
+Execution authorized by user. GitHub-side implementation and audit work is in progress. Local shell/Codex execution is not available in this environment, so repository-reported test results are not being represented as freshly executed results.
 
 ## Baseline
 - Repository: `FahadIbrahim93/BugSmasher-HopeTheory`
 - Default branch: `main`
-- HEAD inspected: `6ac0ece4c17d94e723f752fe2f204af55bc5ba6a`
-- HEAD is the merge of PR #64, "Refactor backlog: engine/UI/audio extraction, DI managers, clean build, typed renderers (A-01..A-08, ST-03)".
-- A `SESSION.md` did not exist before this session; this file is therefore the initial session record.
-- The repository's latest verification addendum reports: 651/651 frontend tests passing, coverage at 79.17% lines / 78.12% statements / 84.57% functions / 66.02% branches against interim thresholds, 0 ESLint errors (908 advisory warnings), 26 emulator tests, a clean production build, and 5/5 Playwright specs. These are repository-reported results; they have not been rerun during this planning pass.
+- Baseline HEAD from planning pass: `6ac0ece4c17d94e723f752fe2f204af55bc5ba6a`
+- Repository verification addendum reports 651/651 frontend tests passing, 79.17% lines / 78.12% statements / 84.57% functions / 66.02% branches against interim thresholds, 0 ESLint errors with advisory warnings, 26 emulator tests, a clean production build, and 5/5 Playwright specs. These remain repository-reported until a fresh CI run is inspected.
 
 ## Current Quality Rating
-### 8.1 / 10 — good engineering baseline, not yet a production-grade 10/10
+### 8.1 / 10 — strong engineering baseline, not yet a verified production-grade 10/10
 
-The repository has moved materially beyond the June 2026 7.2–7.5/10 audits. The biggest positive change is that the architectural backlog was actually executed: combat and bug behavior were extracted from `GameEngine`, managers became instantiable, the legacy window status bridge was removed, Vite/DailyChallenge chunk warnings were addressed, `SoundManager` was split, large UI components were decomposed, renderer/audio `@ts-nocheck` was removed, ESLint became a blocking zero-error gate, and Playwright coverage was added.
+The architecture and verification posture are substantially better than the June baseline. The remaining gap is primarily evidence-backed release hardening: final coverage thresholds, competitive-integrity depth, accessibility evidence, production integration/de-scope decisions, documentation truthfulness, and warning/security hygiene.
 
-The score remains below 9/10 because several release-critical gaps are explicitly still open: coverage is above interim thresholds but below the final 80/70/75/80 target; competitive leaderboard anti-cheat still lacks signed/session-token run validation; dependency/security scanning is incomplete; production-facing analytics, monetization, ads, monitoring, and crash reporting remain stubbed or de-scoped; accessibility has not reached an evidence-backed WCAG 2.2 AA gate; and the repository still carries a substantial volume of ESLint advisory warnings and historical documentation debt.
+## Findings During Execution
 
-## Top 3 Strengths
-1. **Engineering discipline and verification are now credible.** The project has a real CI chain, emulator coverage, unit coverage, production build validation, and Playwright smoke tests rather than relying on a single happy-path build.
-2. **Architecture has materially improved.** `GameEngine` responsibilities were split into specialized systems; audio and large UI surfaces were decomposed; dependency seams were improved; the obsolete global status bridge was removed.
-3. **Security architecture has a strong foundation.** Cloud save and leaderboard writes are routed through callable/server-controlled paths with schema validation and rate limiting, and Firestore/emulator tests exist. The remaining security issue is competitive integrity, not a total absence of server authority.
+### Security / competitive integrity
+- `functions/src/sessionToken.ts` already implements cryptographically random server-created session IDs, a 10-minute TTL, user binding, atomic one-time consumption, replay rejection, and session-duration plausibility checks.
+- `functions/src/handlers.ts` requires `sessionId` for leaderboard submissions and atomically consumes the token before updating the leaderboard.
+- `functions/test/callables.test.ts` already covers valid sessions, replay, cross-user token use, expiration, missing tokens, and implausible session scores.
+- This means the old TASKBOARD statement that session-token anti-cheat is completely unimplemented is stale. However, the current mechanism is better described as server-issued nonce/session validation rather than a fully signed gameplay-run/replay-verification system. It remains a hardening candidate rather than a verified end-state.
 
-## Top 3 Critical Weaknesses
-1. **Final test-quality bar is not met.** Coverage remains at interim thresholds instead of the intended 80/70/75/80 target, so the project's strongest quality signal is still knowingly below its own final standard.
-2. **Competitive/security hardening is incomplete.** Session-token/signed-run anti-cheat and replay resistance remain open for leaderboard integrity; dependency/security scanning evidence is also incomplete.
-3. **Production product surface is still partly simulated.** Analytics, monetization, ads, crash reporting/monitoring, and privacy/consent readiness are not yet demonstrated as production-real, so the project should not claim full commercial-production readiness.
+### Dependency / static security
+- `.github/dependabot.yml` already configures weekly dependency updates for the root app, Firebase Functions, and GitHub Actions.
+- `.github/workflows/codeql.yml` already runs CodeQL security-and-quality analysis for JavaScript/TypeScript.
+- Added `.github/workflows/security-audit.yml` to run blocking `npm audit --audit-level=high` checks for both root and Functions dependencies on pushes, PRs, and weekly schedule.
+- A fresh green result is still required before claiming the dependency/security gate is verified.
 
-## What This Project Should Ultimately Do
-BugSmasher-HopeTheory should be a polished, accessible, performance-conscious browser arcade game in which players defend a tactical OS-themed base by fighting escalating bio-luminescent bugs, with trustworthy progression, saves, competitive scoring, and production-grade operational quality.
+### Coverage
+- Current repository evidence is 79.17% lines, 78.12% statements, 84.57% functions, and 66.02% branches.
+- Therefore the final 80/80/75/70 target is not yet honestly claimable.
+- No coverage threshold was lowered and no superficial test was added merely to manufacture a pass.
 
-## Session Task List — This Session Only
-1. **T-01 — Restore the final coverage gate:** raise meaningful frontend/engine/lib coverage to the repository's stated 80/70/75/80 target without lowering thresholds or adding superficial tests.
-2. **S-01 — Harden competitive score integrity:** design and implement signed/session-token run validation, replay resistance, and corresponding emulator/function tests for leaderboard submissions.
-3. **B-01 — Close production-readiness gaps:** audit and either productionize or explicitly de-scope analytics, monetization, ads, crash reporting/monitoring, privacy/consent, and dependency scanning so documentation matches reality.
+### Production integrations
+- Monetization remains an explicit local/demo stub rather than a payment provider integration.
+- Production analytics/ads/monitoring claims must therefore be treated as de-scoped until real providers and consent/operational controls are installed.
+- Deployment documentation also contains stale historical quality/test counts and needs a documentation truth pass.
 
-## Execution Protocol
-For every task above: read this file first; present the task-specific plan before implementation; implement only after confirmation; run the relevant tests/gates; record exact results here; then request confirmation before moving to the next task.
+## Execution Changes
+1. Added a blocking dependency audit workflow at `.github/workflows/security-audit.yml`.
+2. Preserved the existing CodeQL and Dependabot controls rather than duplicating them.
+3. Corrected this session record so security findings distinguish implemented session-token protection from a future signed-run/replay-verification design.
 
-## Current Status
-- Planning complete.
-- `SESSION.md` created.
-- No source code changed.
-- No tests were run during this planning-only pass.
-- Awaiting confirmation before beginning **T-01**.
+## Remaining Work
+1. Raise meaningful coverage to the final 80/80/75/70 target and verify through CI.
+2. Deepen competitive integrity beyond bearer session validation if the product requires authoritative run summaries/replay resistance.
+3. Complete accessibility/WCAG evidence.
+4. Either integrate or explicitly de-scope analytics, monetization, ads, crash reporting, monitoring, and telemetry consent.
+5. Remove stale documentation claims/counts and align TASKBOARD/DEPLOYMENT/verification records with the current repository.
+6. Inspect the resulting GitHub Actions runs and only mark gates complete when evidence is green.
+
+## Verification Policy
+A task is not considered complete solely because code exists. Completion requires acceptance-criteria evidence from repository inspection and, where applicable, a successful GitHub Actions run. No claim in this session should imply that a local test command was executed when it was not.
