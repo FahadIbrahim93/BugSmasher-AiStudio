@@ -12,7 +12,7 @@ import { GameConfig } from '../game/GameConfig';
 import type { GameSaveData } from '../game/SaveManager';
 import { SaveSlotsModal } from './SaveSlotsModal';
 
-import { StatsManager } from '../game/StatsManager';
+import { statsManager } from '../game/StatsManager';
 import type { GameModeId } from '../game/GameMode';
 import { AchievementManager } from '../game/AchievementManager';
 import { useAuth } from '../contexts/AuthContext';
@@ -108,7 +108,7 @@ export function Game({
       setFinalScore(score);
       setIsGameOver(true);
       const wave = engineRef.current?.wave ?? 0;
-      StatsManager.recordRunEnd(wave, score);
+      statsManager.recordRunEnd(wave, score);
       analytics.track('game_over', { score, wave });
 
       // Check challenge completion
@@ -127,7 +127,7 @@ export function Game({
 
       // Final stats push
       if (engineRef.current) {
-        StatsManager.updateStats({
+        statsManager.updateStats({
           totalScore: score,
           totalPlayTime: engineRef.current.playTimeAccumulator,
         });
@@ -135,7 +135,7 @@ export function Game({
 
       // Auto-update spreadsheet in real-time if Google Sheets are connected
       if (accessToken) {
-        pushPerformanceRow(accessToken, StatsManager.getStats())
+        pushPerformanceRow(accessToken, statsManager.getStats())
           .then(() => {
             console.log('Real-time Google Sheets update complete on run end.');
           })
@@ -169,7 +169,7 @@ export function Game({
         score: engineRef.current.score,
       });
 
-      StatsManager.updateStats({
+      statsManager.updateStats({
         totalWavesCompleted: 1,
       });
 
@@ -310,8 +310,8 @@ export function Game({
       const detail = (e as CustomEvent).detail;
       if (detail.type === 'resources') {
         // Defer to ProgressionManager via dynamic import to avoid circular deps
-        void import('../game/ProgressionManager').then(({ ProgressionManager }) => {
-          ProgressionManager.addResource(
+        void import('../game/ProgressionManager').then(({ progressionManager }) => {
+          progressionManager.addResource(
             detail.id as ResourceType,
             detail.id === 'crystals' ? 25 : 500,
           );

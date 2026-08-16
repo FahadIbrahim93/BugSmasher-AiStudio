@@ -168,8 +168,11 @@ describe('SaveManager', () => {
 
     // loadFromSlot reads slot.data from IndexedDB (memoryStorage), so tamper
     // the slot stored there rather than the localStorage backup.
+    // memoryStorage is private static — bracket access is required here.
+    // eslint-disable-next-line @typescript-eslint/dot-notation -- deliberate private-member access in a tamper test
     const slot = IndexedDBSaveSystem['memoryStorage'][slotId!];
     slot.data.checksum = 'tampered-checksum';
+    // eslint-disable-next-line @typescript-eslint/dot-notation -- deliberate private-member access in a tamper test
     IndexedDBSaveSystem['memoryStorage'][slotId!] = slot;
 
     const loaded = await SaveManager.loadFromSlot(slotId!);

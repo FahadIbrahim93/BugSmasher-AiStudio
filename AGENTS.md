@@ -7,7 +7,7 @@ It follows a modular architecture where the `GameEngine` orchestrates several sy
 
 ## Audit Status (June 30, 2026, Verified - HONEST)
 
-**Overall Rating: ~7.5/10** — Functional and improving toward production readiness. TypeScript, functions build, **507** frontend tests, **21** functions/emulator tests, coverage thresholds (engine/lib), and production build all pass locally and in CI. Cloud save and leaderboard writes route through callables with Zod schema, rate limits, and emulator proof. ESLint is **advisory** in CI (tracked debt — see below); session-token anti-cheat, dependency audit, and production-stub replacement remain release gates.
+**Overall Rating: ~7.5/10** — Functional and improving toward production readiness. TypeScript, functions build, **507** frontend tests, **21** functions/emulator tests, coverage thresholds (engine/lib), and production build all pass locally and in CI. Cloud save and leaderboard writes route through callables with Zod schema, rate limits, and emulator proof. ESLint is a **hard CI gate** (zero errors as of 2026-08); session-token anti-cheat, dependency audit, and production-stub replacement remain release gates.
 
 See `docs/VERIFICATION_2026-06-30.md`, `CTO_AUDIT_2026-06-29.md`, and `PERFECT_10_REMEDIATION_PLAN.md`. Treat older 10/10 claims as stale unless revalidated with tools.
 
@@ -15,7 +15,7 @@ See `docs/VERIFICATION_2026-06-30.md`, `CTO_AUDIT_2026-06-29.md`, and `PERFECT_1
 | ----------------------------- | -----: | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Security & Data Integrity     |   8/10 | Callable paths + emulator tests + Zod/rate limits; session-token anti-cheat still open                                                                |
 | Test Coverage & Reliability   |   7/10 | 507/507 pass; engine/lib ~78% lines / ~62% branches (interim thresholds met)                                                                          |
-| Standards & Compliance        |   6/10 | TypeScript (tsc) is the hard CI gate and passes; eslint runs advisory on every push (tracked debt, was blocking deploys); dependency audit incomplete |
+| Standards & Compliance        |   7/10 | TypeScript (tsc) and ESLint (zero errors) are both hard CI gates and pass; dependency audit incomplete |
 | Code Quality & Structure      |   7/10 | Systems extracted; GameEngine, SoundManager, HUD, IntelHub remain large                                                                               |
 | Performance & Scalability     |   7/10 | DPR/performance scaler exists; build warns about circular chunks and large Firebase vendor chunk                                                      |
 | Architecture & Modularity     |   7/10 | Renderer split + functions modularized; static managers and GameEngine creep remain                                                                   |
@@ -24,7 +24,7 @@ See `docs/VERIFICATION_2026-06-30.md`, `CTO_AUDIT_2026-06-29.md`, and `PERFECT_1
 
 **Action for agents:** Read `docs/AGENTIC_WORKFLOW.md` first. Claim one TASKBOARD ID per branch. Verify with `npm run ci`. Never push to `main` directly. Search for "SALT", "Supabase", "firebase-applet-config". Update verification docs when gates change. Fix issues; do not paper over.
 
-> **ESLint status (2026-08):** `tsc --noEmit` is the hard CI gate. `eslint .` runs on every push as an **advisory** step (`continue-on-error: true`) because ~233 pre-existing errors (config-parse issues fixed 2026-08) are tracked debt that had blocked the deploy pipeline for ~2 weeks. New work must not add lint errors; burn down the debt in TASKBOARD and re-promote eslint to a blocking gate once it reaches zero.
+> **ESLint status (2026-08):** ESLint is a **hard CI gate** — `eslint .` runs blocking on every push and passes with **zero errors** (908 advisory warnings remain, all stylistic/type-strictness hints). New work must not add lint errors. `tsc --noEmit` remains the primary type gate.
 
 ## Architecture Standards
 

@@ -4,7 +4,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { ChecksumSystem } from '../lib/checksum';
 import { IndexedDBSaveSystem, SaveSlot } from './IndexedDBSaveSystem';
 
-import { UserStats, StatsManager } from './StatsManager';
+import { UserStats, statsManager } from './StatsManager';
 
 export interface GameSaveData {
   score: number;
@@ -85,7 +85,7 @@ export class SaveManager {
   static async saveToSlot(slotId: string, data: GameSaveData, slotName: string): Promise<boolean> {
     this.notifySync('syncing');
     try {
-      const stats = StatsManager.getStats();
+      const stats = statsManager.getStats();
       const rawData: Omit<GameSaveData & { stats: unknown }, 'checksum'> = { ...data, stats };
 
       const checksum = await ChecksumSystem.generate(rawData);
@@ -156,7 +156,7 @@ export class SaveManager {
         }
       }
 
-      if (parsed.stats) StatsManager.setStats(parsed.stats);
+      if (parsed.stats) statsManager.setStats(parsed.stats);
 
       // Set active slot
       this.setActiveSlotId(slotId);
@@ -186,7 +186,7 @@ export class SaveManager {
   static async save(data: GameSaveData): Promise<boolean> {
     this.notifySync('syncing');
     try {
-      const stats = StatsManager.getStats();
+      const stats = statsManager.getStats();
       const rawData: Omit<GameSaveData & { stats: unknown }, 'checksum'> = { ...data, stats }; // Ensure we don't hash the previous checksum
 
       const checksum = await ChecksumSystem.generate(rawData);
@@ -299,7 +299,7 @@ export class SaveManager {
         console.warn('Save data lacks a checksum. This might be an old save or tampered.');
       }
 
-      if (parsed.stats) StatsManager.setStats(parsed.stats);
+      if (parsed.stats) statsManager.setStats(parsed.stats);
 
       // If we loaded from cloud and it was valid, sync local
       if (isCloud) {

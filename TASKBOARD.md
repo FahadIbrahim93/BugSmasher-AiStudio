@@ -57,28 +57,30 @@
 
 ## Phase 3 — Standards & Tooling (P1)
 
-| ID    | Task                                   | Pri | Status | Acceptance                                 |
-| ----- | -------------------------------------- | --- | ------ | ------------------------------------------ |
-| ST-01 | ESLint flat config (TS + React + a11y) | P1  | [ ]    | `npm run lint` = ESLint; `typecheck` = tsc |
-| ST-02 | Prettier after ESLint green            | P2  | [ ]    | No mixed noisy diffs                       |
-| ST-03 | Remove `@ts-nocheck` from renderers    | P1  | [ ]    | Environment/Bug/Particle/UIRenderer typed  |
-| ST-04 | Lighthouse CI budget                   | P2  | [ ]    | Performance + a11y scores documented       |
-| ST-05 | Husky pre-commit (lint-staged)         | P2  | [ ]    | Optional; only after ESLint stable         |
+| ID     | Task                                    | Pri | Status | Acceptance                                                         |
+| ------ | --------------------------------------- | --- | ------ | ------------------------------------------------------------------ |
+| ST-01  | ESLint flat config (TS + React + a11y)  | P1  | [ ]    | `npm run lint` = ESLint; `typecheck` = tsc                         |
+| ST-02  | Prettier after ESLint green             | P2  | [ ]    | No mixed noisy diffs                                               |
+| ST-03  | Remove `@ts-nocheck` from renderers     | P1  | [x]    | Environment/Bug/Particle/UIRenderer typed                          |
+| ST-03b | Remove `@ts-nocheck` from audio modules | P1  | [x]    | AudioGraph/MusicSystem/VoiceSystem/SoundManager/SoundEffects typed |
+| ST-01b | Burn down ESLint errors to zero         | P1  | [x]    | `eslint .` = 0 errors; re-promoted to blocking CI gate             |
+| ST-04  | Lighthouse CI budget                    | P2  | [ ]    | Performance + a11y scores documented                               |
+| ST-05  | Husky pre-commit (lint-staged)          | P2  | [ ]    | Optional; only after ESLint stable                                 |
 
 ---
 
 ## Phase 4 — Architecture & Performance (P1)
 
-| ID   | Task                                            | Pri | Status | Acceptance                              |
-| ---- | ----------------------------------------------- | --- | ------ | --------------------------------------- |
-| A-01 | Extract `CombatSystem` from GameEngine          | P1  | [ ]    | GameEngine <800 lines; tests for combat |
-| A-02 | Extract `BugBehaviorSystem`                     | P1  | [ ]    | AI/movement/abilities isolated          |
-| A-03 | DI for ProgressionManager/StatsManager          | P1  | [ ]    | Engine paths inject interfaces          |
-| A-04 | Remove `__gameEngineStatus` window bridge       | P1  | [ ]    | All consumers on GameEngineStatusBus    |
-| A-05 | Fix Vite circular chunk warning                 | P1  | [ ]    | Clean build, no vendor↔react cycle      |
-| A-06 | Fix DailyChallengeManager static/dynamic import | P1  | [ ]    | No vite reporter warning                |
-| A-07 | Split SoundManager (audio vs voice vs music)    | P2  | [ ]    | File <600 lines                         |
-| A-08 | Split IntelHub / HUD / WorkspaceConsole         | P2  | [ ]    | Sub-components + lazy tabs              |
+| ID   | Task                                            | Pri | Status | Acceptance                                                                                                                                           |
+| ---- | ----------------------------------------------- | --- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A-01 | Extract `CombatSystem` from GameEngine          | P1  | [x]    | GameEngine <800 lines; tests for combat                                                                                                              |
+| A-02 | Extract `BugBehaviorSystem`                     | P1  | [x]    | AI/movement/abilities isolated                                                                                                                       |
+| A-03 | De-static ProgressionManager/StatsManager       | P1  | [x]    | Instantiable classes + singleton exports (PARTIAL: true constructor DI / interface injection deferred — engine paths still import module singletons) |
+| A-04 | Remove `__gameEngineStatus` window bridge       | P1  | [x]    | All consumers on GameEngineStatusBus                                                                                                                 |
+| A-05 | Fix Vite circular chunk warning                 | P1  | [x]    | Clean build, no vendor↔react cycle                                                                                                                   |
+| A-06 | Fix DailyChallengeManager static/dynamic import | P1  | [x]    | No vite reporter warning                                                                                                                             |
+| A-07 | Split SoundManager (audio vs voice vs music)    | P2  | [x]    | File <600 lines                                                                                                                                      |
+| A-08 | Split IntelHub / HUD / WorkspaceConsole         | P2  | [x]    | Sub-components + lazy tabs                                                                                                                           |
 
 ---
 

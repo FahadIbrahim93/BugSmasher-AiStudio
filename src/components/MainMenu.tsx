@@ -2,14 +2,14 @@ import { Bug, Settings2, Trophy, User, BookOpen, ListOrdered, Zap, Calendar, Gem
 import { soundManager } from '../game/SoundManager';
 import { SaveManager } from '../game/SaveManager';
 import { SaveSlotsModal } from './SaveSlotsModal';
-import { ProgressionManager } from '../game/ProgressionManager';
+import { progressionManager } from '../game/ProgressionManager';
 import { useState } from 'react';
 import { AccountMenu } from './AccountMenu';
 // import { IntelHub } from './IntelHub'; // kept for future lazy use if needed
 import { Leaderboard } from './Leaderboard';
 import { Armory } from './Armory';
 import { DailyChallengeModal } from './DailyChallengeModal';
-import { isTodaysChallengeCompleted, getStreakInfo } from '../game/DailyChallengeManager';
+import { generateDailyChallenge, isTodaysChallengeCompleted, getStreakInfo } from '../game/DailyChallengeManager';
 import { isSupporter } from '../game/CosmeticsManager';
 import { type ChallengeModifierId } from '../game/DailyChallengeManager';
 import type { GameModeId } from '../game/GameMode';
@@ -82,11 +82,8 @@ export function MainMenu({
         <DailyChallengeModal 
           onStart={() => {
             setIsDailyChallengeOpen(false);
-            // Import daily challenge manager to get modifiers and pass them to game start
-            void import('../game/DailyChallengeManager').then(({ generateDailyChallenge }) => {
-              const challenge = generateDailyChallenge();
-              onStart(challenge.modifiers);
-            });
+            const challenge = generateDailyChallenge();
+            onStart(challenge.modifiers);
           }}
           onClose={() => { setIsDailyChallengeOpen(false); }}
         />
@@ -116,12 +113,12 @@ export function MainMenu({
                 </div>
               </div>
               
-              {ProgressionManager.getData().prestigeLevel > 0 && (
+              {progressionManager.getData().prestigeLevel > 0 && (
                 <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl px-4 py-2 flex items-center space-x-3">
                   <Zap className="w-4 h-4 text-rose-400 opacity-80" />
                   <div className="flex flex-col items-start leading-none">
                     <span className="text-[10px] text-rose-500/60 uppercase font-mono tracking-widest font-black">Detox Level</span>
-                    <span className="text-sm font-mono text-rose-400 tracking-widest">RANK {ProgressionManager.getData().prestigeLevel}</span>
+                    <span className="text-sm font-mono text-rose-400 tracking-widest">RANK {progressionManager.getData().prestigeLevel}</span>
                   </div>
                 </div>
               )}

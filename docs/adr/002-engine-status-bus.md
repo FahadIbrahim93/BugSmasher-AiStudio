@@ -14,7 +14,7 @@ Introduce `GameEngineStatusBus`:
 - `publish(status | null)` each frame while running
 - `subscribe(listener)` for React `useEffect` integration
 - `getSnapshot()` for synchronous reads
-- Deprecated `syncLegacyWindowGlobal()` for one-release migration
+- `syncLegacyWindowGlobal()` served one release of migration and was removed once all consumers moved to `subscribe()` (2026-08, TASKBOARD A-04) — the `window.__gameEngineStatus` bridge no longer exists
 
 ## Consequences
 

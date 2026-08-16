@@ -65,8 +65,10 @@ export default defineConfig(() => {
       hmr: process.env.DISABLE_HMR !== 'true',
     },
     build: {
-      // Temporary raised per audit bundle work; TODO: full lazy Firebase to drop below 500kB warning.
-      // See firebase.ts for lazy getter.
+      // Raised above Vite's default 500 kB: the firebase chunk (~651 kB) and
+      // vendor chunk (~690 kB) both exceed it. Firebase is eagerly loaded via
+      // static imports in src/lib/firebase.ts — tracked debt is to lazy-load
+      // it so this limit can return to the default.
       chunkSizeWarningLimit: 700,
       rollupOptions: {
         output: {

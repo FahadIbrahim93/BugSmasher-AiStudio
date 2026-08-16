@@ -65,6 +65,14 @@ test.describe('wave transition', () => {
     console.log(`RAGE AT MENU: ${rageAtMenu} | wave shown: ${await readWave(page)}`);
 
     // --- Phase C: proceed to wave 2 ---
+    // A stray smash() click may have hit the "Technical Progression Hub" button
+    // (it sits adjacent to Proceed in the menu footer), opening the hub overlay
+    // on top of the menu. Close it if present so the proceed button is clickable.
+    const hubHeader = page.getByText(/Authorized Access Only/).first();
+    if (await hubHeader.isVisible().catch(() => false)) {
+      await hubHeader.locator('xpath=ancestor::div[2]//button').first().click();
+      await expect(hubHeader).not.toBeVisible({ timeout: 5_000 });
+    }
     const proceed = buttonByText(page, /proceed to wave 2/i);
     await expect(proceed).toBeVisible({ timeout: 15_000 });
     await proceed.click();
