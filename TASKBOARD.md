@@ -24,17 +24,17 @@
 
 ## Phase 1 — Security & Trust Boundaries (P0)
 
-| ID   | Task                                         | Pri | Status | Acceptance                                                    |
-| ---- | -------------------------------------------- | --- | ------ | ------------------------------------------------------------- |
-| S-01 | Deny direct client save/leaderboard writes   | P0  | [x]    | Firestore rules + emulator tests                              |
-| S-02 | Callable `saveGameData` with server checksum | P0  | [x]    | Zod schema + `functions/test/callables.test.ts`               |
-| S-03 | Callable `submitScore` with monotonic scores | P0  | [x]    | Rate limit + plausibility bounds tested                       |
-| S-04 | Rate limiting (saves + scores)               | P0  | [x]    | Firestore `_rateLimits/` + emulator tests                     |
-| S-05 | Firebase emulator test suite                 | P0  | [x]    | 17 integration + 4 schema unit tests                          |
-| S-06 | Session-token / signed run anti-cheat        | P0  | [x]    | Server validates session summary; replays rejected            |
-| S-07 | Legacy cloud save migration/backfill         | P1  | [ ]    | Old checksum docs migrated or rejected gracefully             |
-| S-08 | Remove PII from Firestore error logs         | P1  | [x]    | uid/email redacted from error payloads + paths; tests pin it  |
-| S-09 | Dependency + CodeQL security scan in CI      | P1  | [ ]    | Dependabot + `npm audit` + CodeQL green or waived with ticket |
+| ID   | Task                                         | Pri | Status | Acceptance                                                                                                |
+| ---- | -------------------------------------------- | --- | ------ | --------------------------------------------------------------------------------------------------------- |
+| S-01 | Deny direct client save/leaderboard writes   | P0  | [x]    | Firestore rules + emulator tests                                                                          |
+| S-02 | Callable `saveGameData` with server checksum | P0  | [x]    | Zod schema + `functions/test/callables.test.ts`                                                           |
+| S-03 | Callable `submitScore` with monotonic scores | P0  | [x]    | Rate limit + plausibility bounds tested                                                                   |
+| S-04 | Rate limiting (saves + scores)               | P0  | [x]    | Firestore `_rateLimits/` + emulator tests                                                                 |
+| S-05 | Firebase emulator test suite                 | P0  | [x]    | 17 integration + 4 schema unit tests                                                                      |
+| S-06 | Session-token / signed run anti-cheat        | P0  | [x]    | Server validates session summary; replays rejected                                                        |
+| S-07 | Legacy cloud save migration/backfill         | P1  | [ ]    | Old checksum docs migrated or rejected gracefully                                                         |
+| S-08 | Remove PII from Firestore error logs         | P1  | [x]    | uid/email redacted from error payloads + paths; tests pin it                                              |
+| S-09 | Dependency + CodeQL security scan in CI      | P1  | [~]    | Audit gates live (root @0, functions @high); Dependabot + CodeQL green; 10 low/moderate transitive waived |
 
 ---
 
