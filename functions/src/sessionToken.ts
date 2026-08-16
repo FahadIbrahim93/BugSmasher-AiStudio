@@ -7,6 +7,7 @@ import { requireAuth } from './validation';
 // Session configuration
 const SESSION_TTL_MS = 600_000; // 10 minutes — a single game round should complete within this window
 const SESSION_MAX_SCORE_PER_SECOND = 5_000; // Hard cap: max plausible score accumulation per second
+const SESSION_MIN_ELAPSED_SECONDS = 5; // Conservative floor for newly-created sessions
 
 export interface SessionTokenData {
   userId: string;
@@ -29,7 +30,7 @@ function generateSessionId(): string {
  * Creates a new game session token in Firestore and returns it to the client.
  *
  * The token grants the holder the ability to submit one score for the
- * authenticated user.  Reuse is prevented by atomically marking the
+ * authenticated user. Reuse is prevented by atomically marking the
  * document as `used` during score submission (replay protection).
  */
 export async function handleStartSession(
@@ -126,23 +127,20 @@ export async function validateAndConsumeSession(
 
 /**
  * Validates that the submitted score is plausible for a single session.
- * This prevents extremely large scores from a single game session.
  *
- * For just-in-time sessions (elapsed < 5s), the duration check is skipped
- * since the session was created at submission time, not game start.
- * In practice the primary anti-cheat value comes from replay protection
- * (one-time token consumption) and the existing assertSafeScore bounds.
+ * A newly-created session is given a conservative 5-second minimum duration
+ * floor rather than skipping validation entirely. This preserves usability
+ * for legitimate short rounds while preventing a fresh token from becoming
+ * an unconditional bypass around the session plausibility cap.
  */
 export function assertPlausibleSessionScore(
   score: number,
   session: SessionTokenData,
 ): void {
-  const elapsedSeconds = (Date.now() - session.createdAt) / 1000;
-
-  // Skip check for JIT sessions (created < 5s ago at submission time)
-  if (elapsedSeconds < 5) {
-    return;
-  }
+  const elapsedSeconds = Math.max(
+    (Date.now() - session.createdAt) / 1000,
+    SESSION_MIN_ELAPSED_SECONDS,
+  );
 
   const maxPlausible = elapsedSeconds * SESSION_MAX_SCORE_PER_SECOND;
 
@@ -153,5 +151,3 @@ export function assertPlausibleSessionScore(
     );
   }
 }
-
-
