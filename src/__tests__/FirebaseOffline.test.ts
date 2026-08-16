@@ -56,4 +56,25 @@ describe('FirebaseService offline (unconfigured Firebase)', () => {
       handleFirestoreError(new Error('offline test'), OperationType.GET, 'test/path', false);
     }).not.toThrow();
   });
+
+  it('logs a PII-free error payload (S-08): no uid, no email, presence-only auth', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      handleFirestoreError(
+        new Error('boom'),
+        OperationType.GET,
+        'users/private/saves',
+        false,
+      );
+      const logged = JSON.parse(errorSpy.mock.calls[0][1] as string) as {
+        authInfo: Record<string, unknown>;
+        path: string;
+      };
+      expect(logged.authInfo.authenticated).toBe(false);
+      expect(logged.authInfo.userId).toBeUndefined();
+      expect(logged.authInfo.email).toBeUndefined();
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
 });

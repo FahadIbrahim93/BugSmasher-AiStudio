@@ -35,18 +35,29 @@ interface FirestoreErrorInfo {
   operationType: OperationType;
   path: string | null;
   authInfo: {
-    userId?: string | null;
+    // No PII (S-08): presence-only signal instead of the raw uid.
+    authenticated: boolean;
   }
+}
+
+/**
+ * Redacts a uid that may be embedded in a Firestore path (e.g.
+ * `users/<uid>/private/saves`) before it reaches logs or error payloads.
+ * PII-free by construction (S-08).
+ */
+function redactPath(path: string | null, uid?: string | null): string | null {
+  if (!path || !uid) return path;
+  return path.split(uid).join('<uid>');
 }
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null, shouldThrow = true) {
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
-      userId: auth?.currentUser?.uid ?? null,
+      authenticated: Boolean(auth?.currentUser),
     },
     operationType,
-    path
+    path: redactPath(path, auth?.currentUser?.uid)
   };
   console.error('Firestore Error: ', JSON.stringify(errInfo));
 

@@ -107,14 +107,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           
           console.error("Profile listen error:", error);
+          // S-08: PII-free error payload — no uid, email, or verification state.
           const errInfo = {
             error: error instanceof Error ? error.message : String(error),
             operationType: 'get',
-            path: `users/${user.uid}`,
+            path: 'users/<uid>',
             authInfo: {
-              userId: auth?.currentUser?.uid ?? null,
-              email: auth?.currentUser?.email ?? null,
-              emailVerified: auth?.currentUser?.emailVerified ?? null,
+              authenticated: Boolean(auth?.currentUser),
             }
           };
           console.error('Firestore Error: ', JSON.stringify(errInfo));
