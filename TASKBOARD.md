@@ -31,8 +31,7 @@
 | S-03 | Callable `submitScore` with monotonic scores | P0  | [x]    | Rate limit + plausibility bounds tested                                                                   |
 | S-04 | Rate limiting (saves + scores)               | P0  | [x]    | Firestore `_rateLimits/` + emulator tests                                                                 |
 | S-05 | Firebase emulator test suite                 | P0  | [x]    | 17 integration + 4 schema unit tests                                                                      |
-| S-06 | Session-token / signed run anti-cheat        | P0  | [x]    | Server validates session summary; replays rejected                                                        |
-| S-07 | Legacy cloud save migration/backfill         | P1  | [ ]    | Old checksum docs migrated or rejected gracefully                                                         |
+| S-06 | Session-token / signed run anti-cheat        | P0  | [x]    | Server validates session summary; replays rejected                                                        |     | S-07 | Legacy cloud save migration/backfill | P1  | [x] | Graceful rejection already in place: no-checksum docs load w/ warning; invalid checksums rejected + tested |
 | S-08 | Remove PII from Firestore error logs         | P1  | [x]    | uid/email redacted from error payloads + paths; tests pin it                                              |
 | S-09 | Dependency + CodeQL security scan in CI      | P1  | [~]    | Audit gates live (root @0, functions @high); Dependabot + CodeQL green; 10 low/moderate transitive waived |
 
