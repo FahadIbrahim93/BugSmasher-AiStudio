@@ -33,7 +33,7 @@
 | S-05 | Firebase emulator test suite                 | P0  | [x]    | 17 integration + 4 schema unit tests                          |
 | S-06 | Session-token / signed run anti-cheat        | P0  | [x]    | Server validates session summary; replays rejected            |
 | S-07 | Legacy cloud save migration/backfill         | P1  | [ ]    | Old checksum docs migrated or rejected gracefully             |
-| S-08 | Remove PII from Firestore error logs         | P1  | [~]    | Audit `handleFirestoreError` paths                            |
+| S-08 | Remove PII from Firestore error logs         | P1  | [x]    | uid/email redacted from error payloads + paths; tests pin it  |
 | S-09 | Dependency + CodeQL security scan in CI      | P1  | [ ]    | Dependabot + `npm audit` + CodeQL green or waived with ticket |
 
 ---
