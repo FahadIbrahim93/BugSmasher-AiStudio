@@ -79,9 +79,23 @@ Coverage (engine/lib gate) at 2026-08-15: lines 79.17% · statements 78.12% · f
 
 Changes since 2026-06-30: `@ts-nocheck` removed from all renderers and audio modules (zero remain in `src/`); ESLint re-promoted to a **blocking** CI step (was advisory, `continue-on-error: true`); `npm run ci` now fails on lint errors. Playwright E2E suite added and passing.
 
+## 2026-08-16 execution addendum — security/documentation hardening
+
+No local shell commands are claimed as executed in this session. The following repository changes were made and are pending fresh CI evidence:
+
+- Added `.github/workflows/security-audit.yml` with blocking high-severity `npm audit` checks for both root and Firebase Functions dependencies.
+- Confirmed existing Dependabot and CodeQL workflows are present.
+- Confirmed leaderboard score submissions already use server-issued one-time session tokens with authentication binding, TTL, atomic consumption, replay rejection, and emulator coverage.
+- Hardened `assertPlausibleSessionScore()` so a newly-created session no longer bypasses the plausibility cap; it now uses a conservative 5-second minimum elapsed-time floor.
+- Corrected README claims that overstated final accessibility/production readiness and contained stale test counts.
+- Updated `SESSION.md` with the current evidence policy and remaining gates.
+
 ## Remaining release gates
 
-- Phase 2b: raise coverage thresholds to 80/70/75/80; deepen `GameEngine` / `WaveManager` branch tests
-- Session-token anti-cheat for competitive leaderboard (TASKBOARD P1-07)
-- Dependency audit; production stub replacement (`ads`, `monetization`, `monitoring`)
-- ESLint advisory-warning burn-down (908 warnings; not a blocking gate)
+- Raise meaningful coverage to the final 80% lines / 80% statements / 75% functions / 70% branches target.
+- Fresh CI evidence for the new dependency audit workflow.
+- Decide whether competitive integrity requires authoritative gameplay-run summaries or replay verification beyond server-issued one-time sessions.
+- Complete evidence-backed WCAG 2.2 AA audit.
+- Either productionize or explicitly de-scope analytics, monetization, ads, crash reporting, runtime monitoring, and telemetry consent.
+- Remove remaining stale counts/claims from deployment/taskboard documentation.
+- Burn down advisory ESLint warnings where practical; zero errors is already a blocking gate.
