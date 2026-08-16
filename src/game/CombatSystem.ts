@@ -205,8 +205,6 @@ export class CombatSystem {
     if (furyCrit) {
       isCrit = true;
       finalAmount *= 2.0;
-
-      finalAmount *= 2.0;
       this.engine.particleSystem.spawnShockwave(bug.x, bug.y, '#ff6a00', 90);
     }
 

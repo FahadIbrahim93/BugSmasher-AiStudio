@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { progressionManager } from '../game/ProgressionManager';
+import { progressionManager, ProgressionManager } from '../game/ProgressionManager';
 
 // Mock firebase modules
 vi.mock('../lib/firebase', () => ({
@@ -164,6 +164,37 @@ describe('ProgressionManager', () => {
     // Use 'scavenger_protocol' which costs scrap + plasma: level 0→1 = 50 scrap + 2 plasma
     const testSkillId = 'scavenger_protocol';
 
+    it('should refuse upgrades when branch dependencies are missing', () => {
+      // kinetic_amplifier requires sentry_optimization (not owned)
+      progressionManager.addResource('scrap', 9999);
+      progressionManager.addResource('plasma', 9999);
+      progressionManager.addResource('flux', 9999);
+      progressionManager.addResource('neural_core', 9999);
+
+      const result = progressionManager.upgradeSkill('kinetic_amplifier');
+      expect(result).toBe(false);
+      expect(progressionManager.getSkillLevel('kinetic_amplifier')).toBe(0);
+    });
+
+    it('should allow upgrades once dependencies are met', () => {
+      progressionManager.addResource('scrap', 9999);
+      progressionManager.addResource('plasma', 9999);
+      progressionManager.addResource('flux', 9999);
+      progressionManager.addResource('neural_core', 9999);
+
+      expect(progressionManager.upgradeSkill('sentry_optimization')).toBe(true);
+      expect(progressionManager.upgradeSkill('kinetic_amplifier')).toBe(true);
+      expect(progressionManager.getSkillLevel('kinetic_amplifier')).toBe(1);
+    });
+
+    it('should return false when resources are insufficient for the cost', () => {
+      // scavenger_protocol level 0→1 costs 50 scrap + 2 plasma
+      progressionManager.addResource('scrap', 10);
+      const result = progressionManager.upgradeSkill(testSkillId);
+      expect(result).toBe(false);
+      expect(progressionManager.getSkillLevel(testSkillId)).toBe(0);
+    });
+
     it('should increase skill level', () => {
       progressionManager.addResource('scrap', 500);
       progressionManager.addResource('plasma', 200);
@@ -279,6 +310,28 @@ describe('ProgressionManager', () => {
       const earned = progressionManager.prestige(5000);
       expect(earned).toBe(0);
       expect(progressionManager.getData().prestigePoints).toBe(beforePoints);
+    });
+  });
+
+  describe('loadLocal on fresh instance', () => {
+    it('should load merged data when localStorage has a saved payload', () => {
+      localStorage.setItem(
+        'nexus_progression',
+        JSON.stringify({
+          inventory: { scrap: 77, plasma: 3 },
+          skills: { rapid_repair: 2 },
+          consumables: { repair_kit: 1 },
+          prestigeLevel: 4,
+          prestigePoints: 9,
+        }),
+      );
+      const fresh = new ProgressionManager();
+      const data = fresh.getData();
+      expect(data.inventory.scrap).toBe(77);
+      expect(data.inventory.crystals).toBe(0); // merged with defaults
+      expect(data.skills.rapid_repair).toBe(2);
+      expect(data.consumables.repair_kit).toBe(1);
+      expect(data.prestigeLevel).toBe(4);
     });
   });
 

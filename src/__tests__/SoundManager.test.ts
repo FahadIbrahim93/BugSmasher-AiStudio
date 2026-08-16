@@ -121,6 +121,32 @@ describe('SoundManager', () => {
     expect(manager.enabled).toBe(true);
   });
 
+  it('toggles sfx and music mute independently', () => {
+    const manager = new SoundManager();
+    expect(manager.toggleSfxMute()).toBe(true);
+    expect(manager.toggleSfxMute()).toBe(false);
+    expect(manager.toggleMusicMute()).toBe(true);
+    expect(manager.toggleMusicMute()).toBe(false);
+  });
+
+  it('exposes reduced-motion and audio-stats surface', () => {
+    const manager = new SoundManager();
+    manager.setReducedMotion(true);
+    manager.init();
+    expect(manager.getAudioStats()).toBeDefined();
+    manager.setReducedMotion(false);
+  });
+
+  it('resumes a suspended audio context on init', () => {
+    const manager = new SoundManager();
+    manager.init();
+    (manager as unknown as { ctx: { state: string; resume: ReturnType<typeof vi.fn> } }).ctx.state = 'suspended';
+    manager.init();
+    expect(
+      (manager as unknown as { ctx: { state: string; resume: ReturnType<typeof vi.fn> } }).ctx.resume,
+    ).toHaveBeenCalled();
+  });
+
   it('initializes Web Audio graph and plays sfx without throwing', () => {
     const manager = new SoundManager();
     manager.init();

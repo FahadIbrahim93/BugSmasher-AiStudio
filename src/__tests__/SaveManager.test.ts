@@ -6,6 +6,8 @@ const firebaseMocks = vi.hoisted(() => ({
   currentUser: null as { uid: string; displayName: string } | null,
   submitScore: vi.fn(() => Promise.resolve(true)),
   startSession: vi.fn(() => Promise.resolve({ sessionId: 'test-session-123', expiresAt: Date.now() + 600_000 })),
+  uploadSave: vi.fn(() => Promise.resolve(true)),
+  downloadSave: vi.fn(() => Promise.resolve(null)),
   getDoc: vi.fn(() => Promise.resolve({
     exists: () => false,
     data: () => ({}),
@@ -25,6 +27,8 @@ vi.mock('../lib/firebaseService', () => ({
   FirebaseService: {
     submitScore: firebaseMocks.submitScore,
     startSession: firebaseMocks.startSession,
+    uploadSave: firebaseMocks.uploadSave,
+    downloadSave: firebaseMocks.downloadSave,
   },
 }));
 
@@ -199,6 +203,74 @@ describe('SaveManager', () => {
   it('returns 0 for a missing high score', () => {
     localStorage.removeItem('bugsmasher_all_time_high');
     expect(SaveManager.getHighScore()).toBe(0);
+  });
+
+  it('syncs saves to the cloud when a user is signed in', async () => {
+    firebaseMocks.currentUser = { uid: 'user-1', displayName: 'Operator' };
+    const data = {
+      score: 900, wave: 4, health: 70, maxHealth: 100,
+      clickRadiusMultiplier: 1, autoTurretLevel: 1, timestamp: Date.now(),
+    };
+
+    const success = await SaveManager.save(data);
+
+    expect(success).toBe(true);
+    expect(firebaseMocks.uploadSave).toHaveBeenCalledWith('user-1', expect.anything());
+  });
+
+  it('still saves locally when cloud upload fails', async () => {
+    firebaseMocks.currentUser = { uid: 'user-1', displayName: 'Operator' };
+    (firebaseMocks.uploadSave as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('offline'));
+    const data = {
+      score: 900, wave: 4, health: 70, maxHealth: 100,
+      clickRadiusMultiplier: 1, autoTurretLevel: 1, timestamp: Date.now(),
+    };
+
+    const success = await SaveManager.save(data);
+
+    expect(success).toBe(true);
+    expect(localStorage.getItem('bugsmasher_save_data')).not.toBeNull();
+  });
+
+  it('loads from the cloud when a user has a cloud save', async () => {
+    firebaseMocks.currentUser = { uid: 'user-1', displayName: 'Operator' };
+    (firebaseMocks.downloadSave as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      score: 777, wave: 8, health: 60, maxHealth: 100,
+      clickRadiusMultiplier: 1, autoTurretLevel: 2, timestamp: Date.now(),
+    });
+
+    const loaded = await SaveManager.load();
+
+    expect(loaded).not.toBeNull();
+    if (loaded) {
+      expect(loaded.score).toBe(777);
+    }
+  });
+
+  it('falls back to local storage when the cloud download fails', async () => {
+    firebaseMocks.currentUser = { uid: 'user-1', displayName: 'Operator' };
+    (firebaseMocks.downloadSave as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('offline'));
+    localStorage.setItem('bugsmasher_save_data', JSON.stringify({
+      score: 555, wave: 6, health: 90, maxHealth: 100,
+      clickRadiusMultiplier: 1, autoTurretLevel: 0, timestamp: Date.now(),
+    }));
+
+    const loaded = await SaveManager.load();
+
+    expect(loaded).not.toBeNull();
+    if (loaded) {
+      expect(loaded.score).toBe(555);
+    }
+  });
+
+  it('skips cloud submission when no session token is available', async () => {
+    firebaseMocks.currentUser = { uid: 'user-1', displayName: 'Operator' };
+    (firebaseMocks.startSession as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null);
+
+    await SaveManager.setHighScore(6000, 15);
+
+    expect(SaveManager.getHighScore()).toBe(6000);
+    expect(firebaseMocks.submitScore).not.toHaveBeenCalled();
   });
 
   it('persists the rage meter and fury cooldown in save data', async () => {
