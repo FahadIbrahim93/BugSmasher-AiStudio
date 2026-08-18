@@ -4,18 +4,18 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 [![React 19](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-%7E5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Vitest](https://img.shields.io/badge/Vitest-683%20tests-2ECC71?style=for-the-badge)](https://vitest.dev)
+[![Vitest](https://img.shields.io/badge/Vitest-678%20tests-2ECC71?style=for-the-badge)](https://vitest.dev)
 [![Accessibility](https://img.shields.io/badge/Accessibility-in%20progress-FF6B6B?style=for-the-badge)](/docs/BLUEPRINT_10_10.md)
 
 </div>
 
 **Arcade clicker-defense with server-authoritative leaderboards.**  
-React 19 + TypeScript + Canvas 2D. 683 automated tests, CI green. Shipped in 2 weeks.
+React 19 + TypeScript + Canvas 2D. 678 automated tests, CI green. Shipped in 2 weeks.
 
 - **Live:** https://bugsmasher-hopetheory.vercel.app  
 - **Repo:** [FahadIbrahim93/BugSmasher-HopeTheory](https://github.com/FahadIbrahim93/BugSmasher-HopeTheory)  
 - **Stack:** React 19 · TypeScript · Tailwind · Vitest · Firebase  
-- **Quality:** 683 tests (651 Vitest + 32 Firebase), 79% coverage, CI green
+- **Quality:** 678 tests (646 Vitest + 32 Firebase), 79% coverage, CI green
 
 ---
 
@@ -39,7 +39,7 @@ Built with AI-assisted workflow: lint → test → build → deploy pipeline cut
 | **Motion** | Canvas 2D game loop, WebAudio synth SFX, 60+ FPS target |
 | **State** | Zustand for game state, Firestore for persistence |
 | **Auth** | Firebase Auth with OAuth scopes eliminated for security |
-| **Testing** | Vitest + jsdom, 683 tests, engine/lib coverage gates |
+| **Testing** | Vitest + jsdom, 678 tests, engine/lib coverage gates |
 | **CI/CD** | GitHub Actions, Firebase deploy, emulator tests |
 | **Security** | Firestore rules deny direct writes, callables enforce auth + Zod schema + checksums + rate limits |
 
@@ -47,7 +47,7 @@ Built with AI-assisted workflow: lint → test → build → deploy pipeline cut
 
 ## Quality metrics
 
-- **683 automated tests** — 651 Vitest frontend + 32 Firebase emulator + functions
+- **678 automated tests** — 646 Vitest frontend + 32 Firebase emulator + functions
 - **79% coverage** — Engine/lib modules with enforced coverage thresholds
 - **CI green** — typecheck → ESLint → functions build → coverage → emulator → build
 - **Security audit** — Server-authoritative save/score paths, OAuth scopes eliminated
@@ -67,7 +67,7 @@ npm run dev
 ```bash
 npm run typecheck          # TypeScript check
 npm run lint:eslint        # ESLint (TS + React + a11y)
-npm test                   # 683 frontend unit tests
+npm test                   # 678 frontend unit tests
 npm run test:coverage      # engine/lib coverage gate
 npm run ci                 # Full pipeline
 ```
@@ -88,7 +88,7 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for production deploy and [docs/BLUEPRINT_1
 
 ## Why this repo stands out
 
-1. **Testing rigor** — 683 tests with enforced coverage thresholds, not just "tests exist"
+1. **Testing rigor** — 678 tests with enforced coverage thresholds, not just "tests exist"
 2. **Security-first** — Eliminated client-side OAuth, implemented server-authoritative scoring
 3. **Performance** — Real-time FPS scaler + dynamic VFX downscaling
 4. **Accessibility** — WCAG 2.1 AA in a game context, not just a marketing site
