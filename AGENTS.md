@@ -1,77 +1,107 @@
 # Application Context & Standards
 
-## Project Overview
+## Project identity
 
-This is a high-intensity, FAANG-level React/TypeScript game engine using Canvas 2D.
-It follows a modular architecture where the `GameEngine` orchestrates several systems.
+BugSmasher is a React 19 + TypeScript + Canvas 2D arcade game with Firebase-backed authentication, persistence, server-validated score submission, progression, achievements, procedural content, accessibility controls, and automated verification.
 
-## Audit Status (June 30, 2026, Verified - HONEST)
+This repository is intentionally developed with multiple AI agents and coding platforms. The repository documentation is therefore part of the engineering system, not optional prose.
 
-**Overall Rating: ~7.5/10** — Functional and improving toward production readiness. TypeScript, functions build, **507** frontend tests, **21** functions/emulator tests, coverage thresholds (engine/lib), and production build all pass locally and in CI. Cloud save and leaderboard writes route through callables with Zod schema, rate limits, and emulator proof. ESLint is a **hard CI gate** (zero errors as of 2026-08); session-token anti-cheat, dependency audit, and production-stub replacement remain release gates.
+## Current truth (2026-08-29)
 
-See `docs/VERIFICATION_2026-06-30.md`, `CTO_AUDIT_2026-06-29.md`, and `PERFECT_10_REMEDIATION_PLAN.md`. Treat older 10/10 claims as stale unless revalidated with tools.
+**Certification:** NOT 10/10 certified.  
+**Latest inspected main CI:** RED on 2026-08-26 because 1 of 26 emulator tests failed.  
+**Frontend tests in that run:** 651/651 passed.  
+**ESLint:** 0 errors but 908 warnings in that run.  
+**Coverage in that run:** ~79.14% lines, 78.06% statements, 84.43% functions, 66.30% branches.  
+**Security:** server-issued session-token protection exists; it is not equivalent to complete deterministic replay verification.
 
-| Category                      | Rating | Key Issue                                                                                                                                             |
-| ----------------------------- | -----: | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Security & Data Integrity     |   8/10 | Callable paths + emulator tests + Zod/rate limits; session-token anti-cheat still open                                                                |
-| Test Coverage & Reliability   |   7/10 | 507/507 pass; engine/lib ~78% lines / ~62% branches (interim thresholds met)                                                                          |
-| Standards & Compliance        |   7/10 | TypeScript (tsc) and ESLint (zero errors) are both hard CI gates and pass; dependency audit incomplete |
-| Code Quality & Structure      |   7/10 | Systems extracted; GameEngine, SoundManager, HUD, IntelHub remain large                                                                               |
-| Performance & Scalability     |   7/10 | DPR/performance scaler exists; build warns about circular chunks and large Firebase vendor chunk                                                      |
-| Architecture & Modularity     |   7/10 | Renderer split + functions modularized; static managers and GameEngine creep remain                                                                   |
-| Team Collaboration Readiness  |   8/10 | CI, emulator docs, verification evidence; historical audit docs still need archival                                                                   |
-| Business Objectives Alignment |   7/10 | Core game substantial; monetization, ads, analytics are not production-real                                                                           |
+Treat all older ratings and victory-lap claims as historical unless backed by a newer verification record.
 
-**Action for agents:** Read `docs/AGENTIC_WORKFLOW.md` first. Claim one TASKBOARD ID per branch. Verify with `npm run ci`. Never push to `main` directly. Search for "SALT", "Supabase", "firebase-applet-config". Update verification docs when gates change. Fix issues; do not paper over.
+## Read order
 
-> **ESLint status (2026-08):** ESLint is a **hard CI gate** — `eslint .` runs blocking on every push and passes with **zero errors** (908 advisory warnings remain, all stylistic/type-strictness hints). New work must not add lint errors. `tsc --noEmit` remains the primary type gate.
+1. `docs/PROJECT_OPERATING_SYSTEM.md`
+2. `AGENTS.md` (this file)
+3. `TASKBOARD.md`
+4. `docs/STATUS.md`
+5. `docs/RELEASE_CERTIFICATION.md`
+6. `docs/ARCHITECTURE.md`
+7. `docs/AGENT_HANDOFF.md`
+8. task-specific documents and latest verification record
 
-## Architecture Standards
+## Non-negotiable engineering rules
 
-- **Systems over Monoliths**: Avoid adding logic directly to `GameEngine.ts`. Extract specialized systems (e.g., `InputSystem`, `CollisionSystem`) to keep the engine lean.
-  - Renderer delegates to `src/game/rendering/{Environment,Bug,Particle,UIRenderer}.ts` + `PerformanceScaler.ts`.
-  - HUD sync uses `GameEngineStatusBus` — do not reintroduce `(window as any).__gameEngineStatus`.
-- **Strict Timing**: NEVER use `setTimeout` or `setInterval` for game state. Use delta-time (`dt`) passed through the `update` loop.
-- **Type Safety**: Core entities (`Bug`, `Powerup`, `Hazard`) are defined in `src/game/GameTypes.ts`. Always import from there to avoid circular dependencies.
-- **Service Isolation**: Third-party services like Firebase should be abstracted or kept in specialized contexts (`AuthContext`).
+### Truth and evidence
 
-## Implementation Guidelines
+- Never claim a check passed unless it actually passed.
+- CI evidence outranks agent assertions and stale documents.
+- Never lower coverage/security thresholds to manufacture green CI.
+- Never delete or weaken a regression test merely to remove a failure.
+- Never mark a stub/mock/simulation as production-complete.
+- Update documentation whenever a quantitative claim changes.
 
-- **Brutal Honesty**: If a feature is implemented with "magic numbers" or hacks, document the technical debt immediately.
-- **Performance**: High DPR is capped manually for mobile. Always check `isMobile` before intensive rendering effects (like `shadowBlur`).
-- **Observability**: Game events should be logged internally for debugging and potentially surfaced to the player in "Intel" or "Terminal" components.
+### Git and collaboration
 
-## Coding Standards (Post-Audit)
+- One primary TASKBOARD ID per branch/PR.
+- Prefer feature/fix/test/docs branches and PRs.
+- `main` is the release branch.
+- Keep unrelated work separate.
+- Coordinate before touching high-conflict files.
+- Never force-push shared branches.
 
-- **No `any` types in engine code**: Use `ParticleEngineHost`, `GameTypes.ts`. UI components still have `any` — see TASKBOARD P1-06.
-- **No global state buses**: Use `GameEngineStatusBus.subscribe()` from React; legacy window sync is deprecated.
-- **Prefer dependency injection over static managers**: Static service locators (ProgressionManager, StatsManager) make testing difficult — refactor with proper DI.
-- **Test coverage target**: All new systems must have >80% test coverage. No merging without tests.
-- **No client-side-only security**: Client-side checksums and validations must be mirrored with server-side enforcement.
+### Game architecture
 
-## Documentation & Deployment
+- `GameEngine` orchestrates; specialized systems own domain logic.
+- Rendering owns drawing, not game rules.
+- UI owns presentation and interaction, not authoritative scoring/security.
+- Gameplay timing uses delta-time (`dt`). Do not use `setTimeout`/`setInterval` for game-state progression.
+- Do not recreate global `window` state bridges.
+- Prefer explicit dependency injection over new static service coupling.
 
-| Doc                               | Use when                                                  |
-| --------------------------------- | --------------------------------------------------------- |
-| **`docs/AGENTIC_WORKFLOW.md`**    | **Git, PR, parallel agents, version, verification gates** |
-| `CONTRIBUTING.md`                 | First PR / human onboarding                               |
-| `DEPLOYMENT.md`                   | Shipping to Firebase / configuring CI secrets             |
-| `TASKBOARD.md`                    | Picking next implementation task (10/10 roadmap)          |
-| `docs/VERIFICATION_2026-06-30.md` | Current CI/security/coverage evidence                     |
-| `docs/ARCHITECTURE.md`            | Module boundaries before engine changes                   |
-| `CTO_AUDIT_2026-06-29.md`         | Understanding quality gaps                                |
+### Type safety
 
-**Pre-push:** `npm run ci` · **Branch:** `feat/*` → PR to `main` (never direct push) · **Release:** DEPLOYMENT.md · **Version:** `package.json` (2.5.0 — bump on release PR only)
+- Prefer strict TypeScript over casts.
+- No avoidable `any`, `as any`, `@ts-ignore`, or `@ts-nocheck`.
+- Core game entities/types live in `src/game/GameTypes.ts` and should not be duplicated casually.
 
-## Recent Refactors (Completed June 2026)
+### React correctness
 
-- Split `Renderer` into `src/game/rendering/*` sub-modules.
-- `GameEngineStatusBus`, `AccessibilitySettings`, `ParticleEngineHost`.
-- GitHub Actions CI (`.github/workflows/ci.yml`).
+- Render functions should be deterministic.
+- Do not call `Date.now`, `performance.now`, `Math.random`, mutable ref reads, or external mutations during render where React purity is violated.
+- Effects must have correct dependencies and should not be used as a substitute for derived state.
 
-## Earlier Refactors (May 2026)
+### Security
 
-- extracted `InputSystem` from `GameEngine`.
-- centralize `GameTypes.ts`.
-- remove `supabase` (unused).
-- replace all `setTimeout` with `dt` based game timers.
+- Client-side validation is UX assistance, not authority.
+- Authoritative save/score rules belong in server callables and Firestore rules.
+- Security-sensitive changes require emulator/integration tests.
+- Never commit secrets, service-account JSON, production salts, credentials, or private tokens.
+
+## Definition of done
+
+A task is done only when:
+
+1. acceptance criteria are met;
+2. appropriate tests exist and pass;
+3. required verification passes;
+4. documentation is synchronized;
+5. TASKBOARD state is updated;
+6. known follow-up work is recorded.
+
+## Standard verification
+
+```bash
+npm run typecheck
+npm run lint:eslint
+npm run test:coverage
+npm run test:emulator
+npm run build
+npx playwright test
+```
+
+Use `npm run ci` for the full repository gate once the individual failure is understood.
+
+## Agent behavior
+
+Agents must be skeptical, incremental and auditable. Before editing, inspect the relevant implementation and current branch/PR state. After editing, explain the behavioral risk and verify it. Leave a structured handoff if work is incomplete.
+
+The objective is not to produce the most code. The objective is to leave the repository more correct, more understandable and more independently verifiable.

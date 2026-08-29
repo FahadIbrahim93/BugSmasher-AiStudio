@@ -1,61 +1,56 @@
+# BugSmasher — current README
+
 <div align="center">
 
 ![BugSmasher](https://img.shields.io/badge/BugSmasher-HopeTheory-2.5.0-blue?style=for-the-badge)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 [![React 19](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-%7E5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Vitest](https://img.shields.io/badge/Vitest-678%20tests-2ECC71?style=for-the-badge)](https://vitest.dev)
-[![Accessibility](https://img.shields.io/badge/Accessibility-in%20progress-FF6B6B?style=for-the-badge)](/docs/BLUEPRINT_10_10.md)
+[![Vitest](https://img.shields.io/badge/Vitest-tests%20verified%20in%20CI-2ECC71?style=for-the-badge)](https://vitest.dev)
+[![Accessibility](https://img.shields.io/badge/Accessibility-audit%20in%20progress-FF6B6B?style=for-the-badge)](./docs/RELEASE_CERTIFICATION.md)
 
 </div>
 
-**Arcade clicker-defense with server-authoritative leaderboards.**  
-React 19 + TypeScript + Canvas 2D. 678 automated tests, CI green. Shipped in 2 weeks.
+**Arcade clicker-defense with server-validated leaderboards.**  
+React 19 + TypeScript + Canvas 2D + Firebase.
 
-- **Live:** https://bugsmasher-hopetheory.vercel.app  
-- **Repo:** [FahadIbrahim93/BugSmasher-HopeTheory](https://github.com/FahadIbrahim93/BugSmasher-HopeTheory)  
-- **Stack:** React 19 · TypeScript · Tailwind · Vitest · Firebase  
-- **Quality:** 678 tests (646 Vitest + 32 Firebase), 79% coverage, CI green
+> **Current release truth:** BugSmasher is **not currently certified 10/10**. The latest inspected `main` CI run (2026-08-26) is red because one Firebase emulator test fails. See [docs/STATUS.md](./docs/STATUS.md).
 
----
+- **Live:** https://bugsmasher-hopetheory.vercel.app
+- **Repo:** https://github.com/FahadIbrahim93/BugSmasher-HopeTheory
 
 ## What it is
 
-BugSmasher is a production-grade arcade game that combines:
-- **Auth & progression** — OAuth login, XP system, 16 achievements
-- **Real-time leaderboards** — Server-authoritative scores with one-time session tokens to prevent tampering
-- **Offline-first PWA** — Works offline, syncs when back online
-- **Accessibility** — WCAG 2.1 AA compliant, keyboard navigation, screen reader support
+BugSmasher is a feature-rich browser arcade game combining real-time Canvas gameplay with a React interface and Firebase services. Major systems include authentication, progression, achievements, procedural content, offline/local persistence, leaderboards, accessibility settings, game audio, and server-side score validation.
 
-Built with AI-assisted workflow: lint → test → build → deploy pipeline cuts shipping time ~60% while maintaining quality gates.
-
----
-
-## Tech highlights
+## Engineering highlights
 
 | Area | Implementation |
 |---|---|
-| **Frontend** | React 19, TypeScript strict mode, Tailwind CSS, Vite |
-| **Motion** | Canvas 2D game loop, WebAudio synth SFX, 60+ FPS target |
-| **State** | Zustand for game state, Firestore for persistence |
-| **Auth** | Firebase Auth with OAuth scopes eliminated for security |
-| **Testing** | Vitest + jsdom, 678 tests, engine/lib coverage gates |
-| **CI/CD** | GitHub Actions, Firebase deploy, emulator tests |
-| **Security** | Firestore rules deny direct writes, callables enforce auth + Zod schema + checksums + rate limits |
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS |
+| Game loop | Canvas 2D + `requestAnimationFrame` + delta-time updates |
+| State / systems | Specialized game managers and rendering modules |
+| Auth | Firebase Authentication |
+| Persistence | Local/IndexedDB paths plus Firebase callable-backed cloud persistence |
+| Security | Firestore rules, callable validation, rate limits, checksums, session-token controls |
+| Testing | Vitest, Firebase Emulator Suite, Playwright |
+| CI/CD | GitHub Actions with typecheck, tests, coverage, emulator, build, lint and E2E stages |
+| PWA | Service-worker/PWA support |
 
----
+## Verification truth
 
-## Quality metrics
+Do not use the README as the source for current numeric test or coverage metrics. Current evidence lives in:
 
-- **678 automated tests** — 646 Vitest frontend + 32 Firebase emulator + functions
-- **79% coverage** — Engine/lib modules with enforced coverage thresholds
-- **CI green** — typecheck → ESLint → functions build → coverage → emulator → build
-- **Security audit** — Server-authoritative save/score paths, OAuth scopes eliminated
-- **Accessibility** — WCAG 2.1 AA, keyboard navigation, reduced motion support
+- [Current Status](./docs/STATUS.md)
+- [Release Certification](./docs/RELEASE_CERTIFICATION.md)
+- [Live Taskboard](./TASKBOARD.md)
+- [Project Operating System](./docs/PROJECT_OPERATING_SYSTEM.md)
+- [Agent Handoff Protocol](./docs/AGENT_HANDOFF.md)
+- [Architecture](./docs/ARCHITECTURE.md)
 
----
+Historical `VERIFICATION_*.md` documents record past snapshots and should not be interpreted as current results.
 
-## Getting started
+## Local development
 
 ```bash
 git clone https://github.com/FahadIbrahim93/BugSmasher-HopeTheory.git
@@ -64,39 +59,37 @@ npm install
 npm run dev
 ```
 
+Useful checks:
+
 ```bash
-npm run typecheck          # TypeScript check
-npm run lint:eslint        # ESLint (TS + React + a11y)
-npm test                   # 678 frontend unit tests
-npm run test:coverage      # engine/lib coverage gate
-npm run ci                 # Full pipeline
+npm run typecheck
+npm run lint:eslint
+npm test
+npm run test:coverage
+npm run test:emulator
+npm run build
+npx playwright test
 ```
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for production deploy and [docs/BLUEPRINT_10_10.md](./docs/BLUEPRINT_10_10.md) for the 12-week roadmap.
+The full quality gate is `npm run ci` once all required infrastructure is available.
 
----
+## Multi-agent development
 
-## Architecture
+This project is intentionally designed for work across multiple AI agents and coding platforms. Start with [docs/PROJECT_OPERATING_SYSTEM.md](./docs/PROJECT_OPERATING_SYSTEM.md), then [AGENTS.md](./AGENTS.md), then claim exactly one task from [TASKBOARD.md](./TASKBOARD.md).
 
-- **Renderer** — Canvas 2D with modular systems split (game loop, VFX, audio)
-- **Engine** — Pure TypeScript game logic, independently testable
-- **Lib** — Firebase, storage, scoring, utilities
-- **Server** — Express + Cloud Functions for callable endpoints
-- **Security** — Firestore rules + callable wrappers with Zod validation
+Never assume another agent's branch is complete. Verify the current main branch and latest CI run before continuing work.
 
----
+## Security
 
-## Why this repo stands out
+See [SECURITY.md](./SECURITY.md) and [docs/RELEASE_CERTIFICATION.md](./docs/RELEASE_CERTIFICATION.md).
 
-1. **Testing rigor** — 678 tests with enforced coverage thresholds, not just "tests exist"
-2. **Security-first** — Eliminated client-side OAuth, implemented server-authoritative scoring
-3. **Performance** — Real-time FPS scaler + dynamic VFX downscaling
-4. **Accessibility** — WCAG 2.1 AA in a game context, not just a marketing site
-5. **AI-assisted delivery** — Built with multi-agent workflow, 2-week ship time
-
----
+The project already has server-issued session-token protection for score submission, including authentication binding, expiration, one-time use and plausibility checks. This is a security control, not a claim of mathematically unbreakable anti-cheat.
 
 ## Contributing
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup and PR guidelines.  
-See [AGENTS.md](./AGENTS.md) for AI coding standards and architecture rules.
+See [CONTRIBUTING.md](./CONTRIBUTING.md), [AGENTS.md](./AGENTS.md) and [docs/AGENTIC_WORKFLOW.md](./docs/AGENTIC_WORKFLOW.md).
+
+## Status
+
+**10/10 certification:** NOT CERTIFIED  
+**Next priority:** restore green CI, then proceed through the live taskboard in priority order.
