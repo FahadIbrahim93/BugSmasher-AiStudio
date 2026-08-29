@@ -2,13 +2,15 @@
 
 **Status timestamp:** 2026-08-29  
 **Branch:** `main`  
-**Certification:** NOT CERTIFIED 10/10
+**Certification:** **NOT CERTIFIED 10/10**
 
-## Verified repository state
+## Current verified state
 
-The latest GitHub Actions evidence inspected for `main` is a failed CI run from 2026-08-26.
+A known P0 emulator-test defect was corrected on `main`: the monotonic-score fixture now uses `20,000` instead of `50,000` for a newly-created session, so the test no longer contradicts the server plausibility rule.
 
-### Latest inspected CI outcome
+Fresh GitHub Actions verification is running against the current `main` history. Until that run completes, this document must not claim that CI is green.
+
+### Previously inspected baseline (2026-08-26)
 
 | Gate | Result |
 |---|---|
@@ -16,42 +18,47 @@ The latest GitHub Actions evidence inspected for `main` is a failed CI run from 
 | ESLint | PASS with 908 warnings |
 | Functions build | PASS |
 | Frontend tests | 651/651 PASS |
-| Coverage | ~79.14% lines / 78.06% statements / 84.43% functions / 66.30% branches in that run |
+| Coverage | ~79.14% lines / 78.06% statements / 84.43% functions / 66.30% branches |
 | Firebase emulator | **FAIL: 1 of 26 tests** |
-| Production build | SKIPPED because emulator gate failed |
-| Playwright | SKIPPED because quality job failed |
+| Production build | skipped after emulator failure |
+| Playwright | skipped after quality failure |
 
-### Current known blocker
+## Current P0/P1 direction
 
-`functions/test/callables.test.ts` contains a monotonic-score test that submits `50,000` points from a newly created 5-second session. The current anti-cheat plausibility check correctly rejects that value for the session duration. The correct fix is to update the test fixture to a plausible score, not weaken the anti-cheat rule.
+1. Inspect and repair any remaining CI failures.
+2. Establish dependency/security cleanliness.
+3. Eliminate static-analysis and React correctness debt.
+4. Raise meaningful test coverage and regression protection.
+5. Harden competitive-integrity validation.
+6. Certify performance and accessibility with evidence.
+7. Verify deployment and operations.
+8. Establish repository governance/protection.
+9. Keep documentation synchronized with actual evidence.
+10. Perform final adversarial release audit.
 
-## Current engineering direction
+## Important truth rules
 
-Priority order:
+- Server-issued score-session protection already exists with user binding, expiry, one-time use, replay rejection and plausibility checks.
+- That mechanism is strong session/nonce validation, not full deterministic replay verification.
+- Production analytics, monetization, ads, monitoring and telemetry must be called real only after provider configuration and verification.
+- Historical verification files are snapshots, not current truth.
+- README metrics must never outrun CI evidence.
 
-1. restore fully green CI;
-2. establish dependency/security cleanliness;
-3. eliminate static-analysis debt and React correctness warnings;
-4. finish meaningful coverage and regression testing;
-5. harden competitive integrity;
-6. certify accessibility and performance with evidence;
-7. complete production operations and deployment verification;
-8. enforce repository governance;
-9. synchronize documentation;
-10. run final adversarial certification.
+## Documentation control plane
 
-## Important truth notes
-
-- The project has a real server-issued session-token protection layer; older documents saying session-token anti-cheat is completely absent are stale.
-- The current session mechanism is strong nonce/session validation, not full signed deterministic replay verification.
-- Production analytics, monetization, ads, monitoring and similar features must be described as real only when the corresponding provider/integration is actually configured and verified.
-- Historical verification documents are evidence snapshots, not current truth.
-- The README must never contain manually maintained test/coverage/CI numbers that contradict current CI.
+- `docs/PROJECT_OPERATING_SYSTEM.md` — how the multi-agent project is managed.
+- `AGENTS.md` — coding/architecture rules.
+- `TASKBOARD.md` — live work queue and acceptance criteria.
+- `docs/RELEASE_CERTIFICATION.md` — 10/10 release gates.
+- `docs/AGENT_HANDOFF.md` — context-transfer record.
+- `docs/STATUS.md` — current verified state.
+- `docs/ARCHITECTURE.md` — current architecture.
+- `docs/AGENTIC_WORKFLOW.md` — agent operating procedure.
 
 ## Resume rule
 
-When work resumes after a context switch, start with this file, then `TASKBOARD.md`, then the latest Actions run. Work the first unresolved P0 before starting discretionary improvements.
+After a context switch, read `STATUS.md`, then `TASKBOARD.md`, then inspect the latest GitHub Actions run. Resume the highest-priority unresolved task. Do not restart from memory.
 
 ## Certification rule
 
-Do not change `NOT CERTIFIED` to `CERTIFIED` until `docs/RELEASE_CERTIFICATION.md` is fully satisfied with current evidence.
+Do not change the certification state to PASS until `docs/RELEASE_CERTIFICATION.md` is fully satisfied on the exact release commit.
