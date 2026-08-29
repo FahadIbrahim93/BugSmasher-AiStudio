@@ -1,276 +1,160 @@
-# BUGSMASHER — Full Taskboard to Verified 10/10
+# BugSmasher — Live 10/10 Taskboard
 
-**Last updated:** 2026-06-30  
-**Current honest rating:** ~7.5/10 overall · ~6.8/10 visuals  
-**Evidence:** [docs/VERIFICATION_2026-06-30.md](./docs/VERIFICATION_2026-06-30.md) · [CTO_AUDIT_2026-06-29.md](./CTO_AUDIT_2026-06-29.md) · [PERFECT_10_REMEDIATION_PLAN.md](./PERFECT_10_REMEDIATION_PLAN.md)
+**Last updated:** 2026-08-29  
+**Certification:** NOT CERTIFIED  
+**Current state:** strong engineering baseline; latest inspected `main` CI is RED.
 
-**Legend:** `[x]` done · `[~]` partial · `[ ]` todo · **P0** release blocker · **P1** high · **P2** medium · **P3** nice-to-have
+Read first: [Project Operating System](./docs/PROJECT_OPERATING_SYSTEM.md) · [Release Certification](./docs/RELEASE_CERTIFICATION.md) · [Current Status](./docs/STATUS.md) · [AGENTS.md](./AGENTS.md)
 
-**10/10 exit rule:** Every dimension in the exit checklist below is `[x]` with command evidence — no stub marked complete, no doc inflation.
+## Operating rules
 
----
+- One primary task ID per implementation branch/PR.
+- P0 work before discretionary P1/P2 work.
+- A task is `[x]` only with acceptance evidence.
+- Never lower a test/security threshold to manufacture a pass.
+- Never delete a regression test to hide a defect.
+- Never claim a provider/integration is production-ready while it is a stub.
+- Documentation must follow verified repository state.
 
-## Phase 0 — Truth & Release Governance (P0)
-
-| ID   | Task                                  | Pri | Status | Acceptance                                                      |
-| ---- | ------------------------------------- | --- | ------ | --------------------------------------------------------------- |
-| G-01 | Replace false 10/10 claims in docs    | P0  | [~]    | README/AGENTS/DEPLOYMENT honest; archive stale victory-lap docs |
-| G-02 | `npm run ci` as pre-push gate         | P0  | [x]    | lint + functions + coverage + emulator + build                  |
-| G-03 | Branch protection requires CI         | P0  | [ ]    | GitHub settings + required checks                               |
-| G-04 | Verification evidence doc per release | P0  | [x]    | `docs/VERIFICATION_2026-06-30.md` updated each milestone        |
-| G-05 | Release checklist in DEPLOYMENT.md    | P0  | [x]    | Checklist matches actual CI steps                               |
+**Legend:** `[ ]` open · `[~]` partial · `[x]` verified done · **P0** release blocker · **P1** high · **P2** medium · **P3** optional
 
 ---
 
-## Phase 1 — Security & Trust Boundaries (P0)
+## P0 — Restore the verification foundation
 
-| ID   | Task                                         | Pri | Status | Acceptance                                                    |
-| ---- | -------------------------------------------- | --- | ------ | ------------------------------------------------------------- |
-| S-01 | Deny direct client save/leaderboard writes   | P0  | [x]    | Firestore rules + emulator tests                              |
-| S-02 | Callable `saveGameData` with server checksum | P0  | [x]    | Zod schema + `functions/test/callables.test.ts`               |
-| S-03 | Callable `submitScore` with monotonic scores | P0  | [x]    | Rate limit + plausibility bounds tested                       |
-| S-04 | Rate limiting (saves + scores)               | P0  | [x]    | Firestore `_rateLimits/` + emulator tests                     |
-| S-05 | Firebase emulator test suite                 | P0  | [x]    | 17 integration + 4 schema unit tests                          |
-| S-06 | Session-token / signed run anti-cheat        | P0  | [ ]    | Server validates session summary; replays rejected            |
-| S-07 | Legacy cloud save migration/backfill         | P1  | [ ]    | Old checksum docs migrated or rejected gracefully             |
-| S-08 | Remove PII from Firestore error logs         | P1  | [~]    | Audit `handleFirestoreError` paths                            |
-| S-09 | Dependency + CodeQL security scan in CI      | P1  | [ ]    | Dependabot + `npm audit` + CodeQL green or waived with ticket |
+| ID | Task | Acceptance |
+|---|---|---|
+| P0-CI-01 | Fix failing emulator regression test | `functions/test/callables.test.ts` uses a plausible score for a fresh session; anti-cheat logic remains intact; emulator suite green |
+| P0-CI-02 | Run full CI on exact main commit | typecheck + functions + coverage + emulator + build + lint + E2E all green |
+| P0-TRUTH-01 | Synchronize README/STATUS/verification docs | no stale test, coverage or CI claims |
+| P0-GOV-01 | Protect `main` | required CI checks + no unsafe direct merges |
 
 ---
 
-## Phase 2 — Test Coverage & Reliability (P0 → P1)
+## P0 — Security and supply chain
 
-| ID   | Task                                    | Pri | Status | Acceptance                                     |
-| ---- | --------------------------------------- | --- | ------ | ---------------------------------------------- |
-| T-01 | Frontend test suite                     | P0  | [x]    | 507/507 pass                                   |
-| T-02 | Engine/lib coverage interim thresholds  | P0  | [x]    | 77/61/75/76 in `vitest.config.ts`              |
-| T-03 | Restore target thresholds 80/70/75/80   | P0  | [ ]    | `npm run test:coverage` passes at target       |
-| T-04 | GameEngine branch coverage              | P1  | [~]    | Kill/damage/resource/death edge cases          |
-| T-05 | WaveManager branch coverage             | P1  | [~]    | Spawn/boss/surge paths                         |
-| T-06 | SaveManager cloud path coverage         | P1  | [~]    | Auth + error branches                          |
-| T-07 | InputSystem + GameEngineStatusBus tests | P2  | [ ]    | >80% on both                                   |
-| T-08 | Playwright smoke E2E                    | P1  | [ ]    | Menu → play → pause → game over                |
-| T-09 | Frame-time benchmark harness            | P2  | [ ]    | Scripted run; budget enforced in CI or nightly |
-| T-10 | Firebase emulator in CI                 | P0  | [x]    | Java 21 + `test:emulator` in workflow          |
+| ID | Task | Acceptance |
+|---|---|---|
+| S-01 | Dependency vulnerability cleanup | 0 unresolved critical production vulnerabilities; high findings resolved or explicitly mitigated |
+| S-02 | CodeQL/Dependabot verification | current security workflows green |
+| S-03 | Secret/config audit | no credentials, production salts or service-account material in source/history |
+| S-04 | Competitive integrity adversarial suite | authentication, user binding, expiry, replay, rate limit, implausible score and abuse cases proven |
+| S-05 | Evaluate signed/deterministic run validation | documented decision: required vs not required, with rationale |
 
 ---
 
-## Phase 3 — Standards & Tooling (P1)
+## P1 — Zero-debt code quality
 
-| ID     | Task                                    | Pri | Status | Acceptance                                                         |
-| ------ | --------------------------------------- | --- | ------ | ------------------------------------------------------------------ |
-| ST-01  | ESLint flat config (TS + React + a11y)  | P1  | [ ]    | `npm run lint` = ESLint; `typecheck` = tsc                         |
-| ST-02  | Prettier after ESLint green             | P2  | [ ]    | No mixed noisy diffs                                               |
-| ST-03  | Remove `@ts-nocheck` from renderers     | P1  | [x]    | Environment/Bug/Particle/UIRenderer typed                          |
-| ST-03b | Remove `@ts-nocheck` from audio modules | P1  | [x]    | AudioGraph/MusicSystem/VoiceSystem/SoundManager/SoundEffects typed |
-| ST-01b | Burn down ESLint errors to zero         | P1  | [x]    | `eslint .` = 0 errors; re-promoted to blocking CI gate             |
-| ST-04  | Lighthouse CI budget                    | P2  | [ ]    | Performance + a11y scores documented                               |
-| ST-05  | Husky pre-commit (lint-staged)          | P2  | [ ]    | Optional; only after ESLint stable                                 |
+| ID | Task | Acceptance |
+|---|---|---|
+| CQ-01 | Burn down ESLint warnings | 0 errors and 0 warnings on supported source/tooling |
+| CQ-02 | Eliminate unsafe `any` | no avoidable `any`, unsafe member access or unsafe casts in production source |
+| CQ-03 | React purity cleanup | no render-time `Date.now`, `performance.now`, `Math.random`, mutable ref reads or state-effect anti-patterns |
+| CQ-04 | Remove unnecessary hook dependency issues | hooks are dependency-correct or intentionally documented |
+| CQ-05 | Standardize formatting | Prettier check green; no formatting churn mixed with behavior work |
 
 ---
 
-## Phase 4 — Architecture & Performance (P1)
+## P1 — Architecture
 
-| ID   | Task                                            | Pri | Status | Acceptance                                                                                                                                           |
-| ---- | ----------------------------------------------- | --- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A-01 | Extract `CombatSystem` from GameEngine          | P1  | [x]    | GameEngine <800 lines; tests for combat                                                                                                              |
-| A-02 | Extract `BugBehaviorSystem`                     | P1  | [x]    | AI/movement/abilities isolated                                                                                                                       |
-| A-03 | De-static ProgressionManager/StatsManager       | P1  | [x]    | Instantiable classes + singleton exports (PARTIAL: true constructor DI / interface injection deferred — engine paths still import module singletons) |
-| A-04 | Remove `__gameEngineStatus` window bridge       | P1  | [x]    | All consumers on GameEngineStatusBus                                                                                                                 |
-| A-05 | Fix Vite circular chunk warning                 | P1  | [x]    | Clean build, no vendor↔react cycle                                                                                                                   |
-| A-06 | Fix DailyChallengeManager static/dynamic import | P1  | [x]    | No vite reporter warning                                                                                                                             |
-| A-07 | Split SoundManager (audio vs voice vs music)    | P2  | [x]    | File <600 lines                                                                                                                                      |
-| A-08 | Split IntelHub / HUD / WorkspaceConsole         | P2  | [x]    | Sub-components + lazy tabs                                                                                                                           |
+| ID | Task | Acceptance |
+|---|---|---|
+| A-01 | GameEngine decomposition | orchestration-only; specialized systems own domain behavior |
+| A-02 | Sound/audio decomposition | music, SFX and voice separated cleanly |
+| A-03 | Remove static service coupling | injectable interfaces for major services where practical |
+| A-04 | Remove dead/duplicate paths | unused modules/features removed or clearly archived |
+| A-05 | Dependency direction audit | UI → application/game services → infrastructure; no accidental reverse dependencies |
 
 ---
 
-## Phase V — Visual & UX Sprint (NEW — P1 for commercial polish)
+## P1 — Testing and reliability
 
-**Goal:** Close visual gap from 6.8 → 9.0+. Industry bar: cohesive design system, owned assets, WCAG visuals, no dead UI.
-
-### V1 — Design system foundation (P1, ~3 days)
-
-| ID   | Task                                                | Pri | Status | Acceptance                                                                                   |
-| ---- | --------------------------------------------------- | --- | ------ | -------------------------------------------------------------------------------------------- |
-| V-01 | Register `font-display` in `@theme` (Space Grotesk) | P1  | [ ]    | Headings render correctly; visual regression spot-check                                      |
-| V-02 | Define missing CSS utilities                        | P1  | [ ]    | `bg-scanlines`, `bg-radial-vignette`, `bg-radial-gradient`, `animate-fade-in` in `index.css` |
-| V-03 | Unify color tokens                                  | P1  | [ ]    | Single `src/theme/tokens.css` — UI accents map to biome/cursor/cosmetics                     |
-| V-04 | Button/toggle component primitives                  | P1  | [ ]    | `PrimaryButton`, `Toggle`, `GlassPanel` — replace ad-hoc copies                              |
-| V-05 | Focus-visible rings on all interactive elements     | P1  | [ ]    | Keyboard nav audit pass                                                                      |
-| V-06 | Touch targets ≥44px on mobile menus                 | P1  | [ ]    | MainMenu, Pause, Settings, Upgrade                                                           |
-
-### V2 — Asset pipeline (P1, ~2 days)
-
-| ID   | Task                                           | Pri | Status | Acceptance                                                   |
-| ---- | ---------------------------------------------- | --- | ------ | ------------------------------------------------------------ |
-| V-07 | Commit lobby background + avatar assets        | P1  | [ ]    | `src/assets/images/` populated; no 404 in Preloader/MainMenu |
-| V-08 | Remove Unsplash runtime dependencies           | P1  | [ ]    | `AssetManager` uses local or bundled art only                |
-| V-09 | Remove external texture URLs (GameOver carbon) | P1  | [ ]    | Local SVG/pattern or CSS-only texture                        |
-| V-10 | Branded PWA + OG share images                  | P1  | [ ]    | `public/og.png`, manifest icons reviewed                     |
-| V-11 | Brand-grade share card                         | P2  | [ ]    | Logo, score, biome tint — not random circles                 |
-
-### V3 — UI cleanup & consistency (P1, ~2 days)
-
-| ID   | Task                                    | Pri | Status | Acceptance                                              |
-| ---- | --------------------------------------- | --- | ------ | ------------------------------------------------------- |
-| V-12 | Wire or delete `DifficultySelector.tsx` | P1  | [ ]    | Used in flow OR removed from repo                       |
-| V-13 | Wire or delete `MissionPanel.tsx`       | P1  | [ ]    | Styled + routed OR removed                              |
-| V-14 | Align biome names UI ↔ engine           | P2  | [ ]    | `BiomeBackgroundGallery` keys match `GameConfig.biomes` |
-| V-15 | Loading skeletons for lazy routes       | P2  | [ ]    | Game/Settings/IntelHub Suspense fallbacks               |
-| V-16 | Achievement gallery visual upgrade      | P2  | [ ]    | Icons/illustrations replace emoji-only grid             |
-| V-17 | IntelHub dashboard polish               | P2  | [ ]    | Empty/error states when Google Sheets unavailable       |
-
-### V4 — Settings & graphics UX (P1, ~1 day)
-
-| ID   | Task                                               | Pri | Status | Acceptance                                        |
-| ---- | -------------------------------------------------- | --- | ------ | ------------------------------------------------- |
-| V-18 | Expose PerformanceScaler presets in Settings       | P1  | [ ]    | Ultra/High/Balanced/Mobile/Headless selectable    |
-| V-19 | Graphics section copy matches DESIGN_DOC brutalism | P2  | [ ]    | Reduce generic glassmorphism where doc says stark |
-| V-20 | High-contrast UI mode (optional)                   | P2  | [ ]    | Toggle increases border/text contrast on shell    |
-
-### V5 — Accessibility visuals (P1, ~2 days)
-
-| ID   | Task                                               | Pri | Status | Acceptance                                             |
-| ---- | -------------------------------------------------- | --- | ------ | ------------------------------------------------------ |
-| V-21 | Global `prefers-reduced-motion`                    | P1  | [ ]    | Disables Framer Motion + cursor animations + scanline  |
-| V-22 | Colorblind filter on React shell (not just canvas) | P1  | [ ]    | HUD/menus respect same preset                          |
-| V-23 | Fix `cursor: none` fallback                        | P1  | [ ]    | System cursor if CustomCursor fails or a11y setting on |
-| V-24 | Wire SVG colorblind filters to DOM                 | P2  | [ ]    | Filters in `index.html` or component, not dead URLs    |
-
-### V6 — Canvas ↔ shell cohesion (P2, ~3 days)
-
-| ID   | Task                                                     | Pri | Status | Acceptance                               |
-| ---- | -------------------------------------------------------- | --- | ------ | ---------------------------------------- |
-| V-25 | Goop/stain bleed into React HUD edges                    | P2  | [ ]    | DESIGN_DOC “stain on OS” moment visible  |
-| V-26 | Boss intro sync with shell overlay                       | P2  | [ ]    | React + canvas boss warning feel unified |
-| V-27 | Map preview in BattlegroundGenerator matches in-game PCG | P2  | [ ]    | Side-by-side or shared renderer path     |
+| ID | Task | Acceptance |
+|---|---|---|
+| T-01 | Coverage floors | 85% statements, 85% lines, 85% functions, 75% branches |
+| T-02 | Critical branch coverage | GameEngine, SaveManager, WaveManager, InputSystem and security paths have meaningful branch coverage |
+| T-03 | Regression-test every discovered production bug | each fixed defect has a durable automated test |
+| T-04 | E2E critical journey | launch → play → pause/resume → game over → persistence/leaderboard is green |
+| T-05 | Accessibility automated suite | axe/Lighthouse-style automated checks integrated where applicable |
+| T-06 | Mutation testing on critical logic | security/scoring tests demonstrate resistance to meaningful mutants |
 
 ---
 
-## Phase 5 — Audio & Game Feel (P1)
+## P1 — Performance
 
-| ID    | Task                             | Pri | Status | Acceptance                            |
-| ----- | -------------------------------- | --- | ------ | ------------------------------------- |
-| AF-01 | WAV SFX pack                     | P1  | [x]    | 7 files in `public/audio/`            |
-| AF-02 | Adaptive music layers            | P1  | [x]    | Intensity-driven                      |
-| AF-03 | Commercial SFX pack (licensed)   | P1  | [ ]    | Replace/supplement synthesis for ship |
-| AF-04 | Adaptive soundtrack (full loops) | P2  | [ ]    | Not synth-only drones                 |
-| AF-05 | UI sound sync with motion        | P2  | [ ]    | Hover/click on all primary buttons    |
-
----
-
-## Phase 6 — Accessibility & Input (P1)
-
-| ID    | Task                                   | Pri | Status | Acceptance                                   |
-| ----- | -------------------------------------- | --- | ------ | -------------------------------------------- |
-| AX-01 | Difficulty presets                     | P1  | [x]    | Easy/normal/hard                             |
-| AX-02 | Reduced motion (gameplay shake)        | P1  | [x]    | Renderer gate                                |
-| AX-03 | Reduced motion (full UI)               | P1  | [ ]    | See V-21                                     |
-| AX-04 | Colorblind canvas filter               | P1  | [x]    | Settings toggle                              |
-| AX-05 | Enemy shape markers                    | P1  | [x]    | BugRenderer                                  |
-| AX-06 | Gamepad support                        | P1  | [x]    | InputSystem                                  |
-| AX-07 | Control remapping UI                   | P1  | [x]    | Settings                                     |
-| AX-08 | WCAG 2.2 AA audit (automated + manual) | P1  | [ ]    | Lighthouse a11y ≥90 or documented exceptions |
+| ID | Task | Acceptance |
+|---|---|---|
+| PERF-01 | Establish performance budgets | startup, bundle, frame time, memory and network budgets stored in repo |
+| PERF-02 | Stress benchmark | normal/heavy/boss/particle-heavy scenarios measured |
+| PERF-03 | Mobile benchmark | representative low/mid device profile remains usable |
+| PERF-04 | Remove correctness-risk build warnings | production build output is clean or every remaining warning is explicitly accepted |
 
 ---
 
-## Phase 7 — Business & Production (P1)
+## P1 — Accessibility
 
-| ID   | Task                                     | Pri | Status | Acceptance                                           |
-| ---- | ---------------------------------------- | --- | ------ | ---------------------------------------------------- |
-| B-01 | Analytics — real provider or de-scope    | P1  | [ ]    | PostHog/Mixpanel OR remove production claims         |
-| B-02 | Monetization — real provider or de-scope | P1  | [ ]    | Stripe/etc. OR cosmetics stay free-only in docs      |
-| B-03 | Ads — real provider or de-scope          | P1  | [ ]    | AdMob/etc. OR remove from release scope              |
-| B-04 | Crash reporting (Sentry/etc.)            | P1  | [ ]    | Production DSN + source maps                         |
-| B-05 | Runtime monitoring + alerting            | P2  | [ ]    | Uptime, error rate, function latency                 |
-| B-06 | Privacy policy + consent for telemetry   | P1  | [ ]    | Legal review before analytics ship                   |
-| B-07 | Product acceptance criteria doc          | P2  | [ ]    | Saves, leaderboard, offline, daily challenge defined |
+| ID | Task | Acceptance |
+|---|---|---|
+| AX-01 | Keyboard-only audit | complete critical flows usable without pointer |
+| AX-02 | Focus/semantics audit | visible focus, labels, dialog semantics and logical order |
+| AX-03 | Reduced-motion audit | gameplay + React shell respect preference consistently |
+| AX-04 | Contrast/color audit | no critical information depends on color alone |
+| AX-05 | Manual assistive-tech review | supported screen reader workflow documented |
 
 ---
 
-## Phase 8 — Growth & Social (P2)
+## P1 — Production operations
 
-| ID    | Task                       | Pri | Status | Acceptance                           |
-| ----- | -------------------------- | --- | ------ | ------------------------------------ |
-| GR-01 | Share score image          | P2  | [x]    | `shareCard.ts` (upgrade per V-11)    |
-| GR-02 | Friend challenge links     | P2  | [x]    | URL params                           |
-| GR-03 | Daily challenge polish     | P2  | [~]    | Metadata + modal; streak UX          |
-| GR-04 | Lifetime stats dashboard   | P2  | [~]    | StatsManager extended; UI incomplete |
-| GR-05 | Leaderboard UX polish      | P2  | [ ]    | Loading, empty, error states         |
-| GR-06 | Push / email re-engagement | P3  | [ ]    | Firebase messaging or de-scoped      |
-
----
-
-## Phase 9 — Expansion (P2–P3)
-
-| ID   | Task                         | Pri | Status | Acceptance                                 |
-| ---- | ---------------------------- | --- | ------ | ------------------------------------------ |
-| E-01 | Endless mode                 | P2  | [x]    |                                            |
-| E-02 | Boss Rush mode               | P2  | [x]    |                                            |
-| E-03 | i18n en + es wired           | P2  | [~]    | Catalogs exist; UI strings not fully wired |
-| E-04 | Mobile haptics               | P2  | [x]    |                                            |
-| E-05 | Story expansion              | P3  | [~]    | StoryManager + cutscenes exist             |
-| E-06 | Time Attack / Survival modes | P3  | [ ]    |                                            |
-| E-07 | Network status indicator     | P3  | [ ]    | Offline/sync UX                            |
+| ID | Task | Acceptance |
+|---|---|---|
+| OPS-01 | Deployment reproducibility | clean-environment deployment documented and repeatable |
+| OPS-02 | Crash/error monitoring | real provider verified, or feature explicitly de-scoped |
+| OPS-03 | Runtime monitoring | uptime/error/function latency visibility, or explicit de-scope |
+| OPS-04 | Rollback plan | tested/documented rollback path |
+| OPS-05 | Backup/recovery | persistence recovery procedure documented |
+| OPS-06 | Telemetry/privacy | consent and privacy behavior defined before analytics ship |
 
 ---
 
-## Infrastructure & Code Quality (ongoing)
+## P2 — Product / UX polish
 
-| ID    | Task                          | Pri | Status |
-| ----- | ----------------------------- | --- | ------ |
-| CQ-01 | Code splitting / lazy loading | P1  | [x]    |
-| CQ-02 | Monitoring module             | P1  | [x]    |
-| CQ-03 | ErrorBoundary + monitoring    | P1  | [x]    |
-| CQ-04 | Remove unused dependencies    | P1  | [x]    |
-| CQ-05 | TypeScript strict (engine)    | P1  | [x]    |
-| CQ-06 | Git + CI linked               | P1  | [x]    |
-| CQ-07 | PWA (icons + SW)              | P1  | [x]    |
-| CQ-08 | Functions modularized         | P1  | [x]    |
+| ID | Task | Acceptance |
+|---|---|---|
+| UX-01 | Remove dead UI | every visible control is wired, intentionally disabled, or removed |
+| UX-02 | Onboarding polish | first-time player understands objective and controls quickly |
+| UX-03 | Game-feel pass | hit feedback, audio, progression and game-over loop feel coherent |
+| UX-04 | Mobile responsive pass | supported viewport sizes checked manually + E2E where practical |
+| UX-05 | Visual consistency | shared tokens/primitives replace ad-hoc patterns |
 
 ---
 
-## Suggested execution order (path to 10/10)
+## P2 — Documentation
 
-```
-NOW (P0 blockers)
-  S-06 session anti-cheat → T-03 coverage 80/70 → G-03 branch protection
-
-NEXT (P1 — 2–3 weeks)
-  Phase V sprint (V-01…V-23) → ST-01 ESLint → A-01/A-05 architecture
-  → AF-03 commercial audio → B-01/B-04 production telemetry decision
-
-THEN (P2 polish)
-  V-25…V-27 canvas cohesion → T-08 Playwright → AX-08 WCAG audit
-  → GR/Expansion as product priorities allow
-```
+| ID | Task | Acceptance |
+|---|---|---|
+| DOC-01 | Keep `STATUS.md` current | blockers/evidence reflect latest verified state |
+| DOC-02 | Maintain release certification record | every release candidate has current evidence |
+| DOC-03 | ADR coverage | major architectural/security decisions recorded in `docs/adr/` |
+| DOC-04 | Reproducible onboarding | a fresh agent can work from repository docs without tribal knowledge |
 
 ---
 
-## 10/10 exit checklist (all must be `[x]`)
+## 10/10 exit checklist
 
-| Dimension     | Gate                                                                     |
-| ------------- | ------------------------------------------------------------------------ |
-| Security      | Emulator tests green + session anti-cheat + no direct client writes      |
-| Tests         | 80/70/75/80 coverage + Playwright smoke                                  |
-| Tooling       | ESLint + typecheck + CI required on main                                 |
-| Architecture  | GameEngine split; no window status bridge; clean Vite build              |
-| Visuals       | Design tokens, owned assets, no dead UI, a11y motion, ≥9/10 visual audit |
-| Audio         | Licensed SFX pack shipped                                                |
-| Accessibility | WCAG 2.2 AA pass or documented exceptions                                |
-| Business      | Real analytics/monetization OR explicitly de-scoped in docs              |
-| Ops           | Crash reporting + rollback tested                                        |
-| Docs          | VERIFICATION doc + honest ratings; no stale 10/10 claims                 |
+- [ ] P0-CI-01
+- [ ] P0-CI-02
+- [ ] P0-TRUTH-01
+- [ ] P0-GOV-01
+- [ ] S-01 through S-05 accepted
+- [ ] CQ-01 through CQ-05 accepted
+- [ ] A-01 through A-05 accepted
+- [ ] T-01 through T-06 accepted
+- [ ] PERF-01 through PERF-04 accepted
+- [ ] AX-01 through AX-05 accepted
+- [ ] OPS-01 through OPS-06 accepted
+- [ ] UX-01 through UX-05 accepted
+- [ ] DOC-01 through DOC-04 accepted
+- [ ] Final adversarial audit completed
+- [ ] `docs/RELEASE_CERTIFICATION.md` records PASS
 
----
-
-## Quick commands
-
-```bash
-npm run ci              # full gate
-npm run test:coverage   # engine/lib coverage
-npm run test:emulator   # security integration (Java 21+)
-npm run dev             # local play-test visuals
-```
-
-**Deploy:** [DEPLOYMENT.md](./DEPLOYMENT.md) · **Visual audit:** conversation 2026-06-30 · **Evidence:** [docs/VERIFICATION_2026-06-30.md](./docs/VERIFICATION_2026-06-30.md)
+**Do not set the final certification checkbox until the exact release commit is independently verified.**
