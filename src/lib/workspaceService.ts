@@ -1,83 +1,137 @@
 import { UserStats } from '../game/StatsManager';
 
+// Minimal shapes for the Google API responses this module consumes.
+interface GoogleApiErrorBody {
+  error?: { message?: string };
+}
+
+interface DriveFile {
+  id: string;
+  name?: string;
+}
+
+interface DriveFileListResponse {
+  files?: DriveFile[];
+}
+
+interface DriveFileCreateResponse {
+  id: string;
+}
+
+interface SpreadsheetCreateResponse {
+  spreadsheetId: string;
+}
+
+interface SheetValuesResponse {
+  values?: string[][];
+}
+
+interface GmailSendResponse {
+  id?: string;
+  threadId?: string;
+}
+
+async function parseErrorMessage(res: Response, fallback: string): Promise<string> {
+  const errBody: GoogleApiErrorBody = await (res.json() as Promise<GoogleApiErrorBody>).catch(
+    () => ({}),
+  );
+  return errBody.error?.message ?? fallback;
+}
+
 // Helper for Google API Requests
-async function apiCall(accessToken: string, url: string, options: RequestInit = {}) {
+async function apiCall<T>(
+  accessToken: string,
+  url: string,
+  options: RequestInit = {},
+): Promise<T> {
   const headers = new Headers(options.headers);
   headers.set('Authorization', `Bearer ${accessToken}`);
   headers.set('Content-Type', 'application/json');
   const res = await fetch(url, { ...options, headers });
   if (!res.ok) {
-    const errBody = await res.json().catch(() => ({}));
-    throw new Error(errBody?.error?.message || `Google API error: Status ${res.status}`);
+    throw new Error(await parseErrorMessage(res, `Google API error: Status ${res.status}`));
   }
-  return res.json().catch(() => ({}));
+  return (res.json() as Promise<T>).catch(() => ({}) as T);
 }
 
 // 1. Google Sheets helper - get or create
 export async function getOrCreateSpreadsheet(accessToken: string): Promise<string> {
-  const queryStr = encodeURIComponent("name = 'BUGSMASHER Combat Log & Metrics' and mimeType = 'application/vnd.google-apps.spreadsheet'");
-  const driveSearch = await apiCall(accessToken, `https://www.googleapis.com/drive/v3/files?q=${queryStr}`);
+  const queryStr = encodeURIComponent(
+    "name = 'BUGSMASHER Combat Log & Metrics' and mimeType = 'application/vnd.google-apps.spreadsheet'",
+  );
+  const driveSearch = await apiCall<DriveFileListResponse>(
+    accessToken,
+    `https://www.googleapis.com/drive/v3/files?q=${queryStr}`,
+  );
 
-  const files = Array.isArray(driveSearch.files) ? driveSearch.files : [];
-  if (files.length > 0) {
-    return files[0].id;
+  const existing = driveSearch.files?.at(0);
+  if (existing) {
+    return existing.id;
   }
 
   // Create formatted spreadsheet
-  const createSheet = await apiCall(accessToken, 'https://sheets.googleapis.com/v4/spreadsheets', {
-    method: 'POST',
-    body: JSON.stringify({
-      properties: { title: 'BUGSMASHER Combat Log & Metrics' },
-      sheets: [
-        {
-          properties: { title: 'Combat Logs' },
-          data: [
-            {
-              startRow: 0,
-              startColumn: 0,
-              rowData: [
-                {
-                  values: [
-                    { userEnteredValue: { stringValue: 'Timestamp' } },
-                    { userEnteredValue: { stringValue: 'Anomalies Purged (Kills)' } },
-                    { userEnteredValue: { stringValue: 'Waves Survived' } },
-                    { userEnteredValue: { stringValue: 'Aggregate Core Score' } },
-                    { userEnteredValue: { stringValue: 'Tactical Runtime (Minutes)' } },
-                    { userEnteredValue: { stringValue: 'Overseers Neutralized (Bosses)' } },
-                    { userEnteredValue: { stringValue: 'Cores Harvested (Powerups)' } }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    })
-  });
+  const createSheet = await apiCall<SpreadsheetCreateResponse>(
+    accessToken,
+    'https://sheets.googleapis.com/v4/spreadsheets',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        properties: { title: 'BUGSMASHER Combat Log & Metrics' },
+        sheets: [
+          {
+            properties: { title: 'Combat Logs' },
+            data: [
+              {
+                startRow: 0,
+                startColumn: 0,
+                rowData: [
+                  {
+                    values: [
+                      { userEnteredValue: { stringValue: 'Timestamp' } },
+                      { userEnteredValue: { stringValue: 'Anomalies Purged (Kills)' } },
+                      { userEnteredValue: { stringValue: 'Waves Survived' } },
+                      { userEnteredValue: { stringValue: 'Aggregate Core Score' } },
+                      { userEnteredValue: { stringValue: 'Tactical Runtime (Minutes)' } },
+                      { userEnteredValue: { stringValue: 'Overseers Neutralized (Bosses)' } },
+                      { userEnteredValue: { stringValue: 'Cores Harvested (Powerups)' } },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    },
+  );
   return createSheet.spreadsheetId;
 }
 
 // 2. Google Sheets - Push a performance record in real-time
-export async function pushPerformanceRow(accessToken: string, stats: UserStats) {
+export async function pushPerformanceRow(accessToken: string, stats: UserStats): Promise<string> {
   try {
     const spreadsheetId = await getOrCreateSpreadsheet(accessToken);
-    const runtimeMinutes = ((stats.totalPlayTime || 0) / 60).toFixed(1);
+    const runtimeMinutes = (stats.totalPlayTime / 60).toFixed(1);
     const rowValues = [
       new Date().toLocaleString(),
-      stats.totalBugsKilled || 0,
-      stats.totalWavesCompleted || 0,
-      stats.totalScore || 0,
+      stats.totalBugsKilled,
+      stats.totalWavesCompleted,
+      stats.totalScore,
       parseFloat(runtimeMinutes),
-      stats.bossesKilled || 0,
-      stats.totalPowerupsCollected || 0
+      stats.bossesKilled,
+      stats.totalPowerupsCollected,
     ];
 
-    await apiCall(accessToken, `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Combat Logs!A:G:append?valueInputOption=USER_ENTERED`, {
-      method: 'POST',
-      body: JSON.stringify({
-        values: [rowValues]
-      })
-    });
+    await apiCall<unknown>(
+      accessToken,
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Combat Logs!A:G:append?valueInputOption=USER_ENTERED`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          values: [rowValues],
+        }),
+      },
+    );
     return spreadsheetId;
   } catch (err) {
     console.warn('Failed to push performance row in real-time:', err);
@@ -100,8 +154,11 @@ export interface HistoricalDataPoint {
 export async function fetchPerformanceHistory(accessToken: string): Promise<HistoricalDataPoint[]> {
   try {
     const spreadsheetId = await getOrCreateSpreadsheet(accessToken);
-    const valuesRes = await apiCall(accessToken, `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Combat Logs!A:G`);
-    
+    const valuesRes = await apiCall<SheetValuesResponse>(
+      accessToken,
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Combat Logs!A:G`,
+    );
+
     const rows = valuesRes.values;
     if (!rows || rows.length <= 1) {
       return [];
@@ -110,30 +167,29 @@ export async function fetchPerformanceHistory(accessToken: string): Promise<Hist
     // Skip header row
     const dataPoints: HistoricalDataPoint[] = [];
     for (let i = 1; i < rows.length; i++) {
-      const row = rows[i];
+      const row = rows.at(i);
       if (!row || row.length === 0) continue;
-      
-      const rawDate = row[0] || '';
+
+      const rawDate = row[0] ?? '';
       // Format date to a highly clean human readable format (e.g. "Jun 5, 10:15")
       let cleanDate = rawDate;
-      try {
-        const d = new Date(rawDate);
-        if (!isNaN(d.getTime())) {
-          cleanDate = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
-        }
-      } catch {
-        // Fallback
+      const d = new Date(rawDate);
+      if (!isNaN(d.getTime())) {
+        cleanDate =
+          d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) +
+          ' ' +
+          d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
       }
 
       dataPoints.push({
         index: i,
         date: cleanDate,
-        kills: parseInt(row[1]) || 0,
-        wave: parseInt(row[2]) || 0,
-        score: parseInt(row[3]) || 0,
-        duration: parseFloat(row[4]) || 0,
-        bosses: parseInt(row[5]) || 0,
-        powerups: parseInt(row[6]) || 0
+        kills: parseInt(row[1] ?? '') || 0,
+        wave: parseInt(row[2] ?? '') || 0,
+        score: parseInt(row[3] ?? '') || 0,
+        duration: parseFloat(row[4] ?? '') || 0,
+        bosses: parseInt(row[5] ?? '') || 0,
+        powerups: parseInt(row[6] ?? '') || 0,
       });
     }
 
@@ -148,24 +204,26 @@ export async function fetchPerformanceHistory(accessToken: string): Promise<Hist
 function base64UrlEncode(str: string): string {
   const encoder = new TextEncoder();
   const bytes = encoder.encode(str);
-  const binary = Array.from(bytes, byte => String.fromCharCode(byte)).join('');
-  return btoa(binary)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+  const binary = Array.from(bytes, (byte) => String.fromCharCode(byte)).join('');
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-export async function sendGmailReport(accessToken: string, recipientEmail: string, stats: UserStats, highscore: number) {
+export async function sendGmailReport(
+  accessToken: string,
+  recipientEmail: string,
+  stats: UserStats,
+  highscore: number,
+): Promise<GmailSendResponse> {
   try {
     const subject = `🚨 BUGSMASHER: Weekly Combat Analysis & High-Score Briefing 🚨`;
-    
+
     // Evaluate operational rank based on total score & kills
     let opRank = 'Recruit Analyst';
     if (stats.totalBugsKilled > 1000) opRank = 'Grand Overseer Purger';
     else if (stats.totalBugsKilled > 500) opRank = 'Titan Squad Commando';
     else if (stats.totalBugsKilled > 100) opRank = 'Veteran Decimator';
 
-    const runtimeMinutes = ((stats.totalPlayTime || 0) / 60).toFixed(1);
+    const runtimeMinutes = (stats.totalPlayTime / 60).toFixed(1);
 
     const reportHtml = `
       <div style="font-family: 'Courier New', monospace; background-color: #030508; color: #22d3ee; padding: 30px; border: 2px solid #22d3ee; border-radius: 12px; max-width: 600px; margin: 0 auto;">
@@ -175,7 +233,7 @@ export async function sendGmailReport(accessToken: string, recipientEmail: strin
         <p style="color: #8ec3db; font-size: 11px; margin-bottom: 25px; text-transform: uppercase;">
           OPERATIONAL VECTOR DEBRIEF // LEVEL SECURITY: CLASSIFIED // RECIPIENT: ${recipientEmail}
         </p>
-        
+
         <div style="background-color: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.2); padding: 20px; border-radius: 8px; margin-bottom: 25px;">
           <h2 style="color: #ffffff; font-size: 16px; margin-top: 0; text-transform: uppercase;">OPERATIVE SUMMONS</h2>
           <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
@@ -189,11 +247,11 @@ export async function sendGmailReport(accessToken: string, recipientEmail: strin
             </tr>
             <tr>
               <td style="padding: 6px 0; color: #64748b; text-transform: uppercase;">Total Swarm Neutralized:</td>
-              <td style="padding: 6px 0; color: #22d3ee; font-weight: bold;">${(stats.totalBugsKilled || 0).toLocaleString()} BUGS</td>
+              <td style="padding: 6px 0; color: #22d3ee; font-weight: bold;">${stats.totalBugsKilled.toLocaleString()} BUGS</td>
             </tr>
             <tr>
               <td style="padding: 6px 0; color: #64748b; text-transform: uppercase;">Sector Wave Segment:</td>
-              <td style="padding: 6px 0; color: #ffffff;">Wave ${stats.totalWavesCompleted || 0}</td>
+              <td style="padding: 6px 0; color: #ffffff;">Wave ${stats.totalWavesCompleted}</td>
             </tr>
             <tr>
               <td style="padding: 6px 0; color: #64748b; text-transform: uppercase;">Active Combat Time:</td>
@@ -201,7 +259,7 @@ export async function sendGmailReport(accessToken: string, recipientEmail: strin
             </tr>
             <tr>
               <td style="padding: 6px 0; color: #64748b; text-transform: uppercase;">Apex Threat Kills:</td>
-              <td style="padding: 6px 0; color: #ef4444; font-weight: bold;">${stats.bossesKilled || 0} Overlords</td>
+              <td style="padding: 6px 0; color: #ef4444; font-weight: bold;">${stats.bossesKilled} Overlords</td>
             </tr>
           </table>
         </div>
@@ -230,18 +288,22 @@ export async function sendGmailReport(accessToken: string, recipientEmail: strin
       'MIME-Version: 1.0',
       'Content-Type: text/html; charset=utf-8',
       '',
-      reportHtml
+      reportHtml,
     ];
 
     const emailStr = emailParts.join('\r\n');
     const rawBase64 = base64UrlEncode(emailStr);
 
-    const gmailRes = await apiCall(accessToken, 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
-      method: 'POST',
-      body: JSON.stringify({
-        raw: rawBase64
-      })
-    });
+    const gmailRes = await apiCall<GmailSendResponse>(
+      accessToken,
+      'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          raw: rawBase64,
+        }),
+      },
+    );
 
     return gmailRes;
   } catch (err) {
@@ -251,44 +313,58 @@ export async function sendGmailReport(accessToken: string, recipientEmail: strin
 }
 
 // 5. Google Drive API - Backup current game save directly to Drive
-export async function exportSaveToGoogleDrive(accessToken: string, saveDataStateStr: string): Promise<string> {
+export async function exportSaveToGoogleDrive(
+  accessToken: string,
+  saveDataStateStr: string,
+): Promise<string> {
   try {
     // Step A: Search for existing file named bugsmasher_backup.json
     const query = encodeURIComponent("name = 'bugsmasher_backup.json' and trashed = false");
-    const searchRes = await apiCall(accessToken, `https://www.googleapis.com/drive/v3/files?q=${query}`);
-    
+    const searchRes = await apiCall<DriveFileListResponse>(
+      accessToken,
+      `https://www.googleapis.com/drive/v3/files?q=${query}`,
+    );
+
     let fileId = '';
-    if (searchRes.files && searchRes.files.length > 0) {
-      fileId = searchRes.files[0].id;
+    const existing = searchRes.files?.[0];
+    if (existing) {
+      fileId = existing.id;
     } else {
       // Create new file metadata
-      const createRes = await apiCall(accessToken, 'https://www.googleapis.com/drive/v3/files', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
+      const createRes = await apiCall<DriveFileCreateResponse>(
+        accessToken,
+        'https://www.googleapis.com/drive/v3/files',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: 'bugsmasher_backup.json',
+            mimeType: 'application/json',
+          }),
         },
-        body: JSON.stringify({
-          name: 'bugsmasher_backup.json',
-          mimeType: 'application/json'
-        })
-      });
+      );
       fileId = createRes.id;
     }
 
     // Step B: Upload actual game save content to the file using media content pipeline
-    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
+    const uploadRes = await fetch(
+      `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: saveDataStateStr,
       },
-      body: saveDataStateStr
-    }).then(async (res) => {
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody?.error?.message || `Failed content upload. Status: ${res.status}`);
-      }
-    });
+    );
+    if (!uploadRes.ok) {
+      throw new Error(
+        await parseErrorMessage(uploadRes, `Failed content upload. Status: ${uploadRes.status}`),
+      );
+    }
 
     return fileId;
   } catch (err) {
@@ -301,22 +377,34 @@ export async function exportSaveToGoogleDrive(accessToken: string, saveDataState
 export async function importSaveFromGoogleDrive(accessToken: string): Promise<string> {
   try {
     const query = encodeURIComponent("name = 'bugsmasher_backup.json' and trashed = false");
-    const searchRes = await apiCall(accessToken, `https://www.googleapis.com/drive/v3/files?q=${query}`);
-    
-    if (!searchRes.files || searchRes.files.length === 0) {
-      throw new Error(`Operational backup 'bugsmasher_backup.json' not found on your Google Drive.`);
+    const searchRes = await apiCall<DriveFileListResponse>(
+      accessToken,
+      `https://www.googleapis.com/drive/v3/files?q=${query}`,
+    );
+
+    const backupFile = searchRes.files?.[0];
+    if (!backupFile) {
+      throw new Error(
+        `Operational backup 'bugsmasher_backup.json' not found on your Google Drive.`,
+      );
     }
 
-    const fileId = searchRes.files[0].id;
-    const downloadRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`
-      }
-    });
+    const downloadRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${backupFile.id}?alt=media`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
 
     if (!downloadRes.ok) {
-      const errBody = await downloadRes.json().catch(() => ({}));
-      throw new Error(errBody?.error?.message || `Failed to download file alt=media. Status: ${downloadRes.status}`);
+      throw new Error(
+        await parseErrorMessage(
+          downloadRes,
+          `Failed to download file alt=media. Status: ${downloadRes.status}`,
+        ),
+      );
     }
 
     const saveText = await downloadRes.text();

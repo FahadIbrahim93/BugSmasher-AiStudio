@@ -4,14 +4,52 @@ import { SaveManager } from '../game/SaveManager';
 import { getTodaysChallenge } from '../game/DailyChallengeManager';
 import { statsManager } from '../game/StatsManager';
 
+// Minimal shapes for the Google API responses this hook consumes.
+interface GoogleApiErrorBody {
+  error?: { message?: string };
+}
+
+interface GoogleTaskList {
+  id: string;
+  title?: string;
+}
+
+interface GoogleTaskListsResponse {
+  items?: GoogleTaskList[];
+}
+
+interface GoogleTasksResponse {
+  items?: { title?: string }[];
+}
+
+interface DriveFileListResponse {
+  files?: { id: string }[];
+}
+
+interface SpreadsheetCreateResponse {
+  spreadsheetId: string;
+}
+
+interface DocsCreateResponse {
+  documentId: string;
+}
+
+function errorMessage(err: unknown, fallback: string): string {
+  return err instanceof Error && err.message ? err.message : fallback;
+}
+
 export function useWorkspaceActions(accessToken: string | null) {
   const [loading, setLoading] = useState(false);
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string; link?: string } | null>(null);
+  const [feedback, setFeedback] = useState<{
+    type: 'success' | 'error';
+    message: string;
+    link?: string;
+  } | null>(null);
   const [syncStatus, setSyncStatus] = useState<Record<string, string>>({
     tasks: 'PENDING SYNC',
     sheets: 'STATS AVAILABLE',
     calendar: 'ALERTS READY',
-    docs: 'DEBRIEFS PENDING'
+    docs: 'DEBRIEFS PENDING',
   });
 
   const challenge = getTodaysChallenge();
@@ -19,14 +57,18 @@ export function useWorkspaceActions(accessToken: string | null) {
 
   useEffect(() => {
     if (feedback) {
-      const timer = setTimeout(() => { setFeedback(null); }, 10000);
-      return () => { clearTimeout(timer); };
+      const timer = setTimeout(() => {
+        setFeedback(null);
+      }, 10000);
+      return () => {
+        clearTimeout(timer);
+      };
     }
     return;
   }, [feedback]);
 
   // General Fetch Client for Google APIs
-  const apiCall = async (url: string, options: RequestInit = {}) => {
+  const apiCall = async <T,>(url: string, options: RequestInit = {}): Promise<T> => {
     if (!accessToken) {
       throw new Error('Federated connection expired. Please login again.');
     }
@@ -35,10 +77,12 @@ export function useWorkspaceActions(accessToken: string | null) {
     headers.set('Content-Type', 'application/json');
     const res = await fetch(url, { ...options, headers });
     if (!res.ok) {
-      const errBody = await res.json().catch(() => ({}));
-      throw new Error(errBody?.error?.message || `Request failed with status ${res.status}`);
+      const errBody: GoogleApiErrorBody = await (res.json() as Promise<GoogleApiErrorBody>).catch(
+        () => ({}),
+      );
+      throw new Error(errBody.error?.message ?? `Request failed with status ${res.status}`);
     }
-    return res.json().catch(() => ({}));
+    return (res.json() as Promise<T>).catch(() => ({}) as T);
   };
 
   // 1. sync daily directives with Google Tasks
@@ -49,53 +93,67 @@ export function useWorkspaceActions(accessToken: string | null) {
     setFeedback(null);
     try {
       // Step A: Fetch or create 'BUGSMASHER Operative Tasks' list
-      const listsRes = await apiCall('https://tasks.googleapis.com/tasks/v1/users/@me/lists');
-      let targetList = (listsRes.items || []).find((l: any) => l.title === 'BUGSMASHER Operative Tasks');
+      const listsRes = await apiCall<GoogleTaskListsResponse>(
+        'https://tasks.googleapis.com/tasks/v1/users/@me/lists',
+      );
+      let targetList = (listsRes.items ?? []).find((l) => l.title === 'BUGSMASHER Operative Tasks');
 
-      if (!targetList) {
-        targetList = await apiCall('https://tasks.googleapis.com/tasks/v1/users/@me/lists', {
+      targetList ??= await apiCall<GoogleTaskList>(
+        'https://tasks.googleapis.com/tasks/v1/users/@me/lists',
+        {
           method: 'POST',
-          body: JSON.stringify({ title: 'BUGSMASHER Operative Tasks' })
-        });
-      }
+          body: JSON.stringify({ title: 'BUGSMASHER Operative Tasks' }),
+        },
+      );
 
       // Step B: Fetch existing tasks on this list to prevent duplicate entries
-      const existingTasksRes = await apiCall(`https://tasks.googleapis.com/tasks/v1/lists/${targetList.id}/tasks`);
-      const existingTitles = (existingTasksRes.items || []).map((t: any) => t.title);
+      const existingTasksRes = await apiCall<GoogleTasksResponse>(
+        `https://tasks.googleapis.com/tasks/v1/lists/${targetList.id}/tasks`,
+      );
+      const existingTitles = (existingTasksRes.items ?? []).map((t) => t.title);
 
       // Create new sub-tasks
       const taskDirectives = [
         `Main Mission: ${challenge.winCondition.label}`,
-        ...challenge.modifiers.map(m => `Active Modifier Hazard: Handle extreme ${m.replace('_', ' ')} settings`)
+        ...challenge.modifiers.map(
+          (m) => `Active Modifier Hazard: Handle extreme ${m.replace('_', ' ')} settings`,
+        ),
       ];
 
       let createdCount = 0;
       for (const taskText of taskDirectives) {
         if (!existingTitles.includes(taskText)) {
-          await apiCall(`https://tasks.googleapis.com/tasks/v1/lists/${targetList.id}/tasks`, {
-            method: 'POST',
-            body: JSON.stringify({
-              title: taskText,
-              notes: `Task scheduled via BUGSMASHER Tactical Hub on ${new Date().toLocaleDateString()}. Complete today's mission to claim secure operational rewards!`
-            })
-          });
+          await apiCall<unknown>(
+            `https://tasks.googleapis.com/tasks/v1/lists/${targetList.id}/tasks`,
+            {
+              method: 'POST',
+              body: JSON.stringify({
+                title: taskText,
+                notes: `Task scheduled via BUGSMASHER Tactical Hub on ${new Date().toLocaleDateString()}. Complete today's mission to claim secure operational rewards!`,
+              }),
+            },
+          );
           createdCount++;
         }
       }
 
       soundManager.skillUpgrade();
-      setSyncStatus(prev => ({ ...prev, tasks: 'SYNCHRONIZED' }));
+      setSyncStatus((prev) => ({ ...prev, tasks: 'SYNCHRONIZED' }));
       setFeedback({
         type: 'success',
-        message: createdCount > 0
-          ? `Successfully synchronized ${createdCount} daily objectives to Google Tasks under 'BUGSMASHER Operative Tasks'!`
-          : "All active daily objectives are already entered in your Google Tasks calendar feed!",
-        link: 'https://tasks.google.com'
+        message:
+          createdCount > 0
+            ? `Successfully synchronized ${createdCount} daily objectives to Google Tasks under 'BUGSMASHER Operative Tasks'!`
+            : "All active daily objectives are already entered in your Google Tasks calendar feed!",
+        link: 'https://tasks.google.com',
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       soundManager.uiError();
-      setFeedback({ type: 'error', message: err.message || 'Failed to synchronize with Google Tasks.' });
+      setFeedback({
+        type: 'error',
+        message: errorMessage(err, 'Failed to synchronize with Google Tasks.'),
+      });
     } finally {
       setLoading(false);
     }
@@ -109,47 +167,55 @@ export function useWorkspaceActions(accessToken: string | null) {
     setFeedback(null);
     try {
       // Step A: Find existing spreadsheet called "BUGSMASHER Combat Log & Metrics"
-      const queryStr = encodeURIComponent("name = 'BUGSMASHER Combat Log & Metrics' and mimeType = 'application/vnd.google-apps.spreadsheet'");
-      const driveSearch = await apiCall(`https://www.googleapis.com/drive/v3/files?q=${queryStr}`);
+      const queryStr = encodeURIComponent(
+        "name = 'BUGSMASHER Combat Log & Metrics' and mimeType = 'application/vnd.google-apps.spreadsheet'",
+      );
+      const driveSearch = await apiCall<DriveFileListResponse>(
+        `https://www.googleapis.com/drive/v3/files?q=${queryStr}`,
+      );
 
       let spreadsheetId = '';
       let isNew = false;
 
-      if (driveSearch.files && driveSearch.files.length > 0) {
-        spreadsheetId = driveSearch.files[0].id;
+      const existingSheet = driveSearch.files?.at(0);
+      if (existingSheet) {
+        spreadsheetId = existingSheet.id;
       } else {
         // Step B: Create a brand new Spreadsheet
         isNew = true;
-        const createSheet = await apiCall('https://sheets.googleapis.com/v4/spreadsheets', {
-          method: 'POST',
-          body: JSON.stringify({
-            properties: { title: 'BUGSMASHER Combat Log & Metrics' },
-            sheets: [
-              {
-                properties: { title: 'Combat Logs' },
-                data: [
-                  {
-                    startRow: 0,
-                    startColumn: 0,
-                    rowData: [
-                      {
-                        values: [
-                          { userEnteredValue: { stringValue: 'Timestamp' } },
-                          { userEnteredValue: { stringValue: 'Anomalies Purged (Kills)' } },
-                          { userEnteredValue: { stringValue: 'Waves Survived' } },
-                          { userEnteredValue: { stringValue: 'Aggregate Core Score' } },
-                          { userEnteredValue: { stringValue: 'Tactical Runtime (Minutes)' } },
-                          { userEnteredValue: { stringValue: 'Overseers Neutralized (Bosses)' } },
-                          { userEnteredValue: { stringValue: 'Cores Harvested (Powerups)' } }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          })
-        });
+        const createSheet = await apiCall<SpreadsheetCreateResponse>(
+          'https://sheets.googleapis.com/v4/spreadsheets',
+          {
+            method: 'POST',
+            body: JSON.stringify({
+              properties: { title: 'BUGSMASHER Combat Log & Metrics' },
+              sheets: [
+                {
+                  properties: { title: 'Combat Logs' },
+                  data: [
+                    {
+                      startRow: 0,
+                      startColumn: 0,
+                      rowData: [
+                        {
+                          values: [
+                            { userEnteredValue: { stringValue: 'Timestamp' } },
+                            { userEnteredValue: { stringValue: 'Anomalies Purged (Kills)' } },
+                            { userEnteredValue: { stringValue: 'Waves Survived' } },
+                            { userEnteredValue: { stringValue: 'Aggregate Core Score' } },
+                            { userEnteredValue: { stringValue: 'Tactical Runtime (Minutes)' } },
+                            { userEnteredValue: { stringValue: 'Overseers Neutralized (Bosses)' } },
+                            { userEnteredValue: { stringValue: 'Cores Harvested (Powerups)' } },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            }),
+          },
+        );
         spreadsheetId = createSheet.spreadsheetId;
       }
 
@@ -162,29 +228,32 @@ export function useWorkspaceActions(accessToken: string | null) {
         stats.totalScore,
         parseFloat(runtimeMinutes),
         stats.bossesKilled,
-        stats.totalPowerupsCollected
+        stats.totalPowerupsCollected,
       ];
 
-      await apiCall(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Combat Logs!A:G:append?valueInputOption=USER_ENTERED`, {
-        method: 'POST',
-        body: JSON.stringify({
-          values: [rowValues]
-        })
-      });
+      await apiCall<unknown>(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Combat Logs!A:G:append?valueInputOption=USER_ENTERED`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            values: [rowValues],
+          }),
+        },
+      );
 
       soundManager.skillUpgrade();
-      setSyncStatus(prev => ({ ...prev, sheets: 'EXPORTED' }));
+      setSyncStatus((prev) => ({ ...prev, sheets: 'EXPORTED' }));
       setFeedback({
         type: 'success',
         message: isNew
           ? 'Created a new spreadsheet "BUGSMASHER Combat Log & Metrics" and uploaded initial combat metrics logs!'
           : 'Appended your latest gameplay metrics successfully! Tactical records updated.',
-        link: `https://docs.google.com/spreadsheets/d/${spreadsheetId}`
+        link: `https://docs.google.com/spreadsheets/d/${spreadsheetId}`,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       soundManager.uiError();
-      setFeedback({ type: 'error', message: err.message || 'Failed write to sheets.' });
+      setFeedback({ type: 'error', message: errorMessage(err, 'Failed write to sheets.') });
     } finally {
       setLoading(false);
     }
@@ -210,10 +279,16 @@ export function useWorkspaceActions(accessToken: string | null) {
         eventBody = {
           summary: 'BUGSMASHER: Daily Mission Update Alert',
           description: `Assemble at the Core! Stand against the local bug swarm, clear procedural anomalies, and earn custom visual skins. 🐛✨`,
-          start: { dateTime: start.toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
-          end: { dateTime: end.toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+          start: {
+            dateTime: start.toISOString(),
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          },
+          end: {
+            dateTime: end.toISOString(),
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          },
           recurrence: ['RRULE:FREQ=DAILY'],
-          reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 15 }] }
+          reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 15 }] },
         };
       } else {
         // Limited-time custom boss surge weekend event
@@ -226,30 +301,37 @@ export function useWorkspaceActions(accessToken: string | null) {
         eventBody = {
           summary: '🚨 BUGSMASHER: Swarm Influx Raid Surge Event 🚨',
           description: `Elite Boss Rush raid surge window. Core drop rates are boosted by up to 200%. Load your armory configurations and secure defensive coordinates!`,
-          start: { dateTime: start.toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
-          end: { dateTime: end.toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
-          reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 30 }] }
+          start: {
+            dateTime: start.toISOString(),
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          },
+          end: {
+            dateTime: end.toISOString(),
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          },
+          reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 30 }] },
         };
       }
 
-      await apiCall('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+      await apiCall<unknown>('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
         method: 'POST',
-        body: JSON.stringify(eventBody)
+        body: JSON.stringify(eventBody),
       });
 
       soundManager.skillUpgrade();
-      setSyncStatus(prev => ({ ...prev, calendar: 'ALERTS ACTIVE' }));
+      setSyncStatus((prev) => ({ ...prev, calendar: 'ALERTS ACTIVE' }));
       setFeedback({
         type: 'success',
-        message: type === 'daily'
-          ? 'Synchronized Daily Recurring Alarm Event to your Calendar!'
-          : 'Scheduled Elite Weekly Raid Surge Event! Ready for tactical engagement alerts.',
-        link: 'https://calendar.google.com'
+        message:
+          type === 'daily'
+            ? 'Synchronized Daily Recurring Alarm Event to your Calendar!'
+            : 'Scheduled Elite Weekly Raid Surge Event! Ready for tactical engagement alerts.',
+        link: 'https://calendar.google.com',
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       soundManager.uiError();
-      setFeedback({ type: 'error', message: err.message || 'Failed update on Calendar.' });
+      setFeedback({ type: 'error', message: errorMessage(err, 'Failed update on Calendar.') });
     } finally {
       setLoading(false);
     }
@@ -262,14 +344,12 @@ export function useWorkspaceActions(accessToken: string | null) {
     setLoading(true);
     setFeedback(null);
     try {
-      // mapConfig was unused
-      // const _mapConfig = SaveManager.getHighScore() > 0 ? "ADVANCED CORE" : "RECRUIT SIMULATOR";
       const docTitle = `BUGSMASHER Tactical Debrief - Operative Report`;
 
       // Step A: Create Document
-      const createDoc = await apiCall('https://docs.googleapis.com/v1/documents', {
+      const createDoc = await apiCall<DocsCreateResponse>('https://docs.googleapis.com/v1/documents', {
         method: 'POST',
-        body: JSON.stringify({ title: docTitle })
+        body: JSON.stringify({ title: docTitle }),
       });
       const docId = createDoc.documentId;
 
@@ -292,31 +372,32 @@ export function useWorkspaceActions(accessToken: string | null) {
         `--- END OF TRANSMISSION [GRID ONLINE] ---`;
 
       // Document write batch update
-      await apiCall(`https://www.googleapis.com/v1/documents/${docId}:batchUpdate`, {
+      await apiCall<unknown>(`https://docs.googleapis.com/v1/documents/${docId}:batchUpdate`, {
         method: 'POST',
         body: JSON.stringify({
           requests: [
             {
               insertText: {
                 location: { index: 1 },
-                text: contentText
-              }
-            }
-          ]
-        })
+                text: contentText,
+              },
+            },
+          ],
+        }),
       });
 
       soundManager.skillUpgrade();
-      setSyncStatus(prev => ({ ...prev, docs: 'JOURNAL DEPLOYED' }));
+      setSyncStatus((prev) => ({ ...prev, docs: 'JOURNAL DEPLOYED' }));
       setFeedback({
         type: 'success',
-        message: 'Successfully generated high-fidelity Tactical Mission Debrief Document inside your Google Drive folder!',
-        link: `https://docs.google.com/document/d/${docId}`
+        message:
+          'Successfully generated high-fidelity Tactical Mission Debrief Document inside your Google Drive folder!',
+        link: `https://docs.google.com/document/d/${docId}`,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       soundManager.uiError();
-      setFeedback({ type: 'error', message: err.message || 'Failed generation Google Docs.' });
+      setFeedback({ type: 'error', message: errorMessage(err, 'Failed generation Google Docs.') });
     } finally {
       setLoading(false);
     }
