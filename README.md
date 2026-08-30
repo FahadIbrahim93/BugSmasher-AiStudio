@@ -14,7 +14,7 @@
 **Arcade clicker-defense with server-validated leaderboards.**  
 React 19 + TypeScript + Canvas 2D + Firebase.
 
-> **Current release truth:** BugSmasher is **not currently certified 10/10**. The latest inspected `main` CI run (2026-08-26) is red because one Firebase emulator test fails. See [docs/STATUS.md](./docs/STATUS.md).
+> **Current release truth:** BugSmasher is **not currently certified 10/10**. The latest inspected `main` CI run (2026-08-30, commit `bbc7250`) is green across CI, CodeQL and Security Audit; remaining gaps are code-quality, coverage, accessibility, performance and operations evidence. See [docs/STATUS.md](./docs/STATUS.md).
 
 - **Live:** https://bugsmasher-hopetheory.vercel.app
 - **Repo:** https://github.com/FahadIbrahim93/BugSmasher-HopeTheory
@@ -25,17 +25,17 @@ BugSmasher is a feature-rich browser arcade game combining real-time Canvas game
 
 ## Engineering highlights
 
-| Area | Implementation |
-|---|---|
-| Frontend | React 19, TypeScript, Vite, Tailwind CSS |
-| Game loop | Canvas 2D + `requestAnimationFrame` + delta-time updates |
-| State / systems | Specialized game managers and rendering modules |
-| Auth | Firebase Authentication |
-| Persistence | Local/IndexedDB paths plus Firebase callable-backed cloud persistence |
-| Security | Firestore rules, callable validation, rate limits, checksums, session-token controls |
-| Testing | Vitest, Firebase Emulator Suite, Playwright |
-| CI/CD | GitHub Actions with typecheck, tests, coverage, emulator, build, lint and E2E stages |
-| PWA | Service-worker/PWA support |
+| Area            | Implementation                                                                       |
+| --------------- | ------------------------------------------------------------------------------------ |
+| Frontend        | React 19, TypeScript, Vite, Tailwind CSS                                             |
+| Game loop       | Canvas 2D + `requestAnimationFrame` + delta-time updates                             |
+| State / systems | Specialized game managers and rendering modules                                      |
+| Auth            | Firebase Authentication                                                              |
+| Persistence     | Local/IndexedDB paths plus Firebase callable-backed cloud persistence                |
+| Security        | Firestore rules, callable validation, rate limits, checksums, session-token controls |
+| Testing         | Vitest, Firebase Emulator Suite, Playwright                                          |
+| CI/CD           | GitHub Actions with typecheck, tests, coverage, emulator, build, lint and E2E stages |
+| PWA             | Service-worker/PWA support                                                           |
 
 ## Verification truth
 

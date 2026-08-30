@@ -1,40 +1,44 @@
 # BugSmasher — Current Status Ledger
 
-**Status timestamp:** 2026-08-29  
-**Branch:** `main`  
+**Status timestamp:** 2026-08-30  
+**Branch:** `main` @ `bbc7250`  
 **Certification:** **NOT CERTIFIED 10/10**
 
 ## Current verified state
 
-A known P0 emulator-test defect was corrected on `main`: the monotonic-score fixture now uses `20,000` instead of `50,000` for a newly-created session, so the test no longer contradicts the server plausibility rule.
+The P0 emulator-test defect (P0-CI-01) is fixed and verified: the monotonic-score fixture uses a plausible score for a fresh session and the full emulator suite passes. GitHub Actions on `main` @ `bbc7250` is GREEN (CI, CodeQL, Security Audit). The same gates were independently re-run locally on the exact commit on 2026-08-30 with identical results.
 
-Fresh GitHub Actions verification is running against the current `main` history. Until that run completes, this document must not claim that CI is green.
+### Verified baseline (2026-08-30, `main` @ `bbc7250`)
 
-### Previously inspected baseline (2026-08-26)
+| Gate                         | Result                                                                                              |
+| ---------------------------- | --------------------------------------------------------------------------------------------------- |
+| TypeScript                   | PASS                                                                                                |
+| ESLint                       | PASS with 0 errors / 910 warnings                                                                   |
+| Functions build + unit tests | PASS (6/6)                                                                                          |
+| Frontend tests               | 752/752 PASS (40 files)                                                                             |
+| Coverage                     | 81.70% lines / 80.78% statements / 85.99% functions / 70.92% branches (floors 80/80/75/70 enforced) |
+| Firebase emulator            | PASS (26/26)                                                                                        |
+| Production build             | PASS (vendor chunk 690.96 kB, 206.81 kB gzip)                                                       |
+| Playwright E2E               | PASS (5/5)                                                                                          |
+| `npm audit --omit=dev`       | 0 vulnerabilities                                                                                   |
+| `prettier --check .`         | **FAIL: ~181 files unformatted (not a CI gate yet)**                                                |
 
-| Gate | Result |
-|---|---|
-| TypeScript | PASS |
-| ESLint | PASS with 908 warnings |
-| Functions build | PASS |
-| Frontend tests | 651/651 PASS |
-| Coverage | ~79.14% lines / 78.06% statements / 84.43% functions / 66.30% branches |
-| Firebase emulator | **FAIL: 1 of 26 tests** |
-| Production build | skipped after emulator failure |
-| Playwright | skipped after quality failure |
+### Resolved since previous baseline
+
+- P0-CI-01: emulator regression test fixed and verified (26/26).
+- P0-CI-02: full gate suite green on the exact `main` commit (GitHub Actions + local re-run).
 
 ## Current P0/P1 direction
 
-1. Inspect and repair any remaining CI failures.
-2. Establish dependency/security cleanliness.
-3. Eliminate static-analysis and React correctness debt.
-4. Raise meaningful test coverage and regression protection.
-5. Harden competitive-integrity validation.
-6. Certify performance and accessibility with evidence.
-7. Verify deployment and operations.
-8. Establish repository governance/protection.
-9. Keep documentation synchronized with actual evidence.
-10. Perform final adversarial release audit.
+1. Eliminate static-analysis and React correctness debt (910 ESLint warnings → 0; CQ-01/CQ-02/CQ-03).
+2. Bring the tree Prettier-clean and gate formatting in CI (CQ-05).
+3. Raise coverage toward the 85/85/85/75 targets (T-01), especially branch coverage.
+4. Harden competitive-integrity validation (S-04/S-05).
+5. Certify performance and accessibility with evidence (PERF-01..04, AX-01..05).
+6. Verify deployment and operations; real providers or explicit de-scope for monitoring/ads/monetization stubs (OPS-01..06).
+7. Establish repository governance/protection (P0-GOV-01 — requires GitHub settings access).
+8. Keep documentation synchronized with actual evidence.
+9. Perform final adversarial release audit.
 
 ## Important truth rules
 
