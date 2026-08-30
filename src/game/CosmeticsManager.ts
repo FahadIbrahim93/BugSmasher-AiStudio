@@ -143,16 +143,16 @@ function loadExtended(): ExtendedCosmetics {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      const parsed = JSON.parse(raw);
+      const parsed = JSON.parse(raw) as Partial<ExtendedCosmetics>;
       return {
-        unlockedSkins: parsed.unlockedSkins || [],
-        activeSkin: parsed.activeSkin || null,
-        unlockedCoreThemes: parsed.unlockedCoreThemes || [],
-        activeCoreTheme: parsed.activeCoreTheme || null,
-        isSupporter: parsed.isSupporter || false,
-        supporterTier: parsed.supporterTier || null,
-        supporterUnlockedAt: parsed.supporterUnlockedAt || undefined,
-        devUnlocked: parsed.devUnlocked || false,
+        unlockedSkins: parsed.unlockedSkins ?? [],
+        activeSkin: parsed.activeSkin ?? null,
+        unlockedCoreThemes: parsed.unlockedCoreThemes ?? [],
+        activeCoreTheme: parsed.activeCoreTheme ?? null,
+        isSupporter: parsed.isSupporter ?? false,
+        supporterTier: parsed.supporterTier ?? null,
+        supporterUnlockedAt: parsed.supporterUnlockedAt,
+        devUnlocked: parsed.devUnlocked ?? false,
       };
     }
   } catch {
