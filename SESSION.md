@@ -1,69 +1,58 @@
 # BugSmasher-HopeTheory — Engineering Session
 
 ## Session Date
-
-2026-08-16
+2026-08-29
 
 ## Session Mode
+User authorized direct GitHub execution on `main` and autonomous progression toward verified 10/10. Work must remain evidence-driven; no claim is made that unexecuted local commands were run.
 
-Execution authorized by user. GitHub-side implementation and audit work is in progress. Local shell/Codex execution is not available in this environment, so repository-reported test results are not being represented as freshly executed results.
+## Current authoritative documents
+- `docs/PROJECT_OPERATING_SYSTEM.md` — project/agent operating rules
+- `AGENTS.md` — coding and architecture standards
+- `TASKBOARD.md` — live work queue
+- `docs/STATUS.md` — current verified status
+- `docs/RELEASE_CERTIFICATION.md` — 10/10 definition and release gates
+- `docs/AGENT_HANDOFF.md` — context-transfer protocol
+- `docs/ARCHITECTURE.md` — current system boundaries
 
-## Baseline
+## Current state
+- Branch: `main`
+- Certification: **NOT CERTIFIED 10/10**
+- A P0 emulator regression fixture was corrected so the monotonic-score test uses a score compatible with the server plausibility rule.
+- That change triggered fresh GitHub Actions verification; status must be re-inspected before marking the P0 complete.
+- Latest pre-fix main CI that was inspected had 651/651 frontend tests passing, 908 ESLint warnings, and one failing Firebase emulator test.
 
-- Repository: `FahadIbrahim93/BugSmasher-HopeTheory`
-- Default branch: `main`
-- Baseline HEAD from planning pass: `6ac0ece4c17d94e723f752fe2f204af55bc5ba6a`
-- Repository verification addendum reports 651/651 frontend tests passing, 79.17% lines / 78.12% statements / 84.57% functions / 66.02% branches against interim thresholds, 0 ESLint errors with advisory warnings, 26 emulator tests, a clean production build, and 5/5 Playwright specs. These remain repository-reported until a fresh CI run is inspected.
+## Security truth
+- Server-issued score sessions already exist with user binding, expiration, one-time consumption, replay rejection, and plausibility validation.
+- This is strong nonce/session validation, not full deterministic replay verification.
+- Authoritative saves/scores remain server/rules concerns; client checks are not trusted boundaries.
 
-## Current Quality Rating
+## Execution log
 
-### 8.1 / 10 — strong engineering baseline, not yet a verified production-grade 10/10
+### 2026-08-29 — Governance foundation
+- Added `docs/PROJECT_OPERATING_SYSTEM.md`.
+- Added `docs/RELEASE_CERTIFICATION.md`.
+- Added `docs/AGENT_HANDOFF.md`.
+- Added `docs/STATUS.md`.
+- Replaced the stale taskboard with a live priority-based taskboard.
+- Reworked `AGENTS.md`, README and `docs/AGENTIC_WORKFLOW.md` to align with current truth and multi-agent development.
+- Updated `docs/ARCHITECTURE.md` to reflect the current server-validated score/session flow.
 
-The architecture and verification posture are substantially better than the June baseline. The remaining gap is primarily evidence-backed release hardening: final coverage thresholds, competitive-integrity depth, accessibility evidence, production integration/de-scope decisions, documentation truthfulness, and warning/security hygiene.
+### 2026-08-29 — P0 CI repair
+- Updated the monotonic leaderboard test fixture from 50,000 to 20,000 for a fresh session so the test exercises monotonic behavior without contradicting anti-cheat plausibility validation.
+- Commit: `f31658819427211cdbbf718422fc65d5610b2620`.
 
-## Findings During Execution
+## Next autonomous priorities
 
-### Security / competitive integrity
+1. Inspect fresh CI/security results for the current `main` commit.
+2. Restore fully green CI if any gate remains red.
+3. Reconcile/port useful verified work from stale open PRs only when it can be safely validated against current `main`.
+4. Burn down ESLint/React correctness debt.
+5. Improve security and dependency hygiene.
+6. Raise meaningful test coverage and reliability.
+7. Complete performance/accessibility/operations evidence.
+8. Finalize documentation truth and release certification.
 
-- `functions/src/sessionToken.ts` already implements cryptographically random server-created session IDs, a 10-minute TTL, user binding, atomic one-time consumption, replay rejection, and session-duration plausibility checks.
-- `functions/src/handlers.ts` requires `sessionId` for leaderboard submissions and atomically consumes the token before updating the leaderboard.
-- `functions/test/callables.test.ts` already covers valid sessions, replay, cross-user token use, expiration, missing tokens, and implausible session scores.
-- This means the old TASKBOARD statement that session-token anti-cheat is completely unimplemented is stale. However, the current mechanism is better described as server-issued nonce/session validation rather than a fully signed gameplay-run/replay-verification system. It remains a hardening candidate rather than a verified end-state.
+## Verification policy
 
-### Dependency / static security
-
-- `.github/dependabot.yml` already configures weekly dependency updates for the root app, Firebase Functions, and GitHub Actions.
-- `.github/workflows/codeql.yml` already runs CodeQL security-and-quality analysis for JavaScript/TypeScript.
-- Added `.github/workflows/security-audit.yml` to run blocking `npm audit --audit-level=high` checks for both root and Functions dependencies on pushes, PRs, and weekly schedule.
-- A fresh green result is still required before claiming the dependency/security gate is verified.
-
-### Coverage
-
-- Current repository evidence is 79.17% lines, 78.12% statements, 84.57% functions, and 66.02% branches.
-- Therefore the final 80/80/75/70 target is not yet honestly claimable.
-- No coverage threshold was lowered and no superficial test was added merely to manufacture a pass.
-
-### Production integrations
-
-- Monetization remains an explicit local/demo stub rather than a payment provider integration.
-- Production analytics/ads/monitoring claims must therefore be treated as de-scoped until real providers and consent/operational controls are installed.
-- Deployment documentation also contains stale historical quality/test counts and needs a documentation truth pass.
-
-## Execution Changes
-
-1. Added a blocking dependency audit workflow at `.github/workflows/security-audit.yml`.
-2. Preserved the existing CodeQL and Dependabot controls rather than duplicating them.
-3. Corrected this session record so security findings distinguish implemented session-token protection from a future signed-run/replay-verification design.
-
-## Remaining Work
-
-1. Raise meaningful coverage to the final 80/80/75/70 target and verify through CI.
-2. Deepen competitive integrity beyond bearer session validation if the product requires authoritative run summaries/replay resistance.
-3. Complete accessibility/WCAG evidence.
-4. Either integrate or explicitly de-scope analytics, monetization, ads, crash reporting, monitoring, and telemetry consent.
-5. Remove stale documentation claims/counts and align TASKBOARD/DEPLOYMENT/verification records with the current repository.
-6. Inspect the resulting GitHub Actions runs and only mark gates complete when evidence is green.
-
-## Verification Policy
-
-A task is not considered complete solely because code exists. Completion requires acceptance-criteria evidence from repository inspection and, where applicable, a successful GitHub Actions run. No claim in this session should imply that a local test command was executed when it was not.
+A task is not complete because code was written. Completion requires acceptance criteria plus appropriate automated/manual evidence. A GitHub Actions failure overrides optimistic documentation. No final 10/10 label may be used until `docs/RELEASE_CERTIFICATION.md` is fully satisfied on the exact release commit.

@@ -1,4 +1,4 @@
-# BugSmasher-HopeTheory
+# BugSmasher — current README
 
 <div align="center">
 
@@ -6,51 +6,51 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 [![React 19](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-%7E5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Vitest](https://img.shields.io/badge/Vitest-651%20tests-2ECC71?style=for-the-badge)](https://vitest.dev)
-[![Accessibility](https://img.shields.io/badge/Accessibility-in%20progress-FF6B6B?style=for-the-badge)](/docs/BLUEPRINT_10_10.md)
+[![Vitest](https://img.shields.io/badge/Vitest-tests%20verified%20in%20CI-2ECC71?style=for-the-badge)](https://vitest.dev)
+[![Accessibility](https://img.shields.io/badge/Accessibility-audit%20in%20progress-FF6B6B?style=for-the-badge)](./docs/RELEASE_CERTIFICATION.md)
 
 </div>
 
-**Accessible bug-squashing arcade game** built with React 19, TypeScript, and Canvas 2D. High-intensity gameplay meets brutalist OS aesthetics and neon bio-luminescent bugs.
+**Arcade clicker-defense with server-validated leaderboards.**  
+React 19 + TypeScript + Canvas 2D + Firebase.
 
-**Live:** [https://bugsmasher-hopetheory.vercel.app](https://bugsmasher-hopetheory.vercel.app)  
-**Repo:** [FahadIbrahim93/BugSmasher-HopeTheory](https://github.com/FahadIbrahim93/BugSmasher-HopeTheory)
+> **Current release truth:** BugSmasher is **not currently certified 10/10**. The latest inspected `main` CI run (2026-08-26) is red because one Firebase emulator test fails. See [docs/STATUS.md](./docs/STATUS.md).
 
----
+- **Live:** https://bugsmasher-hopetheory.vercel.app
+- **Repo:** https://github.com/FahadIbrahim93/BugSmasher-HopeTheory
 
-## 🎯 What this is
+## What it is
 
-BugSmasher is an actively hardened browser-game project with a strong automated verification baseline. It is **not yet claiming final production-grade 10/10 readiness**: coverage remains below the final target, accessibility still needs evidence-backed WCAG 2.2 AA verification, and several commercial/operational integrations remain intentionally de-scoped or stubbed.
+BugSmasher is a feature-rich browser arcade game combining real-time Canvas gameplay with a React interface and Firebase services. Major systems include authentication, progression, achievements, procedural content, offline/local persistence, leaderboards, accessibility settings, game audio, and server-side score validation.
 
----
+## Engineering highlights
 
-## ✨ Key features
+| Area | Implementation |
+|---|---|
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS |
+| Game loop | Canvas 2D + `requestAnimationFrame` + delta-time updates |
+| State / systems | Specialized game managers and rendering modules |
+| Auth | Firebase Authentication |
+| Persistence | Local/IndexedDB paths plus Firebase callable-backed cloud persistence |
+| Security | Firestore rules, callable validation, rate limits, checksums, session-token controls |
+| Testing | Vitest, Firebase Emulator Suite, Playwright |
+| CI/CD | GitHub Actions with typecheck, tests, coverage, emulator, build, lint and E2E stages |
+| PWA | Service-worker/PWA support |
 
-- **Accessibility foundations** — keyboard-first navigation, ARIA support, difficulty/reduced-motion/colorblind gameplay controls; full WCAG 2.2 AA verification remains in progress
-- **Performance scaling** — adaptive rendering/VFX controls and mobile-aware canvas scaling
-- **Security boundaries** — Firebase callable write paths, authentication, schema validation, server checksums, rate limiting, and server-issued one-time score sessions
-- **Modular architecture** — extracted combat/bug behavior systems, separated audio systems, typed renderers, and dependency seams
-- **AI-assisted workflow** — repository agent rules and engineering skills are documented in `AGENTS.md` and `.agents/`
+## Verification truth
 
----
+Do not use the README as the source for current numeric test or coverage metrics. Current evidence lives in:
 
-## 🧪 Quality & CI
+- [Current Status](./docs/STATUS.md)
+- [Release Certification](./docs/RELEASE_CERTIFICATION.md)
+- [Live Taskboard](./TASKBOARD.md)
+- [Project Operating System](./docs/PROJECT_OPERATING_SYSTEM.md)
+- [Agent Handoff Protocol](./docs/AGENT_HANDOFF.md)
+- [Architecture](./docs/ARCHITECTURE.md)
 
-The latest repository verification addendum reports:
+Historical `VERIFICATION_*.md` documents record past snapshots and should not be interpreted as current results.
 
-| Signal                | Latest repository-reported result                                     |
-| --------------------- | --------------------------------------------------------------------- |
-| Frontend tests        | 651 passing Vitest tests                                              |
-| Firebase tests        | 26 emulator/integration tests plus 6 Functions schema tests           |
-| Coverage              | 79.17% lines · 78.12% statements · 84.57% functions · 66.02% branches |
-| Final coverage target | 80% lines · 80% statements · 75% functions · 70% branches             |
-| ESLint                | 0 errors; advisory warnings remain                                    |
-| Playwright            | 5/5 repository-reported specs passing                                 |
-| Production build      | Passing in the latest repository-reported verification                |
-
-**Important:** these figures are repository-recorded verification results, not a claim that the current ChatGPT session freshly executed the commands.
-
-**Run locally:**
+## Local development
 
 ```bash
 git clone https://github.com/FahadIbrahim93/BugSmasher-HopeTheory.git
@@ -59,57 +59,37 @@ npm install
 npm run dev
 ```
 
-**Quality gates:**
+Useful checks:
 
 ```bash
 npm run typecheck
 npm run lint:eslint
+npm test
 npm run test:coverage
 npm run test:emulator
-npm run test:e2e
-npm run ci
+npm run build
+npx playwright test
 ```
 
----
+The full quality gate is `npm run ci` once all required infrastructure is available.
 
-## 🔐 Security posture
+## Multi-agent development
 
-Competitive leaderboard writes are server-authoritative. Score submission requires an authenticated user and a server-issued session token; tokens are user-bound, expire, are atomically consumed, and cannot be replayed. Emulator tests cover replay, expiry, cross-user use, and plausibility checks.
+This project is intentionally designed for work across multiple AI agents and coding platforms. Start with [docs/PROJECT_OPERATING_SYSTEM.md](./docs/PROJECT_OPERATING_SYSTEM.md), then [AGENTS.md](./AGENTS.md), then claim exactly one task from [TASKBOARD.md](./TASKBOARD.md).
 
-The repository also has Dependabot and CodeQL configured, plus a blocking `npm audit --audit-level=high` workflow for root and Functions dependencies.
+Never assume another agent's branch is complete. Verify the current main branch and latest CI run before continuing work.
 
-This is strong baseline protection, not a claim of perfect anti-cheat: authoritative gameplay-run summaries/replay verification remain future hardening work if competitive integrity requirements demand them.
+## Security
 
----
+See [SECURITY.md](./SECURITY.md) and [docs/RELEASE_CERTIFICATION.md](./docs/RELEASE_CERTIFICATION.md).
 
-## 📚 Documentation
+The project already has server-issued session-token protection for score submission, including authentication binding, expiration, one-time use and plausibility checks. This is a security control, not a claim of mathematically unbreakable anti-cheat.
 
-- **[docs/BLUEPRINT_10_10.md](./docs/BLUEPRINT_10_10.md)** — 10/10 roadmap
-- **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — System design & module boundaries
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)** — CI/CD + Firebase/Vercel deployment reality
-- **[SECURITY.md](./SECURITY.md)** — Vulnerability disclosure & security model
-- **[CONTRIBUTING.md](./CONTRIBUTING.md)** — Contributor & agent entry point
-- **[CHANGELOG.md](./CHANGELOG.md)** — Version history
-- **[TASKBOARD.md](./TASKBOARD.md)** — Work items to 10/10
-- **[SESSION.md](./SESSION.md)** — Current engineering session and evidence policy
+## Contributing
 
----
+See [CONTRIBUTING.md](./CONTRIBUTING.md), [AGENTS.md](./AGENTS.md) and [docs/AGENTIC_WORKFLOW.md](./docs/AGENTIC_WORKFLOW.md).
 
-## 🚧 Explicitly not production-integrated yet
+## Status
 
-The following remain intentionally incomplete until real providers and operational/legal controls are added:
-
-- Paid monetization/payment processing
-- Advertising
-- Production analytics/telemetry consent
-- Crash reporting and runtime alerting
-- Final WCAG 2.2 AA evidence gate
-- Final 80/80/75/70 coverage gate
-
-The project should not claim those capabilities are live merely because integration stubs exist in the source tree.
-
----
-
-## 📄 License
-
-MIT — see [LICENSE](LICENSE).
+**10/10 certification:** NOT CERTIFIED  
+**Next priority:** restore green CI, then proceed through the live taskboard in priority order.

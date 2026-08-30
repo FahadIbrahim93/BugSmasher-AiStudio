@@ -132,8 +132,10 @@ describe('submitScore callable', () => {
     const sessionResult = (await startSession({}, { auth: { uid } })) as {
       sessionId: string;
     };
+    // Keep the fixture within the server's 5,000-points/second plausibility
+    // budget for a fresh session while still exercising monotonic-score behavior.
     await submitScore(
-      { score: 50_000, wave: 10, username: 'Pro', sessionId: sessionResult.sessionId },
+      { score: 20_000, wave: 10, username: 'Pro', sessionId: sessionResult.sessionId },
       { auth: { uid } }
     );
     const secondSession = (await startSession({}, { auth: { uid } })) as {
@@ -145,7 +147,7 @@ describe('submitScore callable', () => {
     );
 
     const snap = await admin.firestore().doc(`leaderboard/${uid}`).get();
-    expect(snap.data()?.score).toBe(50_000);
+    expect(snap.data()?.score).toBe(20_000);
   });
 
   it('rejects implausible scores', async () => {
@@ -209,9 +211,7 @@ describe('startSession callable', () => {
       await startSession({}, { auth: { uid } });
     }
 
-    await expect(
-      startSession({}, { auth: { uid } })
-    ).rejects.toThrow(/Rate limit exceeded/);
+    await expect(startSession({}, { auth: { uid } })).rejects.toThrow(/Rate limit exceeded/);
   });
 });
 
@@ -297,8 +297,8 @@ describe('submitScore with session tokens', () => {
     await admin.firestore().doc(`_sessions/${expiredSessionId}`).set({
       userId: uid,
       sessionId: expiredSessionId,
-      createdAt: Date.now() - 700_000, // 700 seconds ago (over 10 min TTL)
-      expiresAt: Date.now() - 100_000, // Expired 100 seconds ago
+      createdAt: Date.now() - 700_000,
+      expiresAt: Date.now() - 100_000,
       used: false,
     });
 
