@@ -353,8 +353,8 @@ describe('Renderer', () => {
           return call.length >= 5 && typeof call[3] === 'number' && typeof call[4] === 'number';
         });
         expect(spriteBlits.length).toBe(1);
-        const dw = spriteBlits[0][3] as number;
-        const dh = spriteBlits[0][4] as number;
+        const dw = spriteBlits[0][3];
+        const dh = spriteBlits[0][4];
         expect(dw).toBeGreaterThan(0);
         expect(dh).toBeGreaterThan(0);
         // Old vector bodies spanned ~±35 units after scale(size/15). A 30×30 dest

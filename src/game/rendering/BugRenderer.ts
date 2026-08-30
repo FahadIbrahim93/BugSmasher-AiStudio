@@ -468,10 +468,10 @@ export class BugRenderer {
     const ctx = this.engine.ctx;
     const sprite = this.bugSpriteCache.getSprite(bug);
     const dest = BUG_SPRITE_UNIT_DEST;
-    if (!sprite.width || !sprite.height || dest <= 0) {
+    if (sprite.width <= 0 || sprite.height <= 0) {
       ctx.fillStyle = bug.color;
       ctx.beginPath();
-      ctx.arc(0, 0, dest / 2 || 15, 0, Math.PI * 2);
+      ctx.arc(0, 0, dest / 2, 0, Math.PI * 2);
       ctx.fill();
       return;
     }
