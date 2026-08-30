@@ -6,6 +6,9 @@ import type { Renderer } from '../Renderer';
 import type { PerformanceScaler } from './PerformanceScaler';
 import { BugSpriteCache } from './BugSpriteCache';
 
+/** Dest size in the `scale(bug.size / 15)` space. Matches pre-sprite vector extent (~±32). */
+export const BUG_SPRITE_UNIT_DEST = 64;
+
 export class BugRenderer {
   private readonly bugSpriteCache = new BugSpriteCache();
 
@@ -339,6 +342,8 @@ export class BugRenderer {
   }
 
   drawBug(bug: Bug) {
+    if (!bug.active) return;
+
     const ctx = this.engine.ctx;
     ctx.save();
     ctx.translate(bug.x, bug.y);
@@ -394,24 +399,6 @@ export class BugRenderer {
 
     if (this.engine.accessibility?.showEnemyShapes) {
       this.drawEnemyShapeMarker(bug);
-    }
-    
-    // Eyes (Global for all types)
-    ctx.fillStyle = '#050505'; 
-    ctx.beginPath();
-    ctx.arc(-6, -18, 3, 0, Math.PI * 2);
-    ctx.arc(6, -18, 3, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Inner Glow/Pupil - skip on very low FPS
-    if (this.currentFps > 35) {
-      ctx.fillStyle = '#fff';
-      ctx.globalAlpha = 0.8;
-      ctx.beginPath();
-      ctx.arc(-6, -19, 1, 0, Math.PI * 2);
-      ctx.arc(6, -19, 1, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.globalAlpha = 1.0;
     }
 
     // Technical overlay (circuit patterns) - skip on low FPS
@@ -480,9 +467,16 @@ export class BugRenderer {
   private drawBugSprite(bug: Bug) {
     const ctx = this.engine.ctx;
     const sprite = this.bugSpriteCache.getSprite(bug);
-    const spriteScale = 30 / sprite.width;
+    const dest = BUG_SPRITE_UNIT_DEST;
+    if (!sprite.width || !sprite.height || dest <= 0) {
+      ctx.fillStyle = bug.color;
+      ctx.beginPath();
+      ctx.arc(0, 0, dest / 2 || 15, 0, Math.PI * 2);
+      ctx.fill();
+      return;
+    }
     ctx.save();
-    ctx.drawImage(sprite, -sprite.width * spriteScale / 2, -sprite.height * spriteScale / 2, sprite.width * spriteScale, sprite.height * spriteScale);
+    ctx.drawImage(sprite, -dest / 2, -dest / 2, dest, dest);
     ctx.restore();
   }
 
@@ -552,7 +546,7 @@ export class BugRenderer {
     if (this.currentFps < 25) {
       ctx.fillStyle = bug.color;
       ctx.beginPath();
-      ctx.arc(0, 0, 15, 0, Math.PI * 2);
+      ctx.arc(0, 0, BUG_SPRITE_UNIT_DEST / 2, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 1;

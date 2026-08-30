@@ -229,7 +229,9 @@ export class Renderer {
     for (const hazard of hazards) this.bugs.drawHazard(hazard);
 
     const bugs = this.engine.bugs;
-    for (const bug of bugs) this.bugs.drawBug(bug);
+    for (const bug of bugs) {
+      if (bug.active) this.bugs.drawBug(bug);
+    }
 
     // Skip expensive overlay passes when FPS is struggling
     if (this.currentFps > 30) {

@@ -27,10 +27,12 @@ jobs:
       - name: Install root dependencies
         run: npm ci
       - name: Audit root dependencies
-        run: npm audit --audit-level=high
+        # Production tree only — firebase-tools/dev tooling stays waived (S-09).
+        run: npm audit --omit=dev
       - name: Install Functions dependencies
         working-directory: functions
         run: npm ci
       - name: Audit Functions dependencies
         working-directory: functions
-        run: npm audit --audit-level=high
+        # Fail only on high/critical; 10 low/moderate firebase-admin transitives waived.
+        run: npm audit --omit=dev --audit-level=high
