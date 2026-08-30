@@ -135,13 +135,9 @@ export function Game({
 
       // Auto-update spreadsheet in real-time if Google Sheets are connected
       if (accessToken) {
-        pushPerformanceRow(accessToken, statsManager.getStats())
-          .then(() => {
-            console.log('Real-time Google Sheets update complete on run end.');
-          })
-          .catch((err: unknown) => {
-            console.warn('Background spreadsheet sync failed:', err);
-          });
+        pushPerformanceRow(accessToken, statsManager.getStats()).catch((err: unknown) => {
+          console.warn('Background spreadsheet sync failed:', err);
+        });
       }
     },
     [accessToken],

@@ -64,7 +64,6 @@ export class AchievementManager {
   }
 
   private static notify(achievement: Omit<Achievement, 'unlocked'>) {
-    console.log(`ACHIEVEMENT UNLOCKED: ${achievement.title}`);
     // Dispatch custom event for UI to pick up
     window.dispatchEvent(new CustomEvent('achievement_unlocked', { detail: achievement }));
   }

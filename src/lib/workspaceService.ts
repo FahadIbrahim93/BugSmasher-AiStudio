@@ -78,7 +78,6 @@ export async function pushPerformanceRow(accessToken: string, stats: UserStats) 
         values: [rowValues]
       })
     });
-    console.log('Real-time spreadsheet update successful.');
     return spreadsheetId;
   } catch (err) {
     console.warn('Failed to push performance row in real-time:', err);
@@ -244,7 +243,6 @@ export async function sendGmailReport(accessToken: string, recipientEmail: strin
       })
     });
 
-    console.log('Gmail report sent successfully:', gmailRes);
     return gmailRes;
   } catch (err) {
     console.warn('Failed to send mail through Gmail API:', err);
@@ -292,7 +290,6 @@ export async function exportSaveToGoogleDrive(accessToken: string, saveDataState
       }
     });
 
-    console.log('Google Drive Backup written successfully. File ID:', fileId);
     return fileId;
   } catch (err) {
     console.warn('Google Drive export failed:', err);
@@ -323,7 +320,6 @@ export async function importSaveFromGoogleDrive(accessToken: string): Promise<st
     }
 
     const saveText = await downloadRes.text();
-    console.log('Backup pulled successfully from Google Drive.');
     return saveText;
   } catch (err) {
     console.warn('Google Drive restoration failed:', err);

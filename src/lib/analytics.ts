@@ -42,6 +42,7 @@ class AnalyticsService {
     };
     const provider = getProvider();
     if (provider === 'console') {
+      // eslint-disable-next-line no-console -- the "console" analytics provider writes to console by design
       console.info('[analytics]', envelope);
     }
     // Analytics stub. For production, integrate PostHog or similar (see audit recommendation). Currently logs to console only.
@@ -50,6 +51,7 @@ class AnalyticsService {
   identify(userId: string, traits?: AnalyticsPayload): void {
     if (!this.enabled) return;
     if (getProvider() === 'console') {
+      // eslint-disable-next-line no-console -- the "console" analytics provider writes to console by design
       console.info('[analytics] identify', userId, traits);
     }
   }

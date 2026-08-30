@@ -71,8 +71,10 @@ export default tseslint.config(
   // Project-specific overrides and relaxed rules
   {
     rules: {
-      // Allow console for now during development
-      'no-console': 'warn',
+      // Console policy: warn/error are the sanctioned diagnostic channels in
+      // the browser build; log/info/debug are disallowed (use warn/error or
+      // remove). CLI scripts and the server entrypoint are exempt below.
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
       // Allow any in some places for flexibility
       '@typescript-eslint/no-explicit-any': 'warn',
       // Allow non-null assertions cautiously
@@ -95,7 +97,18 @@ export default tseslint.config(
       '@typescript-eslint/prefer-nullish-coalescing': 'warn',
       '@typescript-eslint/prefer-optional-chain': 'warn',
       '@typescript-eslint/no-unnecessary-condition': 'warn',
-      '@typescript-eslint/restrict-template-expressions': 'warn',
+      // Numbers interpolate deterministically and losslessly; keeping
+      // any/boolean/nullish interpolation strict is what catches real bugs.
+      '@typescript-eslint/restrict-template-expressions': [
+        'warn',
+        {
+          allowNumber: true,
+          allowAny: false,
+          allowBoolean: false,
+          allowNullish: false,
+          allowRegExp: false,
+        },
+      ],
       'react/jsx-no-target-blank': 'error',
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/await-thenable': 'error',
@@ -133,6 +146,13 @@ export default tseslint.config(
     files: ['**/*.{ts,tsx}'],
     rules: {
       'no-unused-vars': 'off',
+    },
+  },
+  // CLI tooling and the server entrypoint write to stdout/stderr by design.
+  {
+    files: ['scripts/**', 'server.ts'],
+    rules: {
+      'no-console': 'off',
     },
   },
   // Test file overrides — relax some strictness
