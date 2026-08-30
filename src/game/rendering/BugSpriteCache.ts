@@ -47,7 +47,8 @@ export class BugSpriteCache {
     if (!ctx) return canvas;
 
     const style = getSpriteStyle(bug.type, bug.variantId);
-    const unit = spriteSize / 4.6;
+    // Fill ~95% of the canvas so dest blits show a full body, not padded slivers.
+    const unit = spriteSize / 2.5;
 
     ctx.save();
     ctx.translate(spriteSize / 2, spriteSize / 2);

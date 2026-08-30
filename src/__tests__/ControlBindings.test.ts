@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   loadControlBindings,
   saveControlBindings,
@@ -144,6 +144,42 @@ describe('ControlBindings', () => {
       expect(matchesBinding('', '')).toBe(true);
       expect(matchesBinding('KeyA', '')).toBe(false);
       expect(matchesBinding('', 'KeyA')).toBe(false);
+    });
+  });
+
+  describe('SSR safety', () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('loadControlBindings returns defaults without a window', () => {
+      vi.stubGlobal('window', undefined);
+      expect(loadControlBindings()).toEqual(DEFAULT_BINDINGS);
+    });
+
+    it('saveControlBindings is a no-op without a window', () => {
+      vi.stubGlobal('window', undefined);
+      expect(() => {
+        saveControlBindings(DEFAULT_BINDINGS);
+      }).not.toThrow();
+    });
+
+    it('subscribeControlBindings calls listener once without a window', () => {
+      vi.stubGlobal('window', undefined);
+      const listener = vi.fn();
+      const unsub = subscribeControlBindings(listener);
+      expect(listener).toHaveBeenCalledWith(DEFAULT_BINDINGS);
+      unsub();
+    });
+
+    it('handler falls back to loaded bindings when event detail is missing', () => {
+      const listener = vi.fn();
+      const unsub = subscribeControlBindings(listener);
+      listener.mockClear();
+
+      window.dispatchEvent(new Event('bugsmasher:controls-changed'));
+      expect(listener).toHaveBeenCalledWith(DEFAULT_BINDINGS);
+      unsub();
     });
   });
 

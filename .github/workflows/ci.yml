@@ -35,6 +35,13 @@ jobs:
       - name: Lint (eslint — hard gate)
         run: npm run lint:eslint
 
+      - name: Dependency audit (production deps — hard gate)
+        # 0 production vulnerabilities (2026-08-16). Dev-tooling chain
+        # (firebase-tools/gaxios via npm audit --all) remains waived with
+        # TASKBOARD S-09 until a non-breaking major lands.
+        run: npm audit --omit=dev
+        continue-on-error: false
+
       - name: Typecheck Functions (Cloud Functions for server validation)
         run: |
           if [ -f functions/package.json ]; then
@@ -43,6 +50,19 @@ jobs:
             npm run build
           else
             echo "No functions to build"
+          fi
+
+      - name: Dependency audit — functions (production deps — hard gate)
+        # 0 critical/high (2026-08-16, overrides pinned websocket-driver + form-data).
+        # 10 low/moderate transitive findings remain via firebase-admin's stack
+        # (body-parser/uuid/protobufjs) — tracked in TASKBOARD S-09, no
+        # non-breaking fix available without churning the whole dep tree.
+        run: |
+          if [ -f functions/package.json ]; then
+            cd functions
+            npm audit --omit=dev --audit-level=high
+          else
+            echo "No functions to audit"
           fi
 
       - name: Unit tests (with coverage per audit)

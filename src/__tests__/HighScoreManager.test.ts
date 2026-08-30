@@ -1,10 +1,16 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { HighScoreManager } from '../game/HighScoreManager';
 
+const authMocks = vi.hoisted(() => ({
+  currentUser: null as { displayName: string } | null,
+}));
+
 // Mock auth from firebase to avoid initialization issues
 vi.mock('../lib/firebase', () => ({
   auth: {
-    currentUser: null
+    get currentUser() {
+      return authMocks.currentUser;
+    },
   },
   db: {}
 }));
@@ -85,5 +91,22 @@ describe('HighScoreManager', () => {
     localStorage.setItem('bugsmasher_local_high_scores_top5', 'invalid-json');
     const scores = HighScoreManager.getTopScores();
     expect(scores).toEqual([]);
+  });
+
+  it('should return false when a score does not make the top 5', () => {
+    for (let i = 0; i < 5; i++) {
+      HighScoreManager.submitScore(1000 - i * 100, 5, `P${String(i)}`);
+    }
+    const qualified = HighScoreManager.submitScore(10, 1, 'Low');
+    expect(qualified).toBe(false);
+    expect(HighScoreManager.getTopScores()).toHaveLength(5);
+  });
+
+  it('should use the signed-in user display name when available', () => {
+    authMocks.currentUser = { displayName: 'Commander Fox' };
+    HighScoreManager.submitScore(250, 6);
+    const scores = HighScoreManager.getTopScores();
+    expect(scores[0].playerName).toBe('COMMANDER FOX');
+    authMocks.currentUser = null;
   });
 });

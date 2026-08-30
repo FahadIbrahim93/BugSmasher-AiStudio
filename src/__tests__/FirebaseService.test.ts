@@ -30,7 +30,7 @@ vi.mock('firebase/firestore', () => ({
   limit: vi.fn(),
 }));
 
-import { FirebaseService } from '../lib/firebaseService';
+import { FirebaseService, handleFirestoreError, OperationType } from '../lib/firebaseService';
 
 describe('FirebaseService server-authoritative writes', () => {
   beforeEach(() => {
@@ -171,6 +171,28 @@ describe('FirebaseService server-authoritative writes', () => {
 
     const result = await FirebaseService.downloadSave('user-1');
     expect(result).toMatchObject({ ...payload, checksum });
+  });
+
+  it('redacts the authenticated uid from error payload paths (S-08)', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      handleFirestoreError(
+        new Error('boom'),
+        OperationType.WRITE,
+        'users/user-1/private/saves',
+        false,
+      );
+      const logged = JSON.parse(errorSpy.mock.calls[0][1] as string) as {
+        authInfo: { authenticated: boolean };
+        path: string;
+      };
+      expect(logged.authInfo.authenticated).toBe(true);
+      expect(logged.authInfo).not.toHaveProperty('userId');
+      expect(logged.path).not.toContain('user-1');
+      expect(logged.path).toContain('<uid>');
+    } finally {
+      errorSpy.mockRestore();
+    }
   });
 
   it('returns leaderboard entries from Firestore', async () => {

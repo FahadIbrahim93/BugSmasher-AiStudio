@@ -34,11 +34,11 @@ export default defineConfig({
         'src/game/AudioAssetLoader.ts',
       ],
       thresholds: {
-        // Phase 2 interim floor (2026-06-30). Phase 2b targets 80/70/75/80 after GameEngine/WaveManager branch work.
-        lines: 77,
+        // Phase 2b (2026-08-16): production targets met — 80/70/75/80.
+        lines: 80,
         functions: 75,
-        branches: 61,
-        statements: 76,
+        branches: 70,
+        statements: 80,
       },
     },
   },

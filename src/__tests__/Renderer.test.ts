@@ -317,6 +317,78 @@ describe('Renderer', () => {
       // Should not throw
       expect(() => { renderer.drawBug(bug as any); }).not.toThrow();
     });
+
+    it('draws every live bug in a wave and blits a full dest rect (not a sliver)', () => {
+      const wave = [12, 15, 15, 18, 15, 25, 8, 15].map((size, i) => ({
+        active: true,
+        x: 80 + i * 70,
+        y: 220,
+        type: i === 5 ? 'tank' : i === 6 ? 'mini' : 'basic',
+        variantId: undefined,
+        rotation: 0,
+        walkCycle: 0,
+        color: '#4CAF50',
+        size,
+        hp: 3,
+        maxHp: 3,
+        hitTimer: 0,
+        phase: 1,
+        abilityTimer: 0,
+        isShielded: false,
+        isHealing: false,
+        offsetTime: 0,
+        armor: 1.0,
+        webTimer: 0,
+      }));
+      engine.bugs = wave as any;
+      const drawBugSpy = vi.spyOn((renderer as unknown as { bugs: { drawBug: typeof renderer.drawBug } }).bugs, 'drawBug');
+
+      renderer.draw();
+      expect(drawBugSpy).toHaveBeenCalledTimes(wave.length);
+
+      for (const bug of wave) {
+        vi.mocked(ctx.drawImage).mockClear();
+        renderer.drawBug(bug as any);
+        const spriteBlits = vi.mocked(ctx.drawImage).mock.calls.filter((call) => {
+          return call.length >= 5 && typeof call[3] === 'number' && typeof call[4] === 'number';
+        });
+        expect(spriteBlits.length).toBe(1);
+        const dw = spriteBlits[0][3];
+        const dh = spriteBlits[0][4];
+        expect(dw).toBeGreaterThan(0);
+        expect(dh).toBeGreaterThan(0);
+        // Old vector bodies spanned ~±35 units after scale(size/15). A 30×30 dest
+        // plus sprite padding produced a sliver (~16px) for typical size-15 bugs.
+        expect(dw).toBeGreaterThanOrEqual(56);
+        expect(dh).toBeGreaterThanOrEqual(56);
+      }
+    });
+
+    it('does not blit a sprite for inactive bugs', () => {
+      const bug = {
+        active: false,
+        x: 400,
+        y: 300,
+        type: 'scout',
+        rotation: 0,
+        walkCycle: 0,
+        color: '#00ff00',
+        size: 15,
+        hp: 1,
+        maxHp: 1,
+        hitTimer: 0,
+        phase: 1,
+        abilityTimer: 0,
+        isShielded: false,
+        isHealing: false,
+        offsetTime: 0,
+        armor: 1.0,
+        webTimer: 0,
+      };
+      vi.mocked(ctx.drawImage).mockClear();
+      renderer.drawBug(bug as any);
+      expect(ctx.drawImage).not.toHaveBeenCalled();
+    });
   });
 
   describe('drawBugBody variants', () => {
