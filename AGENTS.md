@@ -6,14 +6,15 @@ BugSmasher is a React 19 + TypeScript + Canvas 2D arcade game with Firebase-back
 
 This repository is intentionally developed with multiple AI agents and coding platforms. The repository documentation is therefore part of the engineering system, not optional prose.
 
-## Current truth (2026-08-29)
+## Current truth (2026-08-30)
 
 **Certification:** NOT 10/10 certified.  
-**Latest inspected main CI:** RED on 2026-08-26 because 1 of 26 emulator tests failed.  
-**Frontend tests in that run:** 651/651 passed.  
-**ESLint:** 0 errors but 908 warnings in that run.  
-**Coverage in that run:** ~79.14% lines, 78.06% statements, 84.43% functions, 66.30% branches.  
-**Security:** server-issued session-token protection exists; it is not equivalent to complete deterministic replay verification.
+**Latest inspected main CI:** GREEN on 2026-08-30 at commit `bbc7250` (CI, CodeQL and Security Audit workflows all passed).  
+**Frontend tests in that state:** 752/752 passed (40 files); emulator suite 26/26 passed; functions unit 6/6 passed; Playwright E2E 5/5 passed.  
+**ESLint:** 0 errors but 910 warnings in that state.  
+**Coverage in that state:** 81.70% lines, 80.78% statements, 85.99% functions, 70.92% branches (enforced floors: 80/80/75/70).  
+**Formatting:** `prettier --check .` still fails on ~181 files; formatting is not yet a CI gate.  
+**Security:** server-issued session-token protection exists; it is not equivalent to complete deterministic replay verification. `npm audit --omit=dev` reports 0 vulnerabilities.
 
 Treat all older ratings and victory-lap claims as historical unless backed by a newer verification record.
 
