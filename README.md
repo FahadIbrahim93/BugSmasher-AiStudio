@@ -92,4 +92,4 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md), [AGENTS.md](./AGENTS.md) and [docs/AGE
 ## Status
 
 **10/10 certification:** NOT CERTIFIED  
-**Next priority:** restore green CI, then proceed through the live taskboard in priority order.
+**Next priority:** lint, prettier, accessibility, and operations evidence — then the live taskboard.
