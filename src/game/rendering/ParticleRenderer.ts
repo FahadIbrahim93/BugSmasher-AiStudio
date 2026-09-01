@@ -330,7 +330,7 @@ export class ParticleRenderer {
     // Cache cloud gradients — recreate only on dimension or boss-state change
     // (cloud gradient is always centered on the canvas, not on moving cloud center)
     // Use a simple key for cache hit: dimension hash + boss flag
-    const cacheKey = `${w}x${h}_b${isBoss}`;
+    const cacheKey = `${w}x${h}_b${isBoss ? 1 : 0}`;
     if (this.lastCloudWidth !== w || this.lastCloudHeight !== h) {
       this.cachedCloudGradients.clear();
       this.lastCloudWidth = w;

@@ -77,12 +77,12 @@ export function useHudSync(engineRef: React.RefObject<GameEngine | null>) {
 
   useEffect(() => {
     const handlePerfChange = (e: Event) => {
-      const customEvent = e as CustomEvent;
+      const customEvent = e as CustomEvent<boolean>;
       setShowPerf(customEvent.detail);
     };
 
     const handlePerfDebugChange = (e: Event) => {
-      const customEvent = e as CustomEvent;
+      const customEvent = e as CustomEvent<boolean>;
       setShowPerfDebug(customEvent.detail);
     };
 
@@ -138,13 +138,13 @@ export function useHudSync(engineRef: React.RefObject<GameEngine | null>) {
         if (showPerfStatsLocal) {
           const engine = engineRef.current;
           if (engine) {
-            const pCount = engine.particleSystem?.particles?.filter((p: { active?: boolean }) => p.active)?.length || 0;
+            const pCount = engine.particleSystem.particles.filter((p) => p.active).length;
             setPerfData({
               fps: measuredFps,
               frameTime: parseFloat(avgFrameTime.toFixed(1)),
-              bugs: engine.bugs?.length || 0,
-              powerups: engine.powerups?.length || 0,
-              hazards: engine.hazards?.length || 0,
+              bugs: engine.bugs.length,
+              powerups: engine.powerups.length,
+              hazards: engine.hazards.length,
               particles: pCount
             });
           }
@@ -162,16 +162,17 @@ export function useHudSync(engineRef: React.RefObject<GameEngine | null>) {
           if (memory) {
             used = Math.round(memory.usedJSHeapSize / 1048576);
             total = Math.round(memory.totalJSHeapSize / 1048576);
-            limit = Math.round((memory.jsHeapSizeLimit || memory.totalJSHeapSize) / 1048576);
-            const limitForPct = memory.jsHeapSizeLimit || memory.totalJSHeapSize || 1;
+            const limitBytes = memory.jsHeapSizeLimit ?? memory.totalJSHeapSize;
+            limit = Math.round(limitBytes / 1048576);
+            const limitForPct = limitBytes > 0 ? limitBytes : 1;
             pct = (memory.usedJSHeapSize / limitForPct) * 100;
           } else {
             // Highly robust, realistic active-workload emulation for standard JS environments
             const elapsed = Date.now() / 1000;
             const engine = engineRef.current;
-            const bugCount = engine?.bugs?.length || 0;
-            const particleCount = engine?.particleSystem?.particles?.filter((p: { active?: boolean }) => p.active)?.length || 0;
-            const waveIndex = engine?.wave || 1;
+            const bugCount = engine?.bugs.length ?? 0;
+            const particleCount = engine?.particleSystem.particles.filter((p) => p.active).length ?? 0;
+            const waveIndex = Math.max(engine?.wave ?? 1, 1);
 
             const baseMemory = 39.4 + (waveIndex * 1.1) + (Math.sin(elapsed / 10) * 1.2);
             const bugMemory = bugCount * 0.20;
@@ -354,11 +355,11 @@ export function useHudSync(engineRef: React.RefObject<GameEngine | null>) {
 
         // Update Goo Contamination + HOLD Q sweep hint
         if (gooBarRef.current && gooTextRef.current && gooHintRef.current) {
-          const gooAmt = engine.gooSystem?.gooAmount || 0;
+          const gooAmt = engine.gooSystem.gooAmount;
           const gooPct = Math.max(0, Math.min(100, gooAmt));
           const gooHeavy = gooPct > 50;
           const crossedGooThreshold = lastGoo >= 0 && gooPct > 50 && lastGoo <= 50;
-          const collecting = engine.gooSystem?.isCollecting ?? false;
+          const collecting = engine.gooSystem.isCollecting;
           if (gooPct !== lastGoo || gooHeavy !== lastGooHeavy || collecting !== lastGooCollecting) {
             gooBarRef.current.style.width = `${gooPct}%`;
             gooTextRef.current.textContent = `${Math.ceil(gooPct)}%`;

@@ -22,6 +22,6 @@ export async function purchaseSupporterPack(): Promise<boolean> {
     grantSupporterPack();
     return true;
   }
-  console.info('[monetization] Supporter pack purchase stub — set VITE_ENABLE_DEMO_PURCHASE=true for demo');
+  console.warn('[monetization] Supporter pack purchase stub — set VITE_ENABLE_DEMO_PURCHASE=true for demo');
   return false;
 }

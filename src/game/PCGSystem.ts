@@ -265,7 +265,6 @@ export class PCGSystem {
         });
         this.engine.particleSystem.spawnShockwave(rx, ry, '#00ffd2', 40);
       }
-      console.log(`[PCGSystem] Distributed ${numResources} resources on wave ${currentWave} (seed ${this.currentSeed})`);
     }
 
     // 2. Procedural Environmental Hazard Spawner (Tied directly to seed + wave + timing)
@@ -290,7 +289,6 @@ export class PCGSystem {
           active: true
         });
         this.engine.particleSystem.spawnShockwave(hx, hy, '#ff5500', 80);
-        console.log(`[PCGSystem] Spawned environmental hazard '${selectedType}' at [${hx}, ${hy}]`);
       }
     }
 

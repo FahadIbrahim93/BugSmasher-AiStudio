@@ -78,13 +78,13 @@ export function Game({
   const [finalScore, setFinalScore] = useState(0);
   const [currentWave, setCurrentWave] = useState(1);
 
-  const [currentBiome, setCurrentBiome] = useState<string>(startBiome || 'neon_core');
+  const [currentBiome, setCurrentBiome] = useState<string>(startBiome ?? 'neon_core');
 
   const engineRef = useRef<GameEngine | null>(null);
   const [a11y, setA11y] = useState<AccessibilitySettings>(loadAccessibilitySettings);
 
   useEffect(() => {
-    let lastBiome = startBiome || 'neon_core';
+    let lastBiome = startBiome ?? 'neon_core';
     const unsub = GameEngineStatusBus.subscribe((status) => {
       if (status && status.currentBiome !== lastBiome) {
         lastBiome = status.currentBiome;
@@ -135,13 +135,9 @@ export function Game({
 
       // Auto-update spreadsheet in real-time if Google Sheets are connected
       if (accessToken) {
-        pushPerformanceRow(accessToken, statsManager.getStats())
-          .then(() => {
-            console.log('Real-time Google Sheets update complete on run end.');
-          })
-          .catch((err: unknown) => {
-            console.warn('Background spreadsheet sync failed:', err);
-          });
+        pushPerformanceRow(accessToken, statsManager.getStats()).catch((err: unknown) => {
+          console.warn('Background spreadsheet sync failed:', err);
+        });
       }
     },
     [accessToken],
@@ -149,7 +145,7 @@ export function Game({
 
   useEffect(() => {
     const handleForcedGameOver = (event: Event) => {
-      const detail = (event as CustomEvent<{ score?: number }>).detail;
+      const detail = (event as CustomEvent<{ score?: number } | null>).detail;
       const score = typeof detail?.score === 'number' ? detail.score : 0;
       handleGameOver(score);
     };
@@ -225,7 +221,7 @@ export function Game({
     } else if (type === 'radius') {
       engine.radiusLevel += 1;
       engine.clickRadiusMultiplier *= GameConfig.upgrades.radius.radiusMultiplier;
-    } else if (type === 'turret') {
+    } else {
       engine.autoTurretLevel += 1;
     }
   };
@@ -302,13 +298,13 @@ export function Game({
     if (engineRef.current && challengeModifiers && !engineRef.current.isChallengeMode) {
       engineRef.current.setChallengeModifiers(challengeModifiers);
     }
-  }, [engineRef.current, challengeModifiers]);
+  }, [challengeModifiers]);
 
   // Listen for challenge reward events to grant progression
   useEffect(() => {
     const handleReward = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (detail.type === 'resources') {
+      const detail = (e as CustomEvent<{ type?: string; id?: string } | null>).detail;
+      if (detail?.type === 'resources') {
         // Defer to ProgressionManager via dynamic import to avoid circular deps
         void import('../game/ProgressionManager').then(({ progressionManager }) => {
           progressionManager.addResource(
@@ -381,9 +377,9 @@ export function Game({
         <UpgradeMenu
           score={finalScore}
           initialLevels={{
-            health: engineRef.current?.healthLevel || 0,
-            radius: engineRef.current?.radiusLevel || 0,
-            turret: engineRef.current?.autoTurretLevel || 0,
+            health: engineRef.current?.healthLevel ?? 0,
+            radius: engineRef.current?.radiusLevel ?? 0,
+            turret: engineRef.current?.autoTurretLevel ?? 0,
           }}
           onUpgrade={handleUpgrade}
           onOpenProgression={() => {

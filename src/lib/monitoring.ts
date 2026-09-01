@@ -64,9 +64,11 @@ function consoleTransport(entry: LogEntry): void {
 
   switch (entry.level) {
     case 'debug':
+      // eslint-disable-next-line no-console -- log-level router maps debug entries to console.debug by design
       console.debug(prefix, entry.message, details, errorInfo);
       break;
     case 'info':
+      // eslint-disable-next-line no-console -- log-level router maps info entries to console.info by design
       console.info(prefix, entry.message, details, errorInfo);
       break;
     case 'warn':

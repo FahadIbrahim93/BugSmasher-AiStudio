@@ -1,15 +1,27 @@
 import { useEffect, useState } from 'react';
 import { progressionManager } from '../game/ProgressionManager';
+import type { GameEngine } from '../game/GameEngine';
 
-export function ActiveSkillsBar({ engineRef }: { engineRef: React.RefObject<any> }) {
-  const [skills, setSkills] = useState<{ id: string; name: string; icon: string; key: string; cooldown: number; active: number; color: string; desc: string; }[]>([]);
+interface ActiveSkillItem {
+  id: string;
+  name: string;
+  icon: string;
+  key: string;
+  cooldown: number;
+  active: number;
+  color: string;
+  desc: string;
+}
+
+export function ActiveSkillsBar({ engineRef }: { engineRef: React.RefObject<GameEngine | null> }) {
+  const [skills, setSkills] = useState<ActiveSkillItem[]>([]);
 
   useEffect(() => {
     const interval = setInterval(() => {
       const engine = engineRef.current;
       if (!engine) return;
 
-      const items = [];
+      const items: ActiveSkillItem[] = [];
       const bioshieldLvl = progressionManager.getSkillLevel('nanite_bioshield');
       const overdriveLvl = progressionManager.getSkillLevel('turret_overdrive');
       const chronoLvl = progressionManager.getSkillLevel('chrono_emp_shatter');
@@ -20,8 +32,8 @@ export function ActiveSkillsBar({ engineRef }: { engineRef: React.RefObject<any>
           name: 'Bio-Shield',
           icon: '🛡️',
           key: '1',
-          cooldown: engine.bioshieldCooldown || 0,
-          active: engine.bioshieldActiveTime || 0,
+          cooldown: engine.bioshieldCooldown,
+          active: engine.bioshieldActiveTime,
           color: 'from-emerald-500 to-teal-500 border-emerald-500/30',
           desc: 'HEALS 25 HP & GRANTS 4S IMMUNITY'
         });
@@ -32,8 +44,8 @@ export function ActiveSkillsBar({ engineRef }: { engineRef: React.RefObject<any>
           name: 'Overdrive',
           icon: '⚔️',
           key: '2',
-          cooldown: engine.overdriveCooldown || 0,
-          active: engine.overdriveActiveTime || 0,
+          cooldown: engine.overdriveCooldown,
+          active: engine.overdriveActiveTime,
           color: 'from-amber-500 to-orange-500 border-amber-500/30',
           desc: 'OVERCLOCKS AUTO-TURRETS SPEED FOR 8S'
         });
@@ -44,8 +56,8 @@ export function ActiveSkillsBar({ engineRef }: { engineRef: React.RefObject<any>
           name: 'Chrono EMP',
           icon: '🔮',
           key: '3',
-          cooldown: engine.empShatterCooldown || 0,
-          active: engine.empShatterActiveTime || 0,
+          cooldown: engine.empShatterCooldown,
+          active: engine.empShatterActiveTime,
           color: 'from-purple-500 to-indigo-500 border-purple-500/30',
           desc: 'FREEZES BUGS & DECAYS 30% HEALTH'
         });

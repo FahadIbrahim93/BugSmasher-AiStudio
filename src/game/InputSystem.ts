@@ -27,19 +27,12 @@ export class InputSystem {
     this.engine = engine;
     this.lastMouseX = engine.width / 2;
     this.lastMouseY = engine.height / 2;
-    this.handlePointerDown = this.handlePointerDown.bind(this);
-    this.handlePointerMove = this.handlePointerMove.bind(this);
-    this.handlePointerUp = this.handlePointerUp.bind(this);
-    this.handleKeyDown = this.handleKeyDown.bind(this);
-    this.handleKeyUp = this.handleKeyUp.bind(this);
-    
     this.engine.canvas.addEventListener('pointerdown', this.handlePointerDown);
     this.engine.canvas.addEventListener('pointerup', this.handlePointerUp);
     this.engine.canvas.addEventListener('pointercancel', this.handlePointerUp);
     this.engine.canvas.addEventListener('pointermove', this.handlePointerMove);
     window.addEventListener('keydown', this.handleKeyDown);
     window.addEventListener('keyup', this.handleKeyUp);
-    this.handleGamepad = this.handleGamepad.bind(this);
   }
 
   private gamepadPollId: number | null = null;
@@ -62,10 +55,11 @@ export class InputSystem {
     }
   }
 
-  private handleGamepad(): void {
+  private handleGamepad = (): void => {
     if (!this.engine.isRunning || this.engine.isPaused) return;
-    const pads = navigator.getGamepads?.();
-    if (!pads) return;
+    // Older browsers and jsdom lack the Gamepad API even though DOM types declare it.
+    if (typeof navigator.getGamepads !== 'function') return;
+    const pads = navigator.getGamepads();
     const pad = pads[0];
     if (!pad) return;
     const ax = pad.axes[0] ?? 0;
@@ -83,12 +77,13 @@ export class InputSystem {
     }
     const fire = pad.buttons[0]?.pressed || pad.buttons[7]?.pressed;
     if (fire && !this.lastGamepadClick) {
-      this.processClick(this.lastMouseX + (this.engine.canvas.getBoundingClientRect?.()?.left ?? 0), this.lastMouseY + (this.engine.canvas.getBoundingClientRect?.()?.top ?? 0));
+      const rect = this.engine.canvas.getBoundingClientRect();
+      this.processClick(this.lastMouseX + rect.left, this.lastMouseY + rect.top);
     }
     this.lastGamepadClick = fire;
   }
 
-  private handleKeyDown(e: KeyboardEvent) {
+  private handleKeyDown = (e: KeyboardEvent) => {
     if (e.repeat) return;
     if (this.engine.isPaused || !this.engine.isRunning) return;
     // Q = Manual Garbage Collection: sweep goo contamination and recycle it
@@ -104,16 +99,16 @@ export class InputSystem {
     }
   }
 
-  private handleKeyUp(e: KeyboardEvent) {
+  private handleKeyUp = (e: KeyboardEvent) => {
     if (e.code === 'KeyQ' || e.key === 'q' || e.key === 'Q') {
       this.engine.gooSystem.isCollecting = false;
     }
-  }
+  };
 
   // Ground Slam hold-to-charge tracking
   private pointerDownTime = 0;
 
-  private handlePointerDown(e: PointerEvent) {
+  private handlePointerDown = (e: PointerEvent) => {
     e.preventDefault();
     if (this.engine.isPaused) return;
     soundManager.init();
@@ -132,7 +127,7 @@ export class InputSystem {
     this.processClick(e.clientX, e.clientY);
   }
 
-  private handlePointerUp(e: PointerEvent) {
+  private handlePointerUp = (e: PointerEvent) => {
     const engine = this.engine;
     const wasCharging = engine.slamCharging;
     engine.slamCharging = false;
@@ -150,7 +145,7 @@ export class InputSystem {
     }
   }
 
-  private handlePointerMove(e: PointerEvent) {
+  private handlePointerMove = (e: PointerEvent) => {
     const rect = this.engine.canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -159,9 +154,7 @@ export class InputSystem {
     this.lastMouseY = y;
 
     if (!this.engine.isRunning || !this.engine.waveManager.waveActive || this.engine.isPaused) {
-      if (this.engine.canvas) {
-        this.engine.canvas.removeAttribute('data-hovering-game-object');
-      }
+      this.engine.canvas.removeAttribute('data-hovering-game-object');
       return;
     }
     
@@ -187,12 +180,10 @@ export class InputSystem {
       }
     }
 
-    if (this.engine.canvas) {
-      if (isHovering) {
-        this.engine.canvas.setAttribute('data-hovering-game-object', 'true');
-      } else {
-        this.engine.canvas.removeAttribute('data-hovering-game-object');
-      }
+    if (isHovering) {
+      this.engine.canvas.setAttribute('data-hovering-game-object', 'true');
+    } else {
+      this.engine.canvas.removeAttribute('data-hovering-game-object');
     }
   }
 
@@ -227,7 +218,7 @@ export class InputSystem {
     }
 
     // Intercept with PCG System
-    if (engine.pcgSystem && engine.pcgSystem.activeMap) {
+    if (engine.pcgSystem.activeMap) {
       const hitNode = engine.pcgSystem.checkNodeHit(x, y);
       if (hitNode) {
         return; // Intercepted successfully!
@@ -325,7 +316,8 @@ export class InputSystem {
           rageGain = GameConfig.rage.hitWithOverdrive;
         }
         engine.addRage(rageGain);
-        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        // Desktop browsers and jsdom lack vibrate() even though DOM types declare it.
+        if (typeof navigator.vibrate === 'function') {
           navigator.vibrate(12);
         }
         engine.damageBug(bug, 1);
